@@ -30,6 +30,12 @@ const burgerBtn            = document.getElementById('burger-btn')
 const burgerDropdown       = document.getElementById('burger-dropdown')
 const menuSettings         = document.getElementById('menu-settings')
 const menuAbout            = document.getElementById('menu-about')
+const settingsModal        = document.getElementById('settings-modal')
+const settingsClose        = document.getElementById('settings-close')
+const settingsTabs         = document.querySelectorAll('.settings-tab')
+const settingsPanes        = document.querySelectorAll('.settings-pane')
+const aboutModal           = document.getElementById('about-modal')
+const aboutClose           = document.getElementById('about-close')
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -276,8 +282,43 @@ menuAbout.addEventListener('click', () => {
   openAbout()
 })
 
-function openSettings() { /* Task 2 */ }
-function openAbout()    { /* Task 2 */ }
+function openSettings() {
+  // reset to user tab
+  settingsTabs.forEach(t => t.classList.remove('active'))
+  settingsPanes.forEach(p => p.classList.add('hidden'))
+  document.querySelector('[data-tab="user"]').classList.add('active')
+  document.getElementById('pane-user').classList.remove('hidden')
+
+  settingsModal.classList.remove('hidden')
+  loadUserTab()
+}
+
+function closeSettings() {
+  settingsModal.classList.add('hidden')
+}
+
+settingsClose.addEventListener('click', closeSettings)
+
+settingsTabs.forEach(tab => {
+  tab.addEventListener('click', () => {
+    settingsTabs.forEach(t => t.classList.remove('active'))
+    settingsPanes.forEach(p => p.classList.add('hidden'))
+    tab.classList.add('active')
+    document.getElementById(`pane-${tab.dataset.tab}`).classList.remove('hidden')
+    if (tab.dataset.tab === 'limit') loadLimitTab()
+  })
+})
+
+function openAbout() {
+  aboutModal.classList.remove('hidden')
+}
+
+aboutClose.addEventListener('click', () => {
+  aboutModal.classList.add('hidden')
+})
+
+function loadUserTab()  { /* Task 3 */ }
+function loadLimitTab() { /* Task 4 */ }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 

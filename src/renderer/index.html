@@ -80,6 +80,39 @@
     </div>
   </div>
 
+  <!-- Settings modal -->
+  <div id="settings-modal" class="modal-overlay hidden">
+    <div class="settings-modal">
+      <button class="modal-close" id="settings-close">×</button>
+      <nav class="settings-nav">
+        <button class="settings-tab active" data-tab="user">Пользователь</button>
+        <button class="settings-tab" data-tab="limit">Лимит &amp; Период</button>
+        <button class="settings-tab" data-tab="categories">Категории</button>
+        <button class="settings-tab" data-tab="hours">Правка часов</button>
+      </nav>
+      <div class="settings-body">
+        <div class="settings-pane" id="pane-user"></div>
+        <div class="settings-pane hidden" id="pane-limit"></div>
+        <div class="settings-pane hidden" id="pane-categories">
+          <p class="settings-stub">Скоро</p>
+        </div>
+        <div class="settings-pane hidden" id="pane-hours">
+          <p class="settings-stub">Скоро</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- About dialog -->
+  <div id="about-modal" class="dialog-overlay hidden">
+    <div class="dialog">
+      <div class="about-name">Time Tracker</div>
+      <div class="about-version">Версия 1.0.0</div>
+      <div class="about-copy">© 2026 Sasha &amp; Maxim</div>
+      <button class="dialog-btn save" id="about-close">Закрыть</button>
+    </div>
+  </div>
+
   <script src="js/app.js"></script>
 </body>
 </html>
