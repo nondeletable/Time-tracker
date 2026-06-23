@@ -26,6 +26,10 @@ const dialogTime           = document.getElementById('dialog-time')
 const dialogCategorySelect = document.getElementById('dialog-category-select')
 const dialogCancel         = document.getElementById('dialog-cancel')
 const dialogSave           = document.getElementById('dialog-save')
+const burgerBtn            = document.getElementById('burger-btn')
+const burgerDropdown       = document.getElementById('burger-dropdown')
+const menuSettings         = document.getElementById('menu-settings')
+const menuAbout            = document.getElementById('menu-about')
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -250,6 +254,30 @@ dialogSave.addEventListener('click', async () => {
   resetTimer()
   await refreshStats()
 })
+
+// ── Burger menu ───────────────────────────────────────────────────────────────
+
+burgerBtn.addEventListener('click', e => {
+  e.stopPropagation()
+  burgerDropdown.classList.toggle('hidden')
+})
+
+document.addEventListener('click', () => {
+  burgerDropdown.classList.add('hidden')
+})
+
+menuSettings.addEventListener('click', () => {
+  burgerDropdown.classList.add('hidden')
+  openSettings()
+})
+
+menuAbout.addEventListener('click', () => {
+  burgerDropdown.classList.add('hidden')
+  openAbout()
+})
+
+function openSettings() { /* Task 2 */ }
+function openAbout()    { /* Task 2 */ }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 

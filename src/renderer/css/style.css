@@ -477,6 +477,75 @@ body {
   background: #22c55e;
 }
 
+/* ── App header ────────────────────────────────────────────────────────────── */
+
+.app-header {
+  height: 40px;
+  background: #0d0d11;
+  border-bottom: 1px solid #1a1a24;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+
+.header-left {
+  position: relative;
+}
+
+.burger-btn {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s;
+  padding: 0;
+}
+
+.burger-btn:hover {
+  opacity: 1;
+  background: #1e1e2a;
+}
+
+/* ── Dropdown ──────────────────────────────────────────────────────────────── */
+
+.burger-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: #191924;
+  border: 1px solid #26263a;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 200;
+  min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #c0c0d8;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.dropdown-item:hover {
+  background: #22222e;
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar {

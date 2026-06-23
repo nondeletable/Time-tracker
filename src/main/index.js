@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const initSqlJs = require('sql.js')
@@ -197,6 +197,7 @@ function createWindow() {
     }
   })
 
+  Menu.setApplicationMenu(null)
   win.loadFile(path.join(__dirname, '../renderer/index.html'))
 }
 
