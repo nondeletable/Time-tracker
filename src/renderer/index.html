@@ -91,7 +91,24 @@
         <button class="settings-tab" data-tab="hours">Правка часов</button>
       </nav>
       <div class="settings-body">
-        <div class="settings-pane" id="pane-user"></div>
+        <div class="settings-pane" id="pane-user">
+          <div class="settings-row" id="user-name-row">
+            <span class="settings-row-label">Имя</span>
+            <span class="settings-row-value" id="user-name-display"></span>
+            <button class="settings-row-btn" id="user-name-edit-btn">Изменить</button>
+          </div>
+          <div class="settings-row hidden" id="user-name-picker">
+            <span class="settings-row-label"></span>
+            <button class="user-pick-btn" data-user="Sasha">Саша</button>
+            <button class="user-pick-btn" data-user="Maxim">Максим</button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-label">Аватар</span>
+            <img class="avatar-preview" id="avatar-preview" src="" width="40" height="40" alt="">
+            <button class="settings-row-btn" id="avatar-edit-btn">Изменить</button>
+          </div>
+          <div class="avatar-grid hidden" id="avatar-grid"></div>
+        </div>
         <div class="settings-pane hidden" id="pane-limit"></div>
         <div class="settings-pane hidden" id="pane-categories">
           <p class="settings-stub">Скоро</p>

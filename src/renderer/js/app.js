@@ -36,6 +36,12 @@ const settingsTabs         = document.querySelectorAll('.settings-tab')
 const settingsPanes        = document.querySelectorAll('.settings-pane')
 const aboutModal           = document.getElementById('about-modal')
 const aboutClose           = document.getElementById('about-close')
+const userNameDisplay      = document.getElementById('user-name-display')
+const userNameEditBtn      = document.getElementById('user-name-edit-btn')
+const userNamePicker       = document.getElementById('user-name-picker')
+const avatarPreview        = document.getElementById('avatar-preview')
+const avatarEditBtn        = document.getElementById('avatar-edit-btn')
+const avatarGrid           = document.getElementById('avatar-grid')
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -317,7 +323,64 @@ aboutClose.addEventListener('click', () => {
   aboutModal.classList.add('hidden')
 })
 
-function loadUserTab()  { /* Task 3 */ }
+const AVATAR_FILES = [
+  'user.png', 'man.png', 'man_1.png', 'man_2.png', 'man_3.png',
+  'woman.png', 'woman_1.png', 'woman_2.png', 'woman_3.png'
+]
+
+async function loadUserTab() {
+  userNameDisplay.textContent = currentUser === 'Sasha' ? 'Саша' : 'Максим'
+  userNamePicker.classList.add('hidden')
+  userNameEditBtn.classList.remove('hidden')
+
+  const avatar = (await window.api.getSetting('avatar')) ?? 'user.png'
+  avatarPreview.src = `../../assets/icons/${avatar}`
+  avatarGrid.classList.add('hidden')
+  avatarEditBtn.classList.remove('hidden')
+  buildAvatarGrid(avatar)
+}
+
+function buildAvatarGrid(currentAvatar) {
+  avatarGrid.innerHTML = ''
+  AVATAR_FILES.forEach(file => {
+    const img = document.createElement('img')
+    img.src = `../../assets/icons/${file}`
+    img.className = 'avatar-option' + (file === currentAvatar ? ' selected' : '')
+    img.dataset.file = file
+    img.addEventListener('click', async () => {
+      await window.api.setSetting('avatar', file)
+      avatarPreview.src = `../../assets/icons/${file}`
+      avatarGrid.querySelectorAll('.avatar-option').forEach(i =>
+        i.classList.toggle('selected', i.dataset.file === file))
+      avatarGrid.classList.add('hidden')
+      avatarEditBtn.classList.remove('hidden')
+    })
+    avatarGrid.appendChild(img)
+  })
+}
+
+userNameEditBtn.addEventListener('click', () => {
+  userNamePicker.classList.remove('hidden')
+  userNameEditBtn.classList.add('hidden')
+})
+
+document.querySelectorAll('.user-pick-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const newUser = btn.dataset.user
+    await window.api.setSetting('user_name', newUser)
+    currentUser = newUser
+    userNameDisplay.textContent = newUser === 'Sasha' ? 'Саша' : 'Максим'
+    userNamePicker.classList.add('hidden')
+    userNameEditBtn.classList.remove('hidden')
+    await refreshStats()
+  })
+})
+
+avatarEditBtn.addEventListener('click', () => {
+  avatarGrid.classList.remove('hidden')
+  avatarEditBtn.classList.add('hidden')
+})
+
 function loadLimitTab() { /* Task 4 */ }
 
 // ── Start ─────────────────────────────────────────────────────────────────────
