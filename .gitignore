@@ -1,0 +1,13 @@
+node_modules/
+dist/
+out/
+release/
+*.db
+*.db-journal
+test-run.mjs
+npm-debug.log*
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

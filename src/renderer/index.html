@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Time Tracker</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Экран выбора пользователя -->
+  <div id="user-select-screen" class="screen hidden">
+    <div class="user-select-box">
+      <p class="user-select-label">Кто ты?</p>
+      <div class="user-select-buttons">
+        <button class="user-btn" data-user="Sasha">Саша</button>
+        <button class="user-btn" data-user="Maxim">Максим</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Основной экран -->
+  <div id="main-screen" class="screen hidden">
+    <div class="main-wrapper">
+
+      <div class="limit-bar-wrap" id="limit-bar-wrap">
+        <div class="limit-bar-header">
+          <span class="limit-bar-label" id="limit-bar-label">Общий лимит</span>
+          <span class="limit-bar-time" id="limit-bar-time">0h 0m 0s / 160h 0m 0s</span>
+        </div>
+        <div class="limit-bar-track">
+          <div class="limit-bar-fill" id="limit-bar-fill"></div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <aside class="categories-panel">
+          <div class="categories-header">Категория</div>
+          <ul class="categories-list" id="categories-list"></ul>
+        </aside>
+
+        <div class="timer-section">
+          <div class="stats-container" id="stats-container"></div>
+          <div class="timer-ring" id="timer-ring">
+            <div class="timer-display" id="timer-display">00:00:00</div>
+            <div class="timer-actions">
+              <button class="timer-btn" id="timer-btn" disabled>Start</button>
+              <button class="reset-btn hidden" id="reset-btn" title="Сбросить">↺</button>
+            </div>
+          </div>
+          <div class="no-category-hint" id="no-category-hint">← Выбери категорию</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Диалог сохранения -->
+  <div id="save-dialog" class="dialog-overlay hidden">
+    <div class="dialog">
+      <div class="dialog-title">Сохранить сессию?</div>
+      <div class="dialog-time" id="dialog-time">00:00:00</div>
+      <select class="dialog-category-select" id="dialog-category-select"></select>
+      <div class="dialog-buttons">
+        <button class="dialog-btn cancel" id="dialog-cancel">Отмена</button>
+        <button class="dialog-btn save" id="dialog-save">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
