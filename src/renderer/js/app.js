@@ -402,11 +402,15 @@ async function loadLimitTab() {
 }
 
 limitSaveBtn.addEventListener('click', async () => {
+  if (currentUser !== 'Maxim') return
   const hours = parseInt(limitInput.value, 10)
   if (!hours || hours < 1) return
+  const start = periodStartInput.value
+  const end   = periodEndInput.value
+  if (!start || !end || end < start) return
   await window.api.setSetting('monthly_limit_seconds', String(hours * 3600))
-  await window.api.setSetting('period_start', periodStartInput.value)
-  await window.api.setSetting('period_end', periodEndInput.value)
+  await window.api.setSetting('period_start', start)
+  await window.api.setSetting('period_end', end)
   await refreshStats()
 })
 
