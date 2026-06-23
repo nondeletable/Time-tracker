@@ -42,6 +42,11 @@ const userNamePicker       = document.getElementById('user-name-picker')
 const avatarPreview        = document.getElementById('avatar-preview')
 const avatarEditBtn        = document.getElementById('avatar-edit-btn')
 const avatarGrid           = document.getElementById('avatar-grid')
+const limitInput           = document.getElementById('limit-input')
+const periodStartInput     = document.getElementById('period-start-input')
+const periodEndInput       = document.getElementById('period-end-input')
+const limitSaveBtn         = document.getElementById('limit-save-btn')
+const limitAdminNote       = document.getElementById('limit-admin-note')
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -312,6 +317,7 @@ settingsTabs.forEach(tab => {
     tab.classList.add('active')
     document.getElementById(`pane-${tab.dataset.tab}`).classList.remove('hidden')
     if (tab.dataset.tab === 'limit') loadLimitTab()
+    if (tab.dataset.tab === 'user') loadUserTab()
   })
 })
 
@@ -381,7 +387,28 @@ avatarEditBtn.addEventListener('click', () => {
   avatarEditBtn.classList.add('hidden')
 })
 
-function loadLimitTab() { /* Task 4 */ }
+async function loadLimitTab() {
+  const period = await window.api.getPeriodSettings()
+  limitInput.value = Math.round(period.monthly_limit_seconds / 3600)
+  periodStartInput.value = period.period_start
+  periodEndInput.value = period.period_end
+
+  const isAdmin = currentUser === 'Maxim'
+  limitInput.disabled = !isAdmin
+  periodStartInput.disabled = !isAdmin
+  periodEndInput.disabled = !isAdmin
+  limitSaveBtn.classList.toggle('hidden', !isAdmin)
+  limitAdminNote.classList.toggle('hidden', isAdmin)
+}
+
+limitSaveBtn.addEventListener('click', async () => {
+  const hours = parseInt(limitInput.value, 10)
+  if (!hours || hours < 1) return
+  await window.api.setSetting('monthly_limit_seconds', String(hours * 3600))
+  await window.api.setSetting('period_start', periodStartInput.value)
+  await window.api.setSetting('period_end', periodEndInput.value)
+  await refreshStats()
+})
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 

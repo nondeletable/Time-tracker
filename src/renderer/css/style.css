@@ -731,6 +731,58 @@ body {
   border-color: #4ade80;
 }
 
+/* ── Settings form fields ──────────────────────────────────────────────────── */
+
+.settings-admin-note {
+  font-size: 0.8rem;
+  color: #6a6a8a;
+  margin-bottom: 20px;
+  padding: 8px 12px;
+  background: #111118;
+  border-radius: 6px;
+  border-left: 2px solid #3a3a5a;
+}
+
+.settings-input {
+  flex: 1;
+  background: #11111a;
+  border: 1px solid #26263a;
+  border-radius: 6px;
+  color: #c0c0d8;
+  padding: 7px 10px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.settings-input:focus {
+  border-color: #4a4a6a;
+}
+
+.settings-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.settings-save-btn {
+  margin-top: 8px;
+  padding: 9px 28px;
+  background: #4ade80;
+  color: #0f0f13;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.settings-save-btn:hover {
+  background: #22c55e;
+}
+
 /* ── About dialog ──────────────────────────────────────────────────────────── */
 
 .about-name {

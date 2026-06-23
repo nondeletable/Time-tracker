@@ -109,7 +109,24 @@
           </div>
           <div class="avatar-grid hidden" id="avatar-grid"></div>
         </div>
-        <div class="settings-pane hidden" id="pane-limit"></div>
+        <div class="settings-pane hidden" id="pane-limit">
+          <p class="settings-admin-note hidden" id="limit-admin-note">
+            Изменить настройки может только Максим
+          </p>
+          <div class="settings-row">
+            <span class="settings-row-label">Лимит (ч)</span>
+            <input type="number" class="settings-input" id="limit-input" min="1" max="9999" step="1">
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-label">Период с</span>
+            <input type="date" class="settings-input" id="period-start-input">
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-label">Период по</span>
+            <input type="date" class="settings-input" id="period-end-input">
+          </div>
+          <button class="settings-save-btn hidden" id="limit-save-btn">Сохранить</button>
+        </div>
         <div class="settings-pane hidden" id="pane-categories">
           <p class="settings-stub">Скоро</p>
         </div>
