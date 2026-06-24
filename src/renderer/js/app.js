@@ -700,6 +700,115 @@ hoursEditSave.addEventListener('click', async () => {
   await refreshStats()
 })
 
+// ── Calendar ──────────────────────────────────────────────────────────────────
+
+const RU_MONTHS = [
+  'Январь','Февраль','Март','Апрель','Май','Июнь',
+  'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'
+]
+
+calendarBtn.addEventListener('click', openCalendar)
+
+calendarClose.addEventListener('click', () => {
+  calendarModal.classList.add('hidden')
+})
+
+calendarModal.addEventListener('click', e => {
+  if (e.target === calendarModal) calendarModal.classList.add('hidden')
+})
+
+calPrev.addEventListener('click', () => navigateCalendar(-1))
+calNext.addEventListener('click', () => navigateCalendar(1))
+
+async function openCalendar() {
+  const now = new Date()
+  calYear  = now.getFullYear()
+  calMonth = now.getMonth() + 1
+  calendarModal.classList.remove('hidden')
+  await loadCalendarMonth()
+}
+
+async function navigateCalendar(delta) {
+  calMonth += delta
+  if (calMonth > 12) { calMonth = 1; calYear++ }
+  if (calMonth < 1)  { calMonth = 12; calYear-- }
+  await loadCalendarMonth()
+}
+
+async function loadCalendarMonth() {
+  const [rows, avatars] = await Promise.all([
+    window.api.getCalendarMonth(calYear, calMonth),
+    window.api.getUserAvatars(),
+  ])
+  calTitle.textContent = `${RU_MONTHS[calMonth - 1]} ${calYear}`
+  renderCalendarGrid(calYear, calMonth, rows, avatars)
+}
+
+function renderCalendarGrid(year, month, rows, avatars) {
+  calGrid.innerHTML = ''
+
+  const dayMap = {}
+  rows.forEach(r => {
+    if (!dayMap[r.day]) dayMap[r.day] = {}
+    dayMap[r.day][r.user] = r.total_seconds
+  })
+
+  const firstDay = new Date(year, month - 1, 1)
+  const todayStr = localISODate(new Date())
+  const startDow = (firstDay.getDay() + 6) % 7  // Mon = 0
+
+  for (let i = 0; i < 42; i++) {
+    const d       = new Date(year, month - 1, 1 + (i - startDow))
+    const inMonth = d.getMonth() === month - 1
+    const dayStr  = localISODate(d)
+    const isToday = dayStr === todayStr
+
+    const cell = document.createElement('div')
+    cell.className = 'cal-cell'
+    if (!inMonth) cell.classList.add('cal-other-month')
+    if (isToday)  cell.classList.add('cal-today')
+
+    const numEl = document.createElement('div')
+    numEl.className = 'cal-day-num'
+    numEl.textContent = d.getDate()
+    cell.appendChild(numEl)
+
+    if (inMonth && dayMap[dayStr]) {
+      ;['Sasha', 'Maxim'].forEach(user => {
+        const secs = dayMap[dayStr][user]
+        if (!secs) return
+        const row  = document.createElement('div')
+        row.className = 'cal-user-row'
+        const img  = document.createElement('img')
+        img.className = 'cal-avatar'
+        img.src = `../../assets/icons/${avatars[user]}`
+        const time = document.createElement('span')
+        time.className = 'cal-user-time'
+        time.textContent = formatCalDuration(secs)
+        row.append(img, time)
+        cell.appendChild(row)
+      })
+    }
+
+    calGrid.appendChild(cell)
+  }
+}
+
+function localISODate(d) {
+  const y  = d.getFullYear()
+  const mo = String(d.getMonth() + 1).padStart(2, '0')
+  const da = String(d.getDate()).padStart(2, '0')
+  return `${y}-${mo}-${da}`
+}
+
+function formatCalDuration(seconds) {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (h === 0) return `${m}m`
+  if (m === 0) return `${h}h`
+  return `${h}h ${m}m`
+}
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 
 init()
