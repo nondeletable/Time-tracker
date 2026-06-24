@@ -248,6 +248,29 @@ function setupIPC() {
     }
   })
 
+  ipcMain.handle('db:get-calendar-month', (_, { year, month }) => {
+    const y = String(year)
+    const m = String(month).padStart(2, '0')
+    const stmt = db.prepare(`
+      SELECT
+        user,
+        date(started_at / 1000, 'unixepoch', 'localtime') AS day,
+        SUM(duration_seconds) AS total_seconds
+      FROM sessions
+      WHERE strftime('%Y', datetime(started_at / 1000, 'unixepoch', 'localtime')) = ?
+        AND strftime('%m', datetime(started_at / 1000, 'unixepoch', 'localtime')) = ?
+      GROUP BY user, day
+      ORDER BY day
+    `)
+    const results = []
+    stmt.bind([y, m])
+    while (stmt.step()) {
+      results.push(stmt.getAsObject())
+    }
+    stmt.free()
+    return results
+  })
+
   ipcMain.handle('db:get-shared-total', () => {
     const { period_start, period_end } = getPeriodSettings()
     const from = dateToMs(period_start)

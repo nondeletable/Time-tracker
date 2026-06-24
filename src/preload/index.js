@@ -14,4 +14,5 @@ contextBridge.exposeInMainWorld('api', {
   updateSession:      (id, categoryId, durSecs)  => ipcRenderer.invoke('db:update-session', id, categoryId, durSecs),
   deleteSession:      (id)                       => ipcRenderer.invoke('db:delete-session', id),
   getUserAvatars:     ()                         => ipcRenderer.invoke('db:get-user-avatars'),
+  getCalendarMonth:   (year, month)              => ipcRenderer.invoke('db:get-calendar-month', { year, month }),
 })
