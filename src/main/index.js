@@ -66,6 +66,13 @@ async function initDB() {
       duration_seconds INTEGER NOT NULL,
       FOREIGN KEY (category_id) REFERENCES categories(id)
     );
+    CREATE TABLE IF NOT EXISTS peer_data (
+      user          TEXT NOT NULL,
+      day           TEXT NOT NULL,
+      total_seconds INTEGER NOT NULL,
+      updated_at    INTEGER NOT NULL,
+      PRIMARY KEY (user, day)
+    );
   `)
 
   const catCount = db.exec('SELECT COUNT(*) FROM categories')[0].values[0][0]
@@ -251,7 +258,8 @@ function setupIPC() {
   ipcMain.handle('db:get-calendar-month', (_, { year, month }) => {
     const y = String(year)
     const m = String(month).padStart(2, '0')
-    const stmt = db.prepare(`
+
+    const sessStmt = db.prepare(`
       SELECT
         user,
         date(started_at / 1000, 'unixepoch', 'localtime') AS day,
@@ -263,11 +271,17 @@ function setupIPC() {
       ORDER BY day
     `)
     const results = []
-    stmt.bind([y, m])
-    while (stmt.step()) {
-      results.push(stmt.getAsObject())
-    }
-    stmt.free()
+    sessStmt.bind([y, m])
+    while (sessStmt.step()) results.push(sessStmt.getAsObject())
+    sessStmt.free()
+
+    const peerStmt = db.prepare(
+      'SELECT user, day, total_seconds FROM peer_data WHERE day LIKE ? ORDER BY day'
+    )
+    peerStmt.bind([`${y}-${m}-%`])
+    while (peerStmt.step()) results.push(peerStmt.getAsObject())
+    peerStmt.free()
+
     return results
   })
 
@@ -275,13 +289,22 @@ function setupIPC() {
     const { period_start, period_end } = getPeriodSettings()
     const from = dateToMs(period_start)
     const to   = dateToMsEnd(period_end)
-    const stmt = db.prepare(
+
+    const sessStmt = db.prepare(
       'SELECT SUM(duration_seconds) as total FROM sessions WHERE started_at >= ? AND started_at <= ?'
     )
-    stmt.bind([from, to])
-    const total = stmt.step() ? (stmt.getAsObject().total ?? 0) : 0
-    stmt.free()
-    return total
+    sessStmt.bind([from, to])
+    const localTotal = sessStmt.step() ? (sessStmt.getAsObject().total ?? 0) : 0
+    sessStmt.free()
+
+    const peerStmt = db.prepare(
+      'SELECT SUM(total_seconds) as total FROM peer_data WHERE day >= ? AND day <= ?'
+    )
+    peerStmt.bind([period_start, period_end])
+    const peerTotal = peerStmt.step() ? (peerStmt.getAsObject().total ?? 0) : 0
+    peerStmt.free()
+
+    return localTotal + peerTotal
   })
 }
 
