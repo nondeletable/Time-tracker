@@ -916,7 +916,7 @@ body {
 }
 
 .cat-edit-cancel {
-  padding: 7px 16px;
+  padding: 9px 16px;
   background: transparent;
   border: 1px solid #2a2a3a;
   border-radius: 6px;
@@ -930,6 +930,11 @@ body {
 .cat-edit-cancel:hover {
   border-color: #4a4a6a;
   color: #c0c0d8;
+}
+
+.cat-edit-actions .settings-save-btn {
+  margin-top: 0;
+  padding: 9px 16px;
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
