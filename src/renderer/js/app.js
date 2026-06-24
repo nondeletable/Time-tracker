@@ -8,6 +8,9 @@ let elapsed = 0
 let interval = null
 let sessionStartedAt = null
 
+let calYear  = 0
+let calMonth = 0
+
 const userSelectScreen     = document.getElementById('user-select-screen')
 const mainScreen           = document.getElementById('main-screen')
 const categoriesList       = document.getElementById('categories-list')
@@ -530,6 +533,14 @@ const hoursCatSelect  = document.getElementById('hours-cat-select')
 const hoursTimeInput  = document.getElementById('hours-time-input')
 const hoursEditCancel = document.getElementById('hours-edit-cancel')
 const hoursEditSave   = document.getElementById('hours-edit-save')
+
+const calendarBtn   = document.getElementById('calendar-btn')
+const calendarModal = document.getElementById('calendar-modal')
+const calendarClose = document.getElementById('calendar-close')
+const calPrev       = document.getElementById('cal-prev')
+const calNext       = document.getElementById('cal-next')
+const calTitle      = document.getElementById('cal-title')
+const calGrid       = document.getElementById('calendar-grid')
 
 function secsToHHMM(seconds) {
   const h = Math.floor(seconds / 3600)

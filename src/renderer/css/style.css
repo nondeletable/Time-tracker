@@ -116,6 +116,7 @@ body {
   list-style: none;
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 .category-item {
@@ -1055,4 +1056,38 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: #0f0f13;
   border-radius: 5px;
   border: 2px solid #1e1e2a;
+}
+
+/* ── Calendar button ───────────────────────────────────────────────────────── */
+
+.calendar-btn-wrap {
+  padding: 15px 18px;
+  flex-shrink: 0;
+}
+
+.calendar-btn {
+  width: 100%;
+  padding: 9px 14px;
+  background: #4ade80;
+  color: #0f0f13;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.calendar-btn:hover {
+  background: #22c55e;
+}
+
+.calendar-btn img {
+  filter: brightness(0);
+  flex-shrink: 0;
 }
