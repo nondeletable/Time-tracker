@@ -632,7 +632,7 @@ body {
 
 .settings-pane {
   height: 100%;
-  padding: 24px 28px;
+  padding: 48px 28px 24px;
   overflow-y: auto;
 }
 

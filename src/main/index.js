@@ -89,7 +89,7 @@ async function initDB() {
   seedSetting('period_start',         period.start)
   seedSetting('period_end',           period.end)
   seedSetting('monthly_limit_seconds', String(160 * 3600))
-  seedSetting('avatar', 'user.png')
+  seedSetting('avatar', 'user.svg')
 
   saveDB()
 }

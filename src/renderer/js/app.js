@@ -330,7 +330,7 @@ aboutClose.addEventListener('click', () => {
 })
 
 const AVATAR_FILES = [
-  'user.png', 'man.png', 'man_1.png', 'man_2.png', 'man_3.png',
+  'user.svg', 'man.png', 'man_1.png', 'man_2.png', 'man_3.png',
   'woman.png', 'woman_1.png', 'woman_2.png', 'woman_3.png'
 ]
 
@@ -339,7 +339,7 @@ async function loadUserTab() {
   userNamePicker.classList.add('hidden')
   userNameEditBtn.classList.remove('hidden')
 
-  const avatar = (await window.api.getSetting('avatar')) ?? 'user.png'
+  const avatar = (await window.api.getSetting('avatar')) ?? 'user.svg'
   avatarPreview.src = `../../assets/icons/${avatar}`
   avatarGrid.classList.add('hidden')
   avatarEditBtn.classList.remove('hidden')
