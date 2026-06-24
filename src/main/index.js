@@ -172,6 +172,36 @@ function setupIPC() {
     return rows
   })
 
+  ipcMain.handle('db:get-sessions-by-date', (_, user, isoDate) => {
+    const from = dateToMs(isoDate)
+    const to   = dateToMsEnd(isoDate)
+    const stmt = db.prepare(`
+      SELECT s.id, s.duration_seconds, s.category_id, c.name, c.color
+      FROM sessions s
+      JOIN categories c ON s.category_id = c.id
+      WHERE s.user = ? AND s.started_at >= ? AND s.started_at <= ?
+      ORDER BY s.started_at
+    `)
+    const rows = []
+    stmt.bind([user, from, to])
+    while (stmt.step()) rows.push(stmt.getAsObject())
+    stmt.free()
+    return rows
+  })
+
+  ipcMain.handle('db:update-session', (_, id, categoryId, durationSeconds) => {
+    db.run(
+      'UPDATE sessions SET category_id = ?, duration_seconds = ?, ended_at = started_at + ? WHERE id = ?',
+      [categoryId, durationSeconds, durationSeconds * 1000, id]
+    )
+    saveDB()
+  })
+
+  ipcMain.handle('db:delete-session', (_, id) => {
+    db.run('DELETE FROM sessions WHERE id = ?', [id])
+    saveDB()
+  })
+
   ipcMain.handle('db:add-category', (_, name, color) => {
     const maxResult = db.exec('SELECT MAX(sort_order) as mx FROM categories')
     const mx = maxResult[0]?.values[0][0] ?? -1

@@ -145,7 +145,23 @@
           </div>
         </div>
         <div class="settings-pane hidden" id="pane-hours">
-          <p class="settings-stub">Скоро</p>
+          <div class="hours-date-row">
+            <span class="settings-row-label">Дата</span>
+            <input type="date" class="settings-input" id="hours-date-input">
+          </div>
+          <ul class="hours-list hidden" id="hours-list"></ul>
+          <p class="hours-empty hidden" id="hours-empty">Нет записей за этот день</p>
+          <button class="cat-add-btn hidden" id="hours-add-btn">+ Добавить</button>
+          <div class="cat-edit-form hidden" id="hours-edit-form">
+            <div class="cat-edit-row">
+              <select class="settings-input hours-cat-select" id="hours-cat-select"></select>
+              <input type="time" class="settings-input hours-time-input" id="hours-time-input">
+            </div>
+            <div class="cat-edit-actions">
+              <button class="cat-edit-cancel" id="hours-edit-cancel">Отмена</button>
+              <button class="settings-save-btn" id="hours-edit-save">Сохранить</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

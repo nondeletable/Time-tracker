@@ -937,6 +937,98 @@ body {
   padding: 9px 16px;
 }
 
+/* ── Hours settings tab ────────────────────────────────────────────────────── */
+
+.hours-date-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.hours-list {
+  list-style: none;
+  max-height: 160px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.hours-list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #1a1a24;
+}
+
+.hours-list-item:last-child {
+  border-bottom: none;
+}
+
+.hours-list-time {
+  font-size: 0.82rem;
+  color: #6a6a8a;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  min-width: 38px;
+  text-align: right;
+}
+
+.hours-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.hours-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.hours-del-btn:hover {
+  color: #f87171 !important;
+  border-color: #f87171 !important;
+}
+
+.hours-confirm-delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hours-confirm-text {
+  font-size: 0.82rem;
+  color: #8080a0;
+  white-space: nowrap;
+}
+
+.hours-confirm-yes {
+  padding: 5px 12px;
+  background: #3a1515;
+  border: 1px solid #f87171;
+  border-radius: 6px;
+  color: #f87171;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.hours-confirm-yes:hover {
+  background: #4a1f1f;
+}
+
+.hours-empty {
+  font-size: 0.84rem;
+  color: #3a3a5a;
+  margin-bottom: 12px;
+}
+
+.hours-time-input {
+  flex: 0 0 88px;
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar {

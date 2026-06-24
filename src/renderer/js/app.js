@@ -319,6 +319,7 @@ settingsTabs.forEach(tab => {
     if (tab.dataset.tab === 'limit') loadLimitTab()
     if (tab.dataset.tab === 'user') loadUserTab()
     if (tab.dataset.tab === 'categories') loadCategoriesTab()
+    if (tab.dataset.tab === 'hours') loadHoursTab()
   })
 })
 
@@ -513,6 +514,178 @@ catEditSave.addEventListener('click', async () => {
   categories = await window.api.getCategories()
   renderCategories()
   renderDialogCategories()
+  await refreshStats()
+})
+
+// ── Hours settings tab ───────────────────────────────────────────────────────
+
+let hoursEditingId = null
+
+const hoursDateInput  = document.getElementById('hours-date-input')
+const hoursList       = document.getElementById('hours-list')
+const hoursEmpty      = document.getElementById('hours-empty')
+const hoursAddBtn     = document.getElementById('hours-add-btn')
+const hoursEditForm   = document.getElementById('hours-edit-form')
+const hoursCatSelect  = document.getElementById('hours-cat-select')
+const hoursTimeInput  = document.getElementById('hours-time-input')
+const hoursEditCancel = document.getElementById('hours-edit-cancel')
+const hoursEditSave   = document.getElementById('hours-edit-save')
+
+function secsToHHMM(seconds) {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+function hhmmToSecs(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number)
+  return h * 3600 + m * 60
+}
+
+function loadHoursTab() {
+  hoursEditForm.classList.add('hidden')
+  hoursList.classList.add('hidden')
+  hoursList.innerHTML = ''
+  hoursEmpty.classList.add('hidden')
+  hoursAddBtn.classList.add('hidden')
+  hoursCatSelect.innerHTML = ''
+  categories.forEach(cat => {
+    const opt = document.createElement('option')
+    opt.value = cat.id
+    opt.textContent = cat.name
+    hoursCatSelect.appendChild(opt)
+  })
+}
+
+async function loadHoursSessions() {
+  const date = hoursDateInput.value
+  if (!date) return
+  const sessions = await window.api.getSessionsByDate(currentUser, date)
+  hoursList.innerHTML = ''
+  hoursList.classList.remove('hidden')
+  hoursEditForm.classList.add('hidden')
+  if (sessions.length === 0) {
+    hoursEmpty.classList.remove('hidden')
+  } else {
+    hoursEmpty.classList.add('hidden')
+    sessions.forEach(s => renderHoursItem(s))
+  }
+  hoursAddBtn.classList.remove('hidden')
+}
+
+function renderHoursItem(session) {
+  const li = document.createElement('li')
+  li.className = 'hours-list-item'
+
+  const dot = document.createElement('span')
+  dot.className = 'cat-settings-dot'
+  dot.style.background = session.color
+
+  const name = document.createElement('span')
+  name.className = 'cat-settings-name'
+  name.textContent = session.name
+
+  const time = document.createElement('span')
+  time.className = 'hours-list-time'
+  time.textContent = secsToHHMM(session.duration_seconds)
+
+  const actions = document.createElement('div')
+  actions.className = 'hours-item-actions'
+
+  const btns = document.createElement('div')
+  btns.className = 'hours-btns'
+
+  const editBtn = document.createElement('button')
+  editBtn.className = 'settings-row-btn'
+  editBtn.textContent = 'Изменить'
+  editBtn.addEventListener('click', () => openHoursForm(session))
+
+  const delBtn = document.createElement('button')
+  delBtn.className = 'settings-row-btn hours-del-btn'
+  delBtn.textContent = 'Удалить'
+
+  btns.append(editBtn, delBtn)
+
+  const confirm = document.createElement('div')
+  confirm.className = 'hours-confirm-delete hidden'
+
+  const confirmText = document.createElement('span')
+  confirmText.className = 'hours-confirm-text'
+  confirmText.textContent = 'Удалить?'
+
+  const yesBtn = document.createElement('button')
+  yesBtn.className = 'hours-confirm-yes'
+  yesBtn.textContent = 'Да'
+
+  const noBtn = document.createElement('button')
+  noBtn.className = 'cat-edit-cancel'
+  noBtn.textContent = 'Нет'
+
+  confirm.append(confirmText, yesBtn, noBtn)
+  actions.append(btns, confirm)
+
+  delBtn.addEventListener('click', () => {
+    btns.classList.add('hidden')
+    confirm.classList.remove('hidden')
+  })
+
+  noBtn.addEventListener('click', () => {
+    confirm.classList.add('hidden')
+    btns.classList.remove('hidden')
+  })
+
+  yesBtn.addEventListener('click', async () => {
+    await window.api.deleteSession(session.id)
+    await loadHoursSessions()
+    await refreshStats()
+  })
+
+  li.append(dot, name, time, actions)
+  hoursList.appendChild(li)
+}
+
+function openHoursForm(session) {
+  hoursEditingId = session ? session.id : null
+  if (session) {
+    hoursCatSelect.value = session.category_id
+    hoursTimeInput.value = secsToHHMM(session.duration_seconds)
+  } else {
+    hoursCatSelect.selectedIndex = 0
+    hoursTimeInput.value = ''
+  }
+  hoursEditForm.classList.remove('hidden')
+  hoursEditForm.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+}
+
+hoursDateInput.addEventListener('change', loadHoursSessions)
+
+hoursAddBtn.addEventListener('click', () => openHoursForm(null))
+
+hoursEditCancel.addEventListener('click', () => {
+  hoursEditForm.classList.add('hidden')
+})
+
+hoursEditSave.addEventListener('click', async () => {
+  const time = hoursTimeInput.value
+  if (!time) return
+  const durationSeconds = hhmmToSecs(time)
+  if (durationSeconds <= 0) return
+  const categoryId = Number(hoursCatSelect.value)
+
+  if (hoursEditingId !== null) {
+    await window.api.updateSession(hoursEditingId, categoryId, durationSeconds)
+  } else {
+    const startedAt = new Date(hoursDateInput.value + 'T00:00:00').getTime()
+    await window.api.saveSession({
+      user: currentUser,
+      category_id: categoryId,
+      started_at: startedAt,
+      ended_at: startedAt + durationSeconds * 1000,
+      duration_seconds: durationSeconds
+    })
+  }
+  hoursEditForm.classList.add('hidden')
+  await loadHoursSessions()
   await refreshStats()
 })
 

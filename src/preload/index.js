@@ -8,6 +8,9 @@ contextBridge.exposeInMainWorld('api', {
   getPeriodSettings:()             => ipcRenderer.invoke('db:get-period-settings'),
   getMonthlyStats:  (user)         => ipcRenderer.invoke('db:get-monthly-stats', user),
   getSharedTotal:   ()             => ipcRenderer.invoke('db:get-shared-total'),
-  addCategory:      (name, color)  => ipcRenderer.invoke('db:add-category', name, color),
-  updateCategory:   (id, name, color) => ipcRenderer.invoke('db:update-category', id, name, color),
+  addCategory:        (name, color)              => ipcRenderer.invoke('db:add-category', name, color),
+  updateCategory:     (id, name, color)          => ipcRenderer.invoke('db:update-category', id, name, color),
+  getSessionsByDate:  (user, isoDate)            => ipcRenderer.invoke('db:get-sessions-by-date', user, isoDate),
+  updateSession:      (id, categoryId, durSecs)  => ipcRenderer.invoke('db:update-session', id, categoryId, durSecs),
+  deleteSession:      (id)                       => ipcRenderer.invoke('db:delete-session', id),
 })
