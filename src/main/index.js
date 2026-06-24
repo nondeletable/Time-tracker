@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const initSqlJs = require('sql.js')
+const { startSync } = require('./sync')
 
 let db = null
 let dbPath = null
@@ -322,12 +323,14 @@ function createWindow() {
 
   Menu.setApplicationMenu(null)
   win.loadFile(path.join(__dirname, '../renderer/index.html'))
+  return win
 }
 
 app.whenReady().then(async () => {
   await initDB()
   setupIPC()
-  createWindow()
+  const win = createWindow()
+  startSync(db, saveDB, win)
 })
 
 app.on('window-all-closed', () => app.quit())
