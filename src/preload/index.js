@@ -8,4 +8,6 @@ contextBridge.exposeInMainWorld('api', {
   getPeriodSettings:()             => ipcRenderer.invoke('db:get-period-settings'),
   getMonthlyStats:  (user)         => ipcRenderer.invoke('db:get-monthly-stats', user),
   getSharedTotal:   ()             => ipcRenderer.invoke('db:get-shared-total'),
+  addCategory:      (name, color)  => ipcRenderer.invoke('db:add-category', name, color),
+  updateCategory:   (id, name, color) => ipcRenderer.invoke('db:update-category', id, name, color),
 })

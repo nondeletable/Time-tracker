@@ -801,6 +801,137 @@ body {
   color: #5a5a7a;
 }
 
+/* ── Categories settings tab ───────────────────────────────────────────────── */
+
+.cat-settings-list {
+  list-style: none;
+  max-height: 176px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.cat-settings-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #1a1a24;
+}
+
+.cat-settings-item:last-child {
+  border-bottom: none;
+}
+
+.cat-settings-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cat-settings-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #c0c0d8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cat-add-btn {
+  padding: 7px 16px;
+  background: #22222e;
+  border: 1px solid #2a2a3a;
+  border-radius: 8px;
+  color: #9090b0;
+  font-size: 0.84rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  margin-bottom: 14px;
+}
+
+.cat-add-btn:hover {
+  background: #2a2a3e;
+  color: #c0c0d8;
+}
+
+.cat-edit-form {
+  background: #111118;
+  border: 1px solid #26263a;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cat-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cat-color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 2px solid #2a2a3a;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.cat-color-swatch:hover {
+  border-color: #4a4a6a;
+}
+
+.cat-color-palette {
+  display: grid;
+  grid-template-columns: repeat(9, 28px);
+  gap: 8px;
+}
+
+.cat-color-option {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.cat-color-option:hover {
+  transform: scale(1.1);
+}
+
+.cat-color-option.selected {
+  border-color: #fff;
+}
+
+.cat-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.cat-edit-cancel {
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px solid #2a2a3a;
+  border-radius: 6px;
+  color: #8080a0;
+  font-size: 0.84rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.cat-edit-cancel:hover {
+  border-color: #4a4a6a;
+  color: #c0c0d8;
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 
 ::-webkit-scrollbar {

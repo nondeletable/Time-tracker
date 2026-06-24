@@ -318,6 +318,7 @@ settingsTabs.forEach(tab => {
     document.getElementById(`pane-${tab.dataset.tab}`).classList.remove('hidden')
     if (tab.dataset.tab === 'limit') loadLimitTab()
     if (tab.dataset.tab === 'user') loadUserTab()
+    if (tab.dataset.tab === 'categories') loadCategoriesTab()
   })
 })
 
@@ -411,6 +412,107 @@ limitSaveBtn.addEventListener('click', async () => {
   await window.api.setSetting('monthly_limit_seconds', String(hours * 3600))
   await window.api.setSetting('period_start', start)
   await window.api.setSetting('period_end', end)
+  await refreshStats()
+})
+
+// ── Categories settings tab ───────────────────────────────────────────────────
+
+const CAT_COLORS = [
+  '#60a5fa', '#c084fc', '#fb923c', '#f472b6', '#f87171',
+  '#34d399', '#EFF74A', '#2AF720', '#3020F5'
+]
+
+let catEditingId    = null
+let catEditingColor = CAT_COLORS[0]
+
+const catSettingsList = document.getElementById('cat-settings-list')
+const catAddBtn       = document.getElementById('cat-add-btn')
+const catEditForm     = document.getElementById('cat-edit-form')
+const catNameInput    = document.getElementById('cat-name-input')
+const catColorSwatch  = document.getElementById('cat-color-swatch')
+const catColorPalette = document.getElementById('cat-color-palette')
+const catEditCancel   = document.getElementById('cat-edit-cancel')
+const catEditSave     = document.getElementById('cat-edit-save')
+
+async function loadCategoriesTab() {
+  catEditForm.classList.add('hidden')
+  catColorPalette.classList.add('hidden')
+  const cats = await window.api.getCategories()
+  catSettingsList.innerHTML = ''
+  cats.forEach(cat => {
+    const li = document.createElement('li')
+    li.className = 'cat-settings-item'
+    const dot  = document.createElement('span')
+    dot.className = 'cat-settings-dot'
+    dot.style.background = cat.color
+    const name = document.createElement('span')
+    name.className = 'cat-settings-name'
+    name.textContent = cat.name
+    const btn  = document.createElement('button')
+    btn.className = 'settings-row-btn'
+    btn.textContent = 'Изменить'
+    btn.addEventListener('click', () => openCatForm(cat.id, cat.name, cat.color))
+    li.append(dot, name, btn)
+    catSettingsList.appendChild(li)
+  })
+}
+
+function openCatForm(id, name, color) {
+  catEditingId    = id ?? null
+  catEditingColor = color ?? CAT_COLORS[0]
+  catNameInput.value = name ?? ''
+  catColorSwatch.style.background = catEditingColor
+  catColorPalette.classList.add('hidden')
+  buildColorPalette()
+  catEditForm.classList.remove('hidden')
+  catEditForm.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+}
+
+function buildColorPalette() {
+  catColorPalette.innerHTML = ''
+  CAT_COLORS.forEach(c => {
+    const el = document.createElement('div')
+    el.className = 'cat-color-option' + (c === catEditingColor ? ' selected' : '')
+    el.style.background = c
+    el.dataset.color = c
+    el.addEventListener('click', () => {
+      catEditingColor = c
+      catColorSwatch.style.background = c
+      catColorPalette.querySelectorAll('.cat-color-option').forEach(o =>
+        o.classList.toggle('selected', o.dataset.color === c))
+      catColorPalette.classList.add('hidden')
+    })
+    catColorPalette.appendChild(el)
+  })
+}
+
+catColorSwatch.addEventListener('click', () => {
+  catColorPalette.classList.toggle('hidden')
+})
+
+catAddBtn.addEventListener('click', () => {
+  openCatForm(null, '', CAT_COLORS[0])
+})
+
+catEditCancel.addEventListener('click', () => {
+  catEditForm.classList.add('hidden')
+  catColorPalette.classList.add('hidden')
+})
+
+catEditSave.addEventListener('click', async () => {
+  const name = catNameInput.value.trim()
+  if (!name) return
+  if (catEditingId !== null) {
+    await window.api.updateCategory(catEditingId, name, catEditingColor)
+  } else {
+    await window.api.addCategory(name, catEditingColor)
+  }
+  catEditForm.classList.add('hidden')
+  catColorPalette.classList.add('hidden')
+  await loadCategoriesTab()
+  categories = await window.api.getCategories()
+  renderCategories()
+  renderDialogCategories()
   await refreshStats()
 })
 

@@ -130,7 +130,19 @@
           <button class="settings-save-btn hidden" id="limit-save-btn">Сохранить</button>
         </div>
         <div class="settings-pane hidden" id="pane-categories">
-          <p class="settings-stub">Скоро</p>
+          <ul class="cat-settings-list" id="cat-settings-list"></ul>
+          <button class="cat-add-btn" id="cat-add-btn">+ Добавить</button>
+          <div class="cat-edit-form hidden" id="cat-edit-form">
+            <div class="cat-edit-row">
+              <input type="text" class="settings-input cat-name-input" id="cat-name-input" placeholder="Название категории">
+              <button class="cat-color-swatch" id="cat-color-swatch" title="Выбрать цвет"></button>
+            </div>
+            <div class="cat-color-palette hidden" id="cat-color-palette"></div>
+            <div class="cat-edit-actions">
+              <button class="cat-edit-cancel" id="cat-edit-cancel">Отмена</button>
+              <button class="settings-save-btn cat-edit-save" id="cat-edit-save">Сохранить</button>
+            </div>
+          </div>
         </div>
         <div class="settings-pane hidden" id="pane-hours">
           <p class="settings-stub">Скоро</p>

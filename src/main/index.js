@@ -172,6 +172,19 @@ function setupIPC() {
     return rows
   })
 
+  ipcMain.handle('db:add-category', (_, name, color) => {
+    const maxResult = db.exec('SELECT MAX(sort_order) as mx FROM categories')
+    const mx = maxResult[0]?.values[0][0] ?? -1
+    db.run('INSERT INTO categories (name, color, sort_order) VALUES (?, ?, ?)', [name, color, mx + 1])
+    saveDB()
+    return db.exec('SELECT last_insert_rowid()')[0].values[0][0]
+  })
+
+  ipcMain.handle('db:update-category', (_, id, name, color) => {
+    db.run('UPDATE categories SET name = ?, color = ? WHERE id = ?', [name, color, id])
+    saveDB()
+  })
+
   ipcMain.handle('db:get-shared-total', () => {
     const { period_start, period_end } = getPeriodSettings()
     const from = dateToMs(period_start)
