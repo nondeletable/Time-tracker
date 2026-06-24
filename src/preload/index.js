@@ -15,4 +15,6 @@ contextBridge.exposeInMainWorld('api', {
   deleteSession:      (id)                       => ipcRenderer.invoke('db:delete-session', id),
   getUserAvatars:     ()                         => ipcRenderer.invoke('db:get-user-avatars'),
   getCalendarMonth:   (year, month)              => ipcRenderer.invoke('db:get-calendar-month', { year, month }),
+  onPeerUpdated:      (cb)                       => ipcRenderer.on('sync:peer-updated', cb),
+  onSyncStatus:       (cb)                       => ipcRenderer.on('sync:status-changed', (_, connected) => cb(connected)),
 })

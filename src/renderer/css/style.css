@@ -1241,3 +1241,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ── Sync status dot ───────────────────────────────────────────────────────── */
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2a2a3a;
+  margin-left: auto;
+  margin-right: 10px;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.sync-dot.connected {
+  background: #4ade80;
+}

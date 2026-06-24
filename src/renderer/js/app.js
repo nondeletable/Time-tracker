@@ -541,6 +541,7 @@ const calPrev       = document.getElementById('cal-prev')
 const calNext       = document.getElementById('cal-next')
 const calTitle      = document.getElementById('cal-title')
 const calGrid       = document.getElementById('calendar-grid')
+const syncDot       = document.getElementById('sync-dot')
 
 function secsToHHMM(seconds) {
   const h = Math.floor(seconds / 3600)
@@ -808,6 +809,19 @@ function formatCalDuration(seconds) {
   if (m === 0) return `${h}h`
   return `${h}h ${m}m`
 }
+
+// ── Sync ──────────────────────────────────────────────────────────────────────
+
+window.api.onPeerUpdated(async () => {
+  await refreshStats()
+  if (!calendarModal.classList.contains('hidden')) {
+    await loadCalendarMonth()
+  }
+})
+
+window.api.onSyncStatus(connected => {
+  syncDot.classList.toggle('connected', connected)
+})
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
