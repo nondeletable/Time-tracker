@@ -89,7 +89,25 @@ async function initDB() {
   seedSetting('period_start',         period.start)
   seedSetting('period_end',           period.end)
   seedSetting('monthly_limit_seconds', String(160 * 3600))
-  seedSetting('avatar', 'user.svg')
+  seedSetting('avatar_Sasha', 'user.svg')
+  seedSetting('avatar_Maxim', 'user.svg')
+
+  // Migration: move old 'avatar' key to avatar_<user>
+  const oldAvatarStmt = db.prepare("SELECT value FROM settings WHERE key = 'avatar'")
+  const oldAvatarExists = oldAvatarStmt.step()
+  const oldAvatarVal = oldAvatarExists ? oldAvatarStmt.getAsObject().value : null
+  oldAvatarStmt.free()
+  if (oldAvatarVal) {
+    const userStmt = db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
+    const userExists = userStmt.step()
+    const userName = userExists ? userStmt.getAsObject().value : null
+    userStmt.free()
+    if (userName) {
+      db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+        [`avatar_${userName}`, oldAvatarVal])
+    }
+    db.run("DELETE FROM settings WHERE key = 'avatar'")
+  }
 
   saveDB()
 }
@@ -213,6 +231,21 @@ function setupIPC() {
   ipcMain.handle('db:update-category', (_, id, name, color) => {
     db.run('UPDATE categories SET name = ?, color = ? WHERE id = ?', [name, color, id])
     saveDB()
+  })
+
+  ipcMain.handle('db:get-user-avatars', () => {
+    const get = (key) => {
+      const stmt = db.prepare('SELECT value FROM settings WHERE key = ?')
+      stmt.bind([key])
+      const found = stmt.step()
+      const val = found ? stmt.getAsObject().value : null
+      stmt.free()
+      return val
+    }
+    return {
+      Sasha: get('avatar_Sasha') ?? 'user.svg',
+      Maxim: get('avatar_Maxim') ?? 'user.svg',
+    }
   })
 
   ipcMain.handle('db:get-shared-total', () => {

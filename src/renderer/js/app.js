@@ -341,7 +341,7 @@ async function loadUserTab() {
   userNamePicker.classList.add('hidden')
   userNameEditBtn.classList.remove('hidden')
 
-  const avatar = (await window.api.getSetting('avatar')) ?? 'user.svg'
+  const avatar = (await window.api.getSetting(`avatar_${currentUser}`)) ?? 'user.svg'
   avatarPreview.src = `../../assets/icons/${avatar}`
   avatarGrid.classList.add('hidden')
   avatarEditBtn.classList.remove('hidden')
@@ -356,7 +356,7 @@ function buildAvatarGrid(currentAvatar) {
     img.className = 'avatar-option' + (file === currentAvatar ? ' selected' : '')
     img.dataset.file = file
     img.addEventListener('click', async () => {
-      await window.api.setSetting('avatar', file)
+      await window.api.setSetting(`avatar_${currentUser}`, file)
       avatarPreview.src = `../../assets/icons/${file}`
       avatarGrid.querySelectorAll('.avatar-option').forEach(i =>
         i.classList.toggle('selected', i.dataset.file === file))
