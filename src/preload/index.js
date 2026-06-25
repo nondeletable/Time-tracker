@@ -18,4 +18,8 @@ contextBridge.exposeInMainWorld('api', {
   syncNow:            ()                         => ipcRenderer.invoke('sync:now'),
   onPeerUpdated:      (cb)                       => ipcRenderer.on('sync:peer-updated', cb),
   onSyncStatus:       (cb)                       => ipcRenderer.on('sync:status-changed', (_, connected) => cb(connected)),
+  getSyncInterval:    ()                         => ipcRenderer.invoke('sync:get-interval'),
+  setSyncInterval:    (seconds)                  => ipcRenderer.invoke('sync:set-interval', seconds),
+  getLastSync:        ()                         => ipcRenderer.invoke('sync:get-last-sync'),
+  onSyncDone:         (cb)                       => ipcRenderer.on('sync:synced', (_, ts) => cb(ts)),
 })
