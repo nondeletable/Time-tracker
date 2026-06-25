@@ -1244,20 +1244,27 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ── Sync status dot ───────────────────────────────────────────────────────── */
 
-.sync-btn {
+.sync-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-left: auto;
-  background: none;
-  border: none;
-  color: #9090b0;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-  transition: color 0.2s;
 }
 
-.sync-btn:hover {
-  color: #e0e0ff;
+.sync-text-btn {
+  background: #1e1e2e;
+  border: 1px solid #2e2e4e;
+  border-radius: 6px;
+  color: #b0b0d0;
+  font-size: 13px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sync-text-btn:hover,
+.sync-text-btn:active {
+  background: #2a2a3e;
 }
 
 .sync-dot {
@@ -1265,7 +1272,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   height: 8px;
   border-radius: 50%;
   background: #2a2a3a;
-  margin-right: 10px;
   flex-shrink: 0;
   transition: background 0.3s;
 }

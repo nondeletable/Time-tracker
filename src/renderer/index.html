@@ -33,8 +33,10 @@
             <button class="dropdown-item" id="menu-about">О программе</button>
           </div>
         </div>
-        <button class="sync-btn" id="sync-btn" title="Синхронизировать сейчас">⟳</button>
-        <div class="sync-dot" id="sync-dot" title="Синхронизация"></div>
+        <div class="sync-controls">
+          <div class="sync-dot" id="sync-dot" title="Синхронизация"></div>
+          <button class="sync-text-btn" id="sync-btn">Синхронизация</button>
+        </div>
       </div>
 
       <div class="limit-bar-wrap" id="limit-bar-wrap">
@@ -96,6 +98,7 @@
         <button class="settings-tab" data-tab="limit">Лимит &amp; Период</button>
         <button class="settings-tab" data-tab="categories">Категории</button>
         <button class="settings-tab" data-tab="hours">Правка часов</button>
+        <button class="settings-tab" data-tab="sync">Синхронизация</button>
       </nav>
       <div class="settings-body">
         <div class="settings-pane" id="pane-user">
@@ -168,6 +171,25 @@
               <button class="cat-edit-cancel" id="hours-edit-cancel">Отмена</button>
               <button class="settings-save-btn" id="hours-edit-save">Сохранить</button>
             </div>
+          </div>
+        </div>
+        <div class="settings-pane hidden" id="pane-sync">
+          <div class="settings-row">
+            <span class="settings-row-label">Интервал</span>
+            <select class="settings-input" id="sync-interval-select">
+              <option value="60">1 мин</option>
+              <option value="120">2 мин</option>
+              <option value="300">5 мин</option>
+              <option value="600">10 мин</option>
+              <option value="900">15 мин</option>
+              <option value="1200">20 мин</option>
+              <option value="1800">30 мин</option>
+              <option value="3600">60 мин</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-label">Последняя синхронизация</span>
+            <span class="settings-row-value" id="sync-last-time">—</span>
           </div>
         </div>
       </div>
