@@ -1267,6 +1267,20 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: #2a2a3e;
 }
 
+.sync-text-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+#pane-sync .settings-row-label {
+  width: auto;
+  white-space: nowrap;
+}
+
+#sync-last-time {
+  text-align: right;
+}
+
 .sync-dot {
   width: 8px;
   height: 8px;

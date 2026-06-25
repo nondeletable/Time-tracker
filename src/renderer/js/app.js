@@ -847,7 +847,16 @@ window.api.onSyncStatus(connected => {
   syncDot.classList.toggle('connected', connected)
 })
 
-syncBtn.addEventListener('click', () => window.api.syncNow())
+syncBtn.addEventListener('click', () => {
+  if (syncBtn.disabled) return
+  syncBtn.textContent = 'Sync...'
+  syncBtn.disabled = true
+  window.api.syncNow()
+  setTimeout(() => {
+    syncBtn.textContent = 'Sync'
+    syncBtn.disabled = false
+  }, 1500)
+})
 
 document.getElementById('sync-interval-select').addEventListener('change', async (e) => {
   await window.api.setSyncInterval(Number(e.target.value))
