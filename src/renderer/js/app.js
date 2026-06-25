@@ -323,6 +323,7 @@ settingsTabs.forEach(tab => {
     if (tab.dataset.tab === 'user') loadUserTab()
     if (tab.dataset.tab === 'categories') loadCategoriesTab()
     if (tab.dataset.tab === 'hours') loadHoursTab()
+    if (tab.dataset.tab === 'sync') loadSyncTab()
   })
 })
 
@@ -543,6 +544,28 @@ const calTitle      = document.getElementById('cal-title')
 const calGrid       = document.getElementById('calendar-grid')
 const syncDot       = document.getElementById('sync-dot')
 const syncBtn       = document.getElementById('sync-btn')
+
+function formatLastSync(ts) {
+  if (!ts) return '—'
+  const d   = new Date(ts)
+  const now = new Date()
+  const hh  = String(d.getHours()).padStart(2, '0')
+  const mm  = String(d.getMinutes()).padStart(2, '0')
+  if (d.toDateString() === now.toDateString()) {
+    return `Сегодня в ${hh}:${mm}`
+  }
+  const dd   = String(d.getDate()).padStart(2, '0')
+  const mo   = String(d.getMonth() + 1).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  return `${dd}.${mo}.${yyyy} ${hh}:${mm}`
+}
+
+async function loadSyncTab() {
+  const seconds = await window.api.getSyncInterval()
+  document.getElementById('sync-interval-select').value = String(seconds || 300)
+  const ts = await window.api.getLastSync()
+  document.getElementById('sync-last-time').textContent = formatLastSync(ts)
+}
 
 function secsToHHMM(seconds) {
   const h = Math.floor(seconds / 3600)
@@ -825,6 +848,15 @@ window.api.onSyncStatus(connected => {
 })
 
 syncBtn.addEventListener('click', () => window.api.syncNow())
+
+document.getElementById('sync-interval-select').addEventListener('change', async (e) => {
+  await window.api.setSyncInterval(Number(e.target.value))
+})
+
+window.api.onSyncDone(ts => {
+  const el = document.getElementById('sync-last-time')
+  if (el) el.textContent = formatLastSync(ts)
+})
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
