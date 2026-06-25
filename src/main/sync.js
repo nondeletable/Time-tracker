@@ -3,7 +3,8 @@ const dgram     = require('dgram')
 
 const WS_PORT               = 43210
 const UDP_PORT              = 43211
-const SYNC_INTERVAL_MS      = 5 * 60 * 1000
+let syncIntervalMs = 5 * 60 * 1000
+let lastSyncAt     = null
 const BROADCAST_INTERVAL_MS = 30 * 1000
 const RECONNECT_DELAY_MS    = 30 * 1000
 const INSTANCE_ID = Math.random().toString(36).slice(2)
@@ -112,7 +113,7 @@ function connectToPeer(ip, port) {
     notifyStatus(true)
     sendSyncPayload(ws)
     if (syncTimer) clearInterval(syncTimer)
-    syncTimer = setInterval(() => sendSyncPayload(ws), SYNC_INTERVAL_MS)
+    syncTimer = setInterval(() => sendSyncPayload(ws), syncIntervalMs)
   })
 
   ws.on('message', data => {
@@ -169,6 +170,10 @@ function sendSyncPayload(ws) {
   const payload = buildPayload()
   if (!payload) return
   ws.send(JSON.stringify(payload))
+  lastSyncAt = Date.now()
+  if (_win && !_win.isDestroyed()) {
+    _win.webContents.send('sync:synced', lastSyncAt)
+  }
 }
 
 // ── Store received peer data in DB ─────────────────────────────────────────
@@ -219,4 +224,16 @@ function syncNow() {
   })
 }
 
-module.exports = { startSync, syncNow }
+function setSyncInterval(seconds) {
+  syncIntervalMs = seconds * 1000
+  if (syncTimer && peerSocket && peerSocket.readyState === WebSocket.OPEN) {
+    clearInterval(syncTimer)
+    syncTimer = setInterval(() => sendSyncPayload(peerSocket), syncIntervalMs)
+  }
+}
+
+function getLastSyncAt() {
+  return lastSyncAt
+}
+
+module.exports = { startSync, syncNow, setSyncInterval, getLastSyncAt }
