@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const initSqlJs = require('sql.js')
-const { startSync } = require('./sync')
+const { startSync, syncNow } = require('./sync')
 
 let db = null
 let dbPath = null
@@ -38,7 +38,12 @@ function defaultPeriod() {
 
 async function initDB() {
   const SQL = await initSqlJs({
-    locateFile: file => path.join(__dirname, '../../node_modules/sql.js/dist', file)
+    locateFile: file => {
+      if (app.isPackaged) {
+        return path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'sql.js', 'dist', file)
+      }
+      return path.join(__dirname, '../../node_modules/sql.js/dist', file)
+    }
   })
 
   dbPath = path.join(app.getPath('userData'), 'timetracker.db')
@@ -307,6 +312,8 @@ function setupIPC() {
 
     return localTotal + peerTotal
   })
+
+  ipcMain.handle('sync:now', () => syncNow())
 }
 
 function createWindow() {

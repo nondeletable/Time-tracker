@@ -17,6 +17,7 @@ let peerIP         = null
 let peerPort       = WS_PORT
 let syncTimer      = null
 let reconnectTimer = null
+let serverClients  = new Set()
 
 function startSync(db, saveDB, win) {
   _db     = db
@@ -31,12 +32,27 @@ function startSync(db, saveDB, win) {
 function startWSServer() {
   try {
     const wss = new WebSocket.Server({ port: WS_PORT })
-    wss.on('connection', ws => {
+    console.log(`[sync] WS server listening on port ${WS_PORT}`)
+    wss.on('connection', (ws, req) => {
+      console.log(`[sync] Incoming connection from ${req.socket.remoteAddress}`)
+      serverClients.add(ws)
+      notifyStatus(true)
       ws.on('message', data => {
         try {
           const payload = JSON.parse(data)
-          if (payload.type === 'sync') storePeerData(payload)
+          if (payload.type === 'sync') {
+            console.log(`[sync] Received data from ${payload.user}`)
+            storePeerData(payload)
+            sendSyncPayload(ws)
+          }
         } catch (_) {}
+      })
+      ws.on('close', () => {
+        console.log('[sync] Incoming connection closed')
+        serverClients.delete(ws)
+        if (serverClients.size === 0 && (!peerSocket || peerSocket.readyState !== WebSocket.OPEN)) {
+          notifyStatus(false)
+        }
       })
     })
     wss.on('error', err => console.log('[sync] WS server error:', err.message))
@@ -51,10 +67,12 @@ function startUDP() {
   const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true })
   sock.bind(UDP_PORT, () => {
     sock.setBroadcast(true)
+    console.log(`[sync] UDP socket bound on port ${UDP_PORT}`)
 
     const sendBroadcast = () => {
       const msg = Buffer.from(JSON.stringify({ instanceId: INSTANCE_ID, port: WS_PORT }))
       sock.send(msg, 0, msg.length, UDP_PORT, '255.255.255.255', () => {})
+      console.log('[sync] UDP broadcast sent')
     }
     sendBroadcast()
     setInterval(sendBroadcast, BROADCAST_INTERVAL_MS)
@@ -63,6 +81,7 @@ function startUDP() {
       try {
         const data = JSON.parse(msg.toString())
         if (data.instanceId === INSTANCE_ID) return
+        console.log(`[sync] UDP received from ${rinfo.address} — connecting...`)
         connectToPeer(rinfo.address, data.port || WS_PORT)
       } catch (_) {}
     })
@@ -84,9 +103,11 @@ function connectToPeer(ip, port) {
   peerIP   = ip
   peerPort = port
 
+  console.log(`[sync] Connecting to peer ${ip}:${port}`)
   const ws = new WebSocket(`ws://${ip}:${port}`)
 
   ws.on('open', () => {
+    console.log(`[sync] Connected to peer ${ip}:${port}`)
     peerSocket = ws
     notifyStatus(true)
     sendSyncPayload(ws)
@@ -102,6 +123,7 @@ function connectToPeer(ip, port) {
   })
 
   ws.on('close', () => {
+    console.log(`[sync] Connection to peer ${ip}:${port} closed`)
     peerSocket = null
     notifyStatus(false)
     if (syncTimer) { clearInterval(syncTimer); syncTimer = null }
@@ -188,4 +210,13 @@ function notifyStatus(connected) {
   }
 }
 
-module.exports = { startSync }
+function syncNow() {
+  if (peerSocket && peerSocket.readyState === WebSocket.OPEN) {
+    sendSyncPayload(peerSocket)
+  }
+  serverClients.forEach(ws => {
+    if (ws.readyState === WebSocket.OPEN) sendSyncPayload(ws)
+  })
+}
+
+module.exports = { startSync, syncNow }

@@ -542,6 +542,7 @@ const calNext       = document.getElementById('cal-next')
 const calTitle      = document.getElementById('cal-title')
 const calGrid       = document.getElementById('calendar-grid')
 const syncDot       = document.getElementById('sync-dot')
+const syncBtn       = document.getElementById('sync-btn')
 
 function secsToHHMM(seconds) {
   const h = Math.floor(seconds / 3600)
@@ -822,6 +823,8 @@ window.api.onPeerUpdated(async () => {
 window.api.onSyncStatus(connected => {
   syncDot.classList.toggle('connected', connected)
 })
+
+syncBtn.addEventListener('click', () => window.api.syncNow())
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 

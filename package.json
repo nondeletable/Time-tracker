@@ -19,9 +19,13 @@
   "build": {
     "appId": "com.timetracker.app",
     "productName": "Time Tracker",
+    "electronDist": "node_modules/electron/dist",
     "files": [
       "src/**/*",
-      "!node_modules/**/*"
+      "assets/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/sql.js/dist/*.wasm"
     ],
     "win": {
       "target": "nsis",
