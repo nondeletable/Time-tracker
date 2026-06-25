@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const initSqlJs = require('sql.js')
-const { startSync, syncNow } = require('./sync')
+const { startSync, syncNow, setSyncInterval, getLastSyncAt } = require('./sync')
 
 let db = null
 let dbPath = null
@@ -104,6 +104,7 @@ async function initDB() {
   seedSetting('monthly_limit_seconds', String(160 * 3600))
   seedSetting('avatar_Sasha', 'user.svg')
   seedSetting('avatar_Maxim', 'user.svg')
+  seedSetting('sync_interval_seconds', '300')
 
   // Migration: move old 'avatar' key to avatar_<user>
   const oldAvatarStmt = db.prepare("SELECT value FROM settings WHERE key = 'avatar'")
@@ -314,6 +315,22 @@ function setupIPC() {
   })
 
   ipcMain.handle('sync:now', () => syncNow())
+
+  ipcMain.handle('sync:get-interval', () => {
+    const stmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
+    const val  = stmt.step() ? Number(stmt.getAsObject().value) : 300
+    stmt.free()
+    return val
+  })
+
+  ipcMain.handle('sync:set-interval', (_, seconds) => {
+    db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+      ['sync_interval_seconds', String(seconds)])
+    saveDB()
+    setSyncInterval(seconds)
+  })
+
+  ipcMain.handle('sync:get-last-sync', () => getLastSyncAt())
 }
 
 function createWindow() {
@@ -338,6 +355,10 @@ app.whenReady().then(async () => {
   setupIPC()
   const win = createWindow()
   startSync(db, saveDB, win)
+
+  const intStmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
+  if (intStmt.step()) setSyncInterval(Number(intStmt.getAsObject().value))
+  intStmt.free()
 })
 
 app.on('window-all-closed', () => app.quit())
