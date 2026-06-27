@@ -29,7 +29,8 @@
     ],
     "win": {
       "target": "nsis",
-      "executableName": "time-tracker"
+      "executableName": "time-tracker",
+      "icon": "assets/icons/time-management.ico"
     },
     "nsis": {
       "artifactName": "${name}-${version}-setup.${ext}",

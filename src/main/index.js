@@ -338,6 +338,7 @@ function createWindow() {
     width: 700,
     height: 600,
     resizable: false,
+    icon: path.join(__dirname, '../../assets/icons/time-management.png'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
