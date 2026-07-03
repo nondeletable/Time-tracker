@@ -140,8 +140,14 @@
           <button class="settings-save-btn hidden" id="limit-save-btn">Сохранить</button>
         </div>
         <div class="settings-pane hidden" id="pane-categories">
+          <div class="cat-subtabs">
+            <button class="cat-subtab active" data-subtab="active">Активные</button>
+            <button class="cat-subtab" data-subtab="deleted">Удалённые</button>
+          </div>
           <ul class="cat-settings-list" id="cat-settings-list"></ul>
           <button class="cat-add-btn" id="cat-add-btn">+ Добавить</button>
+          <ul class="cat-settings-list hidden" id="cat-deleted-list"></ul>
+          <p class="cat-deleted-empty hidden" id="cat-deleted-empty">Нет удалённых категорий</p>
           <div class="cat-edit-form hidden" id="cat-edit-form">
             <div class="cat-edit-row">
               <input type="text" class="settings-input cat-name-input" id="cat-name-input" placeholder="Название категории">
@@ -192,6 +198,19 @@
             <span class="settings-row-value" id="sync-last-time">—</span>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Category delete confirmation dialog -->
+  <div id="cat-delete-dialog" class="dialog-overlay hidden">
+    <div class="dialog">
+      <div class="dialog-title">Удалить категорию?</div>
+      <div class="cat-delete-name-display" id="cat-delete-name"></div>
+      <p class="cat-delete-hint">Часы по ней перестанут учитываться.</p>
+      <div class="dialog-buttons">
+        <button class="dialog-btn cancel" id="cat-delete-cancel">Отмена</button>
+        <button class="dialog-btn danger" id="cat-delete-confirm">Удалить</button>
       </div>
     </div>
   </div>

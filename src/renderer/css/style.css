@@ -802,6 +802,89 @@ body {
   color: #5a5a7a;
 }
 
+/* ── Category sub-tabs ─────────────────────────────────────────────────────── */
+
+.cat-subtabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.cat-subtab {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1px solid #2e2e4e;
+  background: transparent;
+  color: #6a6a8a;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.cat-subtab:hover {
+  background: #161620;
+  color: #b0b0d0;
+}
+
+.cat-subtab.active {
+  background: #14141e;
+  border-color: #4ade80;
+  color: #d8d8f0;
+}
+
+/* ── Category delete button ─────────────────────────────────────────────────── */
+
+.cat-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  opacity: 0.45;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.15s;
+}
+
+.cat-delete-btn:hover {
+  opacity: 1;
+}
+
+/* ── Deleted categories ─────────────────────────────────────────────────────── */
+
+.cat-settings-item--deleted .cat-settings-name {
+  color: #4a4a6a;
+}
+
+.cat-deleted-empty {
+  font-size: 0.82rem;
+  color: #4a4a6a;
+  margin: 8px 0 0;
+}
+
+.cat-delete-name-display {
+  font-size: 0.95rem;
+  color: #c0c0d8;
+  margin: 8px 0 6px;
+  font-style: italic;
+}
+
+.cat-delete-hint {
+  font-size: 0.82rem;
+  color: #6a6a8a;
+  margin: 0 0 16px;
+}
+
+/* ── Danger dialog button ───────────────────────────────────────────────────── */
+
+.dialog-btn.danger {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+
+.dialog-btn.danger:hover {
+  background: #991b1b;
+}
+
 /* ── Categories settings tab ───────────────────────────────────────────────── */
 
 .cat-settings-list {
