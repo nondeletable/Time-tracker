@@ -428,6 +428,7 @@ const CAT_COLORS = [
 ]
 
 let catEditingId    = null
+let pendingDeleteId = null
 let catEditingColor = CAT_COLORS[0]
 
 const catSettingsList = document.getElementById('cat-settings-list')
@@ -438,28 +439,20 @@ const catColorSwatch  = document.getElementById('cat-color-swatch')
 const catColorPalette = document.getElementById('cat-color-palette')
 const catEditCancel   = document.getElementById('cat-edit-cancel')
 const catEditSave     = document.getElementById('cat-edit-save')
+const catDeletedList  = document.getElementById('cat-deleted-list')
+const catDeletedEmpty = document.getElementById('cat-deleted-empty')
+const catDeleteDialog = document.getElementById('cat-delete-dialog')
+const catDeleteName   = document.getElementById('cat-delete-name')
+const catDeleteCancel = document.getElementById('cat-delete-cancel')
+const catDeleteConfirm = document.getElementById('cat-delete-confirm')
 
 async function loadCategoriesTab() {
   catEditForm.classList.add('hidden')
   catColorPalette.classList.add('hidden')
-  const cats = await window.api.getCategories()
-  catSettingsList.innerHTML = ''
-  cats.forEach(cat => {
-    const li = document.createElement('li')
-    li.className = 'cat-settings-item'
-    const dot  = document.createElement('span')
-    dot.className = 'cat-settings-dot'
-    dot.style.background = cat.color
-    const name = document.createElement('span')
-    name.className = 'cat-settings-name'
-    name.textContent = cat.name
-    const btn  = document.createElement('button')
-    btn.className = 'settings-row-btn'
-    btn.textContent = 'Изменить'
-    btn.addEventListener('click', () => openCatForm(cat.id, cat.name, cat.color))
-    li.append(dot, name, btn)
-    catSettingsList.appendChild(li)
-  })
+  document.querySelectorAll('.cat-subtab').forEach(t => t.classList.remove('active'))
+  document.querySelector('[data-subtab="active"]').classList.add('active')
+  await renderActiveCategoriesList()
+  showActiveCatPanel()
 }
 
 function openCatForm(id, name, color) {
@@ -491,6 +484,87 @@ function buildColorPalette() {
   })
 }
 
+function showActiveCatPanel() {
+  catSettingsList.classList.remove('hidden')
+  catAddBtn.classList.remove('hidden')
+  catDeletedList.classList.add('hidden')
+  catDeletedEmpty.classList.add('hidden')
+}
+
+function showDeletedCatPanel() {
+  catSettingsList.classList.add('hidden')
+  catAddBtn.classList.add('hidden')
+  catEditForm.classList.add('hidden')
+  catColorPalette.classList.add('hidden')
+}
+
+async function renderActiveCategoriesList() {
+  const cats = await window.api.getCategories()
+  catSettingsList.innerHTML = ''
+  cats.forEach(cat => {
+    const li = document.createElement('li')
+    li.className = 'cat-settings-item'
+    const dot = document.createElement('span')
+    dot.className = 'cat-settings-dot'
+    dot.style.background = cat.color
+    const name = document.createElement('span')
+    name.className = 'cat-settings-name'
+    name.textContent = cat.name
+    const editBtn = document.createElement('button')
+    editBtn.className = 'settings-row-btn'
+    editBtn.textContent = 'Изменить'
+    editBtn.addEventListener('click', () => openCatForm(cat.id, cat.name, cat.color))
+    const delBtn = document.createElement('button')
+    delBtn.className = 'cat-delete-btn'
+    delBtn.title = 'Удалить'
+    delBtn.innerHTML = '<img src="../../assets/icons/del.svg" width="14" height="14" alt="">'
+    delBtn.addEventListener('click', () => openDeleteDialog(cat.id, cat.name))
+    li.append(dot, name, editBtn, delBtn)
+    catSettingsList.appendChild(li)
+  })
+}
+
+async function loadDeletedCategoriesTab() {
+  showDeletedCatPanel()
+  const cats = await window.api.getDeletedCategories()
+  catDeletedList.innerHTML = ''
+  if (cats.length === 0) {
+    catDeletedList.classList.add('hidden')
+    catDeletedEmpty.classList.remove('hidden')
+    return
+  }
+  catDeletedList.classList.remove('hidden')
+  catDeletedEmpty.classList.add('hidden')
+  cats.forEach(cat => {
+    const li = document.createElement('li')
+    li.className = 'cat-settings-item cat-settings-item--deleted'
+    const name = document.createElement('span')
+    name.className = 'cat-settings-name'
+    name.textContent = cat.name
+    const restoreBtn = document.createElement('button')
+    restoreBtn.className = 'settings-row-btn'
+    restoreBtn.textContent = 'Восстановить'
+    restoreBtn.addEventListener('click', () => restoreCategoryById(cat.id))
+    li.append(name, restoreBtn)
+    catDeletedList.appendChild(li)
+  })
+}
+
+function openDeleteDialog(id, name) {
+  pendingDeleteId = id
+  catDeleteName.textContent = `«${name}»`
+  catDeleteDialog.classList.remove('hidden')
+}
+
+async function restoreCategoryById(id) {
+  await window.api.restoreCategory(id)
+  await loadDeletedCategoriesTab()
+  categories = await window.api.getCategories()
+  renderCategories()
+  renderDialogCategories()
+  await refreshStats()
+}
+
 catColorSwatch.addEventListener('click', () => {
   catColorPalette.classList.toggle('hidden')
 })
@@ -502,6 +576,35 @@ catAddBtn.addEventListener('click', () => {
 catEditCancel.addEventListener('click', () => {
   catEditForm.classList.add('hidden')
   catColorPalette.classList.add('hidden')
+})
+
+document.querySelectorAll('.cat-subtab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.cat-subtab').forEach(t => t.classList.remove('active'))
+    tab.classList.add('active')
+    if (tab.dataset.subtab === 'active') {
+      renderActiveCategoriesList().then(() => showActiveCatPanel())
+    } else {
+      loadDeletedCategoriesTab()
+    }
+  })
+})
+
+catDeleteCancel.addEventListener('click', () => {
+  catDeleteDialog.classList.add('hidden')
+  pendingDeleteId = null
+})
+
+catDeleteConfirm.addEventListener('click', async () => {
+  if (pendingDeleteId === null) return
+  await window.api.softDeleteCategory(pendingDeleteId)
+  catDeleteDialog.classList.add('hidden')
+  pendingDeleteId = null
+  await loadCategoriesTab()
+  categories = await window.api.getCategories()
+  renderCategories()
+  renderDialogCategories()
+  await refreshStats()
 })
 
 catEditSave.addEventListener('click', async () => {
