@@ -123,6 +123,10 @@ async function initDB() {
     db.run("DELETE FROM settings WHERE key = 'avatar'")
   }
 
+  try {
+    db.exec('ALTER TABLE categories ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
+  } catch (_) {}
+
   saveDB()
 }
 
@@ -165,7 +169,7 @@ function setupIPC() {
   })
 
   ipcMain.handle('db:get-categories', () => {
-    const stmt = db.prepare('SELECT id, name, color, sort_order FROM categories ORDER BY sort_order')
+    const stmt = db.prepare('SELECT id, name, color, sort_order FROM categories WHERE deleted = 0 ORDER BY sort_order')
     const rows = []
     while (stmt.step()) rows.push(stmt.getAsObject())
     stmt.free()
@@ -193,6 +197,7 @@ function setupIPC() {
       JOIN categories c ON s.category_id = c.id
       WHERE s.user = ?
         AND s.started_at >= ? AND s.started_at <= ?
+        AND c.deleted = 0
       GROUP BY s.category_id
       HAVING total > 0
       ORDER BY total DESC
@@ -212,6 +217,7 @@ function setupIPC() {
       FROM sessions s
       JOIN categories c ON s.category_id = c.id
       WHERE s.user = ? AND s.started_at >= ? AND s.started_at <= ?
+        AND c.deleted = 0
       ORDER BY s.started_at
     `)
     const rows = []
@@ -297,9 +303,13 @@ function setupIPC() {
     const from = dateToMs(period_start)
     const to   = dateToMsEnd(period_end)
 
-    const sessStmt = db.prepare(
-      'SELECT SUM(duration_seconds) as total FROM sessions WHERE started_at >= ? AND started_at <= ?'
-    )
+    const sessStmt = db.prepare(`
+      SELECT SUM(s.duration_seconds) as total
+      FROM sessions s
+      JOIN categories c ON s.category_id = c.id
+      WHERE s.started_at >= ? AND s.started_at <= ?
+        AND c.deleted = 0
+    `)
     sessStmt.bind([from, to])
     const localTotal = sessStmt.step() ? (sessStmt.getAsObject().total ?? 0) : 0
     sessStmt.free()
@@ -331,6 +341,24 @@ function setupIPC() {
   })
 
   ipcMain.handle('sync:get-last-sync', () => getLastSyncAt())
+
+  ipcMain.handle('db:get-deleted-categories', () => {
+    const stmt = db.prepare('SELECT id, name FROM categories WHERE deleted = 1 ORDER BY name')
+    const rows = []
+    while (stmt.step()) rows.push(stmt.getAsObject())
+    stmt.free()
+    return rows
+  })
+
+  ipcMain.handle('db:soft-delete-category', (_, id) => {
+    db.run('UPDATE categories SET deleted = 1 WHERE id = ?', [id])
+    saveDB()
+  })
+
+  ipcMain.handle('db:restore-category', (_, id) => {
+    db.run('UPDATE categories SET deleted = 0 WHERE id = ?', [id])
+    saveDB()
+  })
 }
 
 function createWindow() {

@@ -151,10 +151,11 @@ function buildPayload() {
 
   const daysStmt = _db.prepare(`
     SELECT
-      date(started_at / 1000, 'unixepoch', 'localtime') AS day,
-      SUM(duration_seconds) AS total_seconds
-    FROM sessions
-    WHERE user = ?
+      date(s.started_at / 1000, 'unixepoch', 'localtime') AS day,
+      SUM(s.duration_seconds) AS total_seconds
+    FROM sessions s
+    JOIN categories c ON s.category_id = c.id
+    WHERE s.user = ? AND c.deleted = 0
     GROUP BY day
   `)
   daysStmt.bind([user])
