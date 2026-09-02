@@ -11,11 +11,10 @@
   <!-- Экран выбора пользователя -->
   <div id="user-select-screen" class="screen hidden">
     <div class="user-select-box">
-      <p class="user-select-label">Кто ты?</p>
-      <div class="user-select-buttons">
-        <button class="user-btn" data-user="Sasha">Саша</button>
-        <button class="user-btn" data-user="Maxim">Максим</button>
-      </div>
+      <p class="user-select-label" data-i18n="onboarding_prompt">Как тебя зовут?</p>
+      <input type="text" id="onboarding-name-input" class="settings-input"
+             data-i18n-placeholder="onboarding_placeholder" placeholder="Имя" maxlength="32">
+      <button class="user-btn" id="onboarding-continue" data-i18n="btn_continue">Продолжить</button>
     </div>
   </div>
 

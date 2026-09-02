@@ -6,6 +6,9 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   const ru = {
     // Меню/шапка
+    onboarding_prompt: 'Как тебя зовут?',
+    onboarding_placeholder: 'Имя',
+    btn_continue: 'Продолжить',
     menu_settings: 'Настройки',
     menu_about: 'О программе',
     sync_title: 'Синхронизация',
@@ -72,6 +75,9 @@
   }
 
   const en = {
+    onboarding_prompt: 'What is your name?',
+    onboarding_placeholder: 'Name',
+    btn_continue: 'Continue',
     menu_settings: 'Settings',
     menu_about: 'About',
     sync_title: 'Synchronization',

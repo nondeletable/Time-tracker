@@ -87,18 +87,29 @@ async function init() {
     currentUser = userName
     await showMainScreen()
   } else {
-    userSelectScreen.classList.remove('hidden')
+    await showUserSelect()
   }
 }
 
-document.querySelectorAll('.user-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    currentUser = btn.dataset.user
-    await window.api.setSetting('user_name', currentUser)
+async function showUserSelect() {
+  const input = document.getElementById('onboarding-name-input')
+  const btn   = document.getElementById('onboarding-continue')
+  input.value = (await window.api.getDefaultName()) || ''
+  const sync = () => { btn.disabled = input.value.trim().length === 0 }
+  sync()
+  input.addEventListener('input', sync)
+  const confirm = async () => {
+    const name = input.value.trim()
+    if (!name) return
+    currentUser = name
+    await window.api.setSetting('user_name', name)
     userSelectScreen.classList.add('hidden')
     await showMainScreen()
-  })
-})
+  }
+  btn.addEventListener('click', confirm)
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') confirm() })
+  userSelectScreen.classList.remove('hidden')
+}
 
 async function showMainScreen() {
   categories = await window.api.getCategories()
