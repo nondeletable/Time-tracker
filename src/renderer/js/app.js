@@ -452,16 +452,14 @@ async function loadLimitTab() {
   periodStartInput.value = period.period_start
   periodEndInput.value = period.period_end
 
-  const isAdmin = currentUser === 'Maxim'
-  limitInput.disabled = !isAdmin
-  periodStartInput.disabled = !isAdmin
-  periodEndInput.disabled = !isAdmin
-  limitSaveBtn.classList.toggle('hidden', !isAdmin)
-  limitAdminNote.classList.toggle('hidden', isAdmin)
+  limitInput.disabled = false
+  periodStartInput.disabled = false
+  periodEndInput.disabled = false
+  limitSaveBtn.classList.remove('hidden')
+  limitAdminNote.classList.add('hidden')
 }
 
 limitSaveBtn.addEventListener('click', async () => {
-  if (currentUser !== 'Maxim') return
   const hours = parseInt(limitInput.value, 10)
   if (!hours || hours < 1) return
   const start = periodStartInput.value
