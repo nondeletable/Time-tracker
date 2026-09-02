@@ -2,6 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 
 const { detectLang, translate, keySets } = require('../src/renderer/js/i18n/i18n')
+const dict = require('../src/renderer/js/i18n/dict')
 
 test('detectLang: русская локаль → ru', () => {
   assert.equal(detectLang('ru'), 'ru')
@@ -29,8 +30,20 @@ test('translate: фолбэк на en, затем на сам ключ', () => {
 })
 
 test('keySets: возвращает отсортированные ключи по языкам без months/weekdays', () => {
-  const dict = { ru: { b: '1', a: '2', months: [], weekdays: [] }, en: { a: '3', b: '4' } }
-  const ks = keySets(dict)
+  const d = { ru: { b: '1', a: '2', months: [], weekdays: [] }, en: { a: '3', b: '4' } }
+  const ks = keySets(d)
   assert.deepEqual(ks.ru, ['a', 'b'])
   assert.deepEqual(ks.en, ['a', 'b'])
+})
+
+test('dict: ru и en имеют одинаковый набор ключей', () => {
+  const ks = keySets(dict)
+  assert.deepEqual(ks.ru, ks.en)
+})
+
+test('dict: months и weekdays правильной длины в обоих языках', () => {
+  for (const lang of ['ru', 'en']) {
+    assert.equal(dict[lang].months.length, 12, `${lang}.months`)
+    assert.equal(dict[lang].weekdays.length, 7, `${lang}.weekdays`)
+  }
 })
