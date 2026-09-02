@@ -10,8 +10,6 @@
     menu_about: 'О программе',
     sync_title: 'Синхронизация',
     sync_btn: 'Sync',
-    // Шкала лимита
-    limit_bar_label: 'Общий лимит',
     // Таймер/категории
     timer_start: 'Start',
     timer_stop: 'Stop',
@@ -53,6 +51,9 @@
     // Правка часов
     hours_date: 'Дата',
     hours_empty: 'Нет записей за этот день',
+    confirm_delete_q: 'Удалить?',
+    btn_yes: 'Да',
+    btn_no: 'Нет',
     // Синхронизация
     sync_interval: 'Интервал',
     sync_last: 'Последняя синхронизация',
@@ -66,6 +67,7 @@
     unit_m: 'м',
     unit_s: 'с',
     months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+    months_short: ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'],
     weekdays: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
   }
 
@@ -74,7 +76,6 @@
     menu_about: 'About',
     sync_title: 'Synchronization',
     sync_btn: 'Sync',
-    limit_bar_label: 'Shared limit',
     timer_start: 'Start',
     timer_stop: 'Stop',
     reset_title: 'Reset',
@@ -108,6 +109,9 @@
     btn_restore: 'Restore',
     hours_date: 'Date',
     hours_empty: 'No entries for this day',
+    confirm_delete_q: 'Delete?',
+    btn_yes: 'Yes',
+    btn_no: 'No',
     sync_interval: 'Interval',
     sync_last: 'Last sync',
     sync_min: 'min',
@@ -118,6 +122,7 @@
     unit_m: 'm',
     unit_s: 's',
     months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    months_short: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   }
 

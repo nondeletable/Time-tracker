@@ -29,13 +29,13 @@
             <img src="../../assets/icons/menu.svg" width="22" height="22" alt="">
           </button>
           <div class="burger-dropdown hidden" id="burger-dropdown">
-            <button class="dropdown-item" id="menu-settings">Настройки</button>
-            <button class="dropdown-item" id="menu-about">О программе</button>
+            <button class="dropdown-item" id="menu-settings" data-i18n="menu_settings">Настройки</button>
+            <button class="dropdown-item" id="menu-about" data-i18n="menu_about">О программе</button>
           </div>
         </div>
         <div class="sync-controls">
-          <div class="sync-dot" id="sync-dot" title="Синхронизация"></div>
-          <button class="sync-text-btn" id="sync-btn">Sync</button>
+          <div class="sync-dot" id="sync-dot" data-i18n-title="sync_title" title="Синхронизация"></div>
+          <button class="sync-text-btn" id="sync-btn" data-i18n="sync_btn">Sync</button>
         </div>
       </div>
 
@@ -55,7 +55,7 @@
           <div class="calendar-btn-wrap">
             <button class="calendar-btn" id="calendar-btn">
               <img src="../../assets/icons/calendar.svg" width="16" height="16" alt="">
-              Календарь
+              <span data-i18n="calendar_btn">Календарь</span>
             </button>
           </div>
         </aside>
@@ -65,11 +65,11 @@
           <div class="timer-ring" id="timer-ring">
             <div class="timer-display" id="timer-display">00:00:00</div>
             <div class="timer-actions">
-              <button class="timer-btn" id="timer-btn" disabled>Start</button>
-              <button class="reset-btn hidden" id="reset-btn" title="Сбросить">↺</button>
+              <button class="timer-btn" id="timer-btn" disabled data-i18n="timer_start">Start</button>
+              <button class="reset-btn hidden" id="reset-btn" data-i18n-title="reset_title" title="Сбросить">↺</button>
             </div>
           </div>
-          <div class="no-category-hint" id="no-category-hint">← Выбери категорию</div>
+          <div class="no-category-hint" id="no-category-hint" data-i18n="no_category_hint">← Выбери категорию</div>
         </div>
       </div>
 
@@ -79,12 +79,12 @@
   <!-- Диалог сохранения -->
   <div id="save-dialog" class="dialog-overlay hidden">
     <div class="dialog">
-      <div class="dialog-title">Сохранить сессию?</div>
+      <div class="dialog-title" data-i18n="save_dialog_title">Сохранить сессию?</div>
       <div class="dialog-time" id="dialog-time">00:00:00</div>
       <select class="dialog-category-select" id="dialog-category-select"></select>
       <div class="dialog-buttons">
-        <button class="dialog-btn cancel" id="dialog-cancel">Отмена</button>
-        <button class="dialog-btn save" id="dialog-save">Сохранить</button>
+        <button class="dialog-btn cancel" id="dialog-cancel" data-i18n="btn_cancel">Отмена</button>
+        <button class="dialog-btn save" id="dialog-save" data-i18n="btn_save">Сохранить</button>
       </div>
     </div>
   </div>
@@ -94,18 +94,28 @@
     <div class="settings-modal">
       <button class="modal-close" id="settings-close">×</button>
       <nav class="settings-nav">
-        <button class="settings-tab active" data-tab="user">Пользователь</button>
-        <button class="settings-tab" data-tab="limit">Лимит &amp; Период</button>
-        <button class="settings-tab" data-tab="categories">Категории</button>
-        <button class="settings-tab" data-tab="hours">Правка часов</button>
-        <button class="settings-tab" data-tab="sync">Синхронизация</button>
+        <button class="settings-tab" data-tab="general" data-i18n="tab_general">Общие</button>
+        <button class="settings-tab active" data-tab="user" data-i18n="tab_user">Пользователь</button>
+        <button class="settings-tab" data-tab="limit" data-i18n="tab_limit">Лимит &amp; Период</button>
+        <button class="settings-tab" data-tab="categories" data-i18n="tab_categories">Категории</button>
+        <button class="settings-tab" data-tab="hours" data-i18n="tab_hours">Правка часов</button>
+        <button class="settings-tab" data-tab="sync" data-i18n="tab_sync">Синхронизация</button>
       </nav>
       <div class="settings-body">
-        <div class="settings-pane" id="pane-user">
+        <div class="settings-pane hidden" id="pane-general">
+          <div class="settings-row">
+            <span class="settings-row-label" data-i18n="general_language">Язык</span>
+            <select class="settings-input" id="lang-select">
+              <option value="ru">Русский</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-pane hidden" id="pane-user">
           <div class="settings-row" id="user-name-row">
-            <span class="settings-row-label">Имя</span>
+            <span class="settings-row-label" data-i18n="user_name">Имя</span>
             <span class="settings-row-value" id="user-name-display"></span>
-            <button class="settings-row-btn" id="user-name-edit-btn">Изменить</button>
+            <button class="settings-row-btn" id="user-name-edit-btn" data-i18n="btn_edit">Изменить</button>
           </div>
           <div class="settings-row hidden" id="user-name-picker">
             <span class="settings-row-label"></span>
@@ -113,11 +123,11 @@
             <button class="user-pick-btn" data-user="Maxim">Максим</button>
           </div>
           <div class="settings-row">
-            <span class="settings-row-label">Аватар</span>
+            <span class="settings-row-label" data-i18n="user_avatar">Аватар</span>
             <span class="settings-row-value">
               <img class="avatar-preview" id="avatar-preview" src="../../assets/icons/user.svg" width="40" height="40" alt="">
             </span>
-            <button class="settings-row-btn" id="avatar-edit-btn">Изменить</button>
+            <button class="settings-row-btn" id="avatar-edit-btn" data-i18n="btn_edit">Изменить</button>
           </div>
           <div class="avatar-grid hidden" id="avatar-grid"></div>
         </div>
@@ -126,62 +136,62 @@
             Изменить настройки может только Максим
           </p>
           <div class="settings-row">
-            <span class="settings-row-label">Лимит (ч)</span>
+            <span class="settings-row-label" data-i18n="limit_hours">Лимит (ч)</span>
             <input type="number" class="settings-input" id="limit-input" min="1" max="9999" step="1">
           </div>
           <div class="settings-row">
-            <span class="settings-row-label">Период с</span>
+            <span class="settings-row-label" data-i18n="period_from">Период с</span>
             <input type="date" class="settings-input" id="period-start-input">
           </div>
           <div class="settings-row">
-            <span class="settings-row-label">Период по</span>
+            <span class="settings-row-label" data-i18n="period_to">Период по</span>
             <input type="date" class="settings-input" id="period-end-input">
           </div>
-          <button class="settings-save-btn hidden" id="limit-save-btn">Сохранить</button>
+          <button class="settings-save-btn hidden" id="limit-save-btn" data-i18n="btn_save">Сохранить</button>
         </div>
         <div class="settings-pane hidden" id="pane-categories">
           <div class="cat-subtabs">
-            <button class="cat-subtab active" data-subtab="active">Активные</button>
-            <button class="cat-subtab" data-subtab="deleted">Удалённые</button>
+            <button class="cat-subtab active" data-subtab="active" data-i18n="cat_subtab_active">Активные</button>
+            <button class="cat-subtab" data-subtab="deleted" data-i18n="cat_subtab_deleted">Удалённые</button>
           </div>
           <ul class="cat-settings-list" id="cat-settings-list"></ul>
-          <button class="cat-add-btn" id="cat-add-btn">+ Добавить</button>
+          <button class="cat-add-btn" id="cat-add-btn" data-i18n="cat_add">+ Добавить</button>
           <ul class="cat-settings-list hidden" id="cat-deleted-list"></ul>
-          <p class="cat-deleted-empty hidden" id="cat-deleted-empty">Нет удалённых категорий</p>
+          <p class="cat-deleted-empty hidden" id="cat-deleted-empty" data-i18n="cat_deleted_empty">Нет удалённых категорий</p>
           <div class="cat-edit-form hidden" id="cat-edit-form">
             <div class="cat-edit-row">
-              <input type="text" class="settings-input cat-name-input" id="cat-name-input" placeholder="Название категории">
-              <button class="cat-color-swatch" id="cat-color-swatch" title="Выбрать цвет"></button>
+              <input type="text" class="settings-input cat-name-input" id="cat-name-input" data-i18n-placeholder="cat_name_placeholder" placeholder="Название категории">
+              <button class="cat-color-swatch" id="cat-color-swatch" data-i18n-title="cat_pick_color" title="Выбрать цвет"></button>
             </div>
             <div class="cat-color-palette hidden" id="cat-color-palette"></div>
             <div class="cat-edit-actions">
-              <button class="cat-edit-cancel" id="cat-edit-cancel">Отмена</button>
-              <button class="settings-save-btn cat-edit-save" id="cat-edit-save">Сохранить</button>
+              <button class="cat-edit-cancel" id="cat-edit-cancel" data-i18n="btn_cancel">Отмена</button>
+              <button class="settings-save-btn cat-edit-save" id="cat-edit-save" data-i18n="btn_save">Сохранить</button>
             </div>
           </div>
         </div>
         <div class="settings-pane hidden" id="pane-hours">
           <div class="hours-date-row">
-            <span class="settings-row-label">Дата</span>
+            <span class="settings-row-label" data-i18n="hours_date">Дата</span>
             <input type="date" class="settings-input" id="hours-date-input">
           </div>
           <ul class="hours-list hidden" id="hours-list"></ul>
-          <p class="hours-empty hidden" id="hours-empty">Нет записей за этот день</p>
-          <button class="cat-add-btn hidden" id="hours-add-btn">+ Добавить</button>
+          <p class="hours-empty hidden" id="hours-empty" data-i18n="hours_empty">Нет записей за этот день</p>
+          <button class="cat-add-btn hidden" id="hours-add-btn" data-i18n="cat_add">+ Добавить</button>
           <div class="cat-edit-form hidden" id="hours-edit-form">
             <div class="cat-edit-row">
               <select class="settings-input hours-cat-select" id="hours-cat-select"></select>
               <input type="time" class="settings-input hours-time-input" id="hours-time-input">
             </div>
             <div class="cat-edit-actions">
-              <button class="cat-edit-cancel" id="hours-edit-cancel">Отмена</button>
-              <button class="settings-save-btn" id="hours-edit-save">Сохранить</button>
+              <button class="cat-edit-cancel" id="hours-edit-cancel" data-i18n="btn_cancel">Отмена</button>
+              <button class="settings-save-btn" id="hours-edit-save" data-i18n="btn_save">Сохранить</button>
             </div>
           </div>
         </div>
         <div class="settings-pane hidden" id="pane-sync">
           <div class="settings-row">
-            <span class="settings-row-label">Интервал</span>
+            <span class="settings-row-label" data-i18n="sync_interval">Интервал</span>
             <select class="settings-input" id="sync-interval-select">
               <option value="60">1 мин</option>
               <option value="120">2 мин</option>
@@ -194,7 +204,7 @@
             </select>
           </div>
           <div class="settings-row">
-            <span class="settings-row-label">Последняя синхронизация</span>
+            <span class="settings-row-label" data-i18n="sync_last">Последняя синхронизация</span>
             <span class="settings-row-value" id="sync-last-time">—</span>
           </div>
         </div>
@@ -205,12 +215,12 @@
   <!-- Category delete confirmation dialog -->
   <div id="cat-delete-dialog" class="dialog-overlay hidden">
     <div class="dialog">
-      <div class="dialog-title">Удалить категорию?</div>
+      <div class="dialog-title" data-i18n="cat_delete_title">Удалить категорию?</div>
       <div class="cat-delete-name-display" id="cat-delete-name"></div>
-      <p class="cat-delete-hint">Часы по ней перестанут учитываться.</p>
+      <p class="cat-delete-hint" data-i18n="cat_delete_hint">Часы по ней перестанут учитываться.</p>
       <div class="dialog-buttons">
-        <button class="dialog-btn cancel" id="cat-delete-cancel">Отмена</button>
-        <button class="dialog-btn danger" id="cat-delete-confirm">Удалить</button>
+        <button class="dialog-btn cancel" id="cat-delete-cancel" data-i18n="btn_cancel">Отмена</button>
+        <button class="dialog-btn danger" id="cat-delete-confirm" data-i18n="btn_delete">Удалить</button>
       </div>
     </div>
   </div>
@@ -219,9 +229,9 @@
   <div id="about-modal" class="dialog-overlay hidden">
     <div class="dialog">
       <div class="about-name">Time Tracker</div>
-      <div class="about-version">Версия 1.0.0</div>
-      <div class="about-copy">© 2026 Sasha &amp; Maxim</div>
-      <button class="dialog-btn save" id="about-close">Закрыть</button>
+      <div class="about-version"><span data-i18n="about_version">Версия</span> 1.0.0</div>
+      <div class="about-copy">© 2026 Time Tracker</div>
+      <button class="dialog-btn save" id="about-close" data-i18n="btn_close">Закрыть</button>
     </div>
   </div>
 
@@ -242,6 +252,8 @@
     </div>
   </div>
 
+  <script src="js/i18n/i18n.js"></script>
+  <script src="js/i18n/dict.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

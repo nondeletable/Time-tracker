@@ -11,6 +11,29 @@ let sessionStartedAt = null
 let calYear  = 0
 let calMonth = 0
 
+let currentLang = 'ru'
+
+function t(key) {
+  return window.I18N.translate(window.DICT, currentLang, key)
+}
+
+function applyI18n() {
+  document.documentElement.lang = currentLang
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'))
+  })
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.setAttribute('title', t(el.getAttribute('data-i18n-title')))
+  })
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')))
+  })
+  document.querySelectorAll('#sync-interval-select option').forEach(opt => {
+    const min = Math.round(Number(opt.value) / 60)
+    opt.textContent = `${min} ${t('sync_min')}`
+  })
+}
+
 const userSelectScreen     = document.getElementById('user-select-screen')
 const mainScreen           = document.getElementById('main-screen')
 const categoriesList       = document.getElementById('categories-list')
@@ -54,6 +77,11 @@ const limitAdminNote       = document.getElementById('limit-admin-note')
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
+  const savedLang = await window.api.getSetting('lang')
+  currentLang = savedLang || window.I18N.detectLang(navigator.language)
+  if (!savedLang) await window.api.setSetting('lang', currentLang)
+  applyI18n()
+
   const userName = await window.api.getSetting('user_name')
   if (userName) {
     currentUser = userName
@@ -125,7 +153,7 @@ function formatDuration(seconds) {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
   const s = seconds % 60
-  return `${h}h ${m}m ${s}s`
+  return `${h}${t('unit_h')} ${m}${t('unit_m')} ${s}${t('unit_s')}`
 }
 
 async function refreshStats() {
@@ -160,7 +188,7 @@ function renderLimitBar(totalSeconds, period) {
 
   const fmtDate = iso => {
     const [, m, d] = iso.split('-')
-    const months = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек']
+    const months = window.DICT[currentLang].months_short
     return `${Number(d)} ${months[Number(m) - 1]}`
   }
   limitBarLabel.textContent = `${fmtDate(period.period_start)} — ${fmtDate(period.period_end)}`
@@ -210,7 +238,7 @@ function start() {
   startTime = Date.now()
   if (elapsed === 0) sessionStartedAt = startTime
   interval = setInterval(tick, 500)
-  timerBtn.textContent = 'Stop'
+  timerBtn.textContent = t('timer_stop')
   timerBtn.classList.add('stop')
   timerRing.classList.add('running')
   resetBtn.classList.add('hidden')
@@ -222,7 +250,7 @@ function stop() {
   clearInterval(interval)
   interval = null
   timerDisplay.textContent = formatTime(elapsed)
-  timerBtn.textContent = 'Start'
+  timerBtn.textContent = t('timer_start')
   timerBtn.classList.remove('stop')
   timerRing.classList.remove('running')
   resetBtn.classList.remove('hidden')
@@ -303,6 +331,7 @@ function openSettings() {
   document.querySelector('[data-tab="user"]').classList.add('active')
   document.getElementById('pane-user').classList.remove('hidden')
 
+  document.getElementById('lang-select').value = currentLang
   settingsModal.classList.remove('hidden')
   loadUserTab()
 }
@@ -312,6 +341,16 @@ function closeSettings() {
 }
 
 settingsClose.addEventListener('click', closeSettings)
+
+document.getElementById('lang-select').addEventListener('change', async e => {
+  currentLang = e.target.value
+  await window.api.setSetting('lang', currentLang)
+  applyI18n()
+  renderCategories()
+  renderDialogCategories()
+  await refreshStats()
+  if (!calendarModal.classList.contains('hidden')) await loadCalendarMonth()
+})
 
 settingsTabs.forEach(tab => {
   tab.addEventListener('click', () => {
@@ -512,11 +551,11 @@ async function renderActiveCategoriesList() {
     name.textContent = cat.name
     const editBtn = document.createElement('button')
     editBtn.className = 'settings-row-btn'
-    editBtn.textContent = 'Изменить'
+    editBtn.textContent = t('btn_edit')
     editBtn.addEventListener('click', () => openCatForm(cat.id, cat.name, cat.color))
     const delBtn = document.createElement('button')
     delBtn.className = 'cat-delete-btn'
-    delBtn.title = 'Удалить'
+    delBtn.title = t('btn_delete')
     delBtn.innerHTML = '<img src="../../assets/icons/del.svg" width="14" height="14" alt="">'
     delBtn.addEventListener('click', () => openDeleteDialog(cat.id, cat.name))
     li.append(dot, name, editBtn, delBtn)
@@ -543,7 +582,7 @@ async function loadDeletedCategoriesTab() {
     name.textContent = cat.name
     const restoreBtn = document.createElement('button')
     restoreBtn.className = 'settings-row-btn'
-    restoreBtn.textContent = 'Восстановить'
+    restoreBtn.textContent = t('btn_restore')
     restoreBtn.addEventListener('click', () => restoreCategoryById(cat.id))
     li.append(name, restoreBtn)
     catDeletedList.appendChild(li)
@@ -655,7 +694,7 @@ function formatLastSync(ts) {
   const hh  = String(d.getHours()).padStart(2, '0')
   const mm  = String(d.getMinutes()).padStart(2, '0')
   if (d.toDateString() === now.toDateString()) {
-    return `Сегодня в ${hh}:${mm}`
+    return `${t('today_at')} ${hh}:${mm}`
   }
   const dd   = String(d.getDate()).padStart(2, '0')
   const mo   = String(d.getMonth() + 1).padStart(2, '0')
@@ -736,12 +775,12 @@ function renderHoursItem(session) {
 
   const editBtn = document.createElement('button')
   editBtn.className = 'settings-row-btn'
-  editBtn.textContent = 'Изменить'
+  editBtn.textContent = t('btn_edit')
   editBtn.addEventListener('click', () => openHoursForm(session))
 
   const delBtn = document.createElement('button')
   delBtn.className = 'settings-row-btn hours-del-btn'
-  delBtn.textContent = 'Удалить'
+  delBtn.textContent = t('btn_delete')
 
   btns.append(editBtn, delBtn)
 
@@ -750,15 +789,15 @@ function renderHoursItem(session) {
 
   const confirmText = document.createElement('span')
   confirmText.className = 'hours-confirm-text'
-  confirmText.textContent = 'Удалить?'
+  confirmText.textContent = t('confirm_delete_q')
 
   const yesBtn = document.createElement('button')
   yesBtn.className = 'hours-confirm-yes'
-  yesBtn.textContent = 'Да'
+  yesBtn.textContent = t('btn_yes')
 
   const noBtn = document.createElement('button')
   noBtn.className = 'cat-edit-cancel'
-  noBtn.textContent = 'Нет'
+  noBtn.textContent = t('btn_no')
 
   confirm.append(confirmText, yesBtn, noBtn)
   actions.append(btns, confirm)
@@ -830,10 +869,11 @@ hoursEditSave.addEventListener('click', async () => {
 
 // ── Calendar ──────────────────────────────────────────────────────────────────
 
-const RU_MONTHS = [
-  'Январь','Февраль','Март','Апрель','Май','Июнь',
-  'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'
-]
+function renderWeekdays() {
+  const spans = document.querySelectorAll('.calendar-weekdays span')
+  const wd = window.DICT[currentLang].weekdays
+  spans.forEach((span, i) => { if (wd[i]) span.textContent = wd[i] })
+}
 
 calendarBtn.addEventListener('click', openCalendar)
 
@@ -868,7 +908,8 @@ async function loadCalendarMonth() {
     window.api.getCalendarMonth(calYear, calMonth),
     window.api.getUserAvatars(),
   ])
-  calTitle.textContent = `${RU_MONTHS[calMonth - 1]} ${calYear}`
+  calTitle.textContent = `${window.DICT[currentLang].months[calMonth - 1]} ${calYear}`
+  renderWeekdays()
   renderCalendarGrid(calYear, calMonth, rows, avatars)
 }
 
@@ -932,9 +973,9 @@ function localISODate(d) {
 function formatCalDuration(seconds) {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
-  if (h === 0) return `${m}m`
-  if (m === 0) return `${h}h`
-  return `${h}h ${m}m`
+  if (h === 0) return `${m}${t('unit_m')}`
+  if (m === 0) return `${h}${t('unit_h')}`
+  return `${h}${t('unit_h')} ${m}${t('unit_m')}`
 }
 
 // ── Sync ──────────────────────────────────────────────────────────────────────

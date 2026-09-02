@@ -47,3 +47,20 @@ test('dict: months и weekdays правильной длины в обоих я�
     assert.equal(dict[lang].weekdays.length, 7, `${lang}.weekdays`)
   }
 })
+
+test('markup: все data-i18n ключи из index.html есть в обоих словарях', () => {
+  const fs = require('node:fs')
+  const path = require('node:path')
+  const html = fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'renderer', 'index.html'), 'utf8'
+  )
+  const keys = new Set()
+  const re = /data-i18n(?:-title|-placeholder)?="([^"]+)"/g
+  let m
+  while ((m = re.exec(html))) keys.add(m[1])
+  assert.ok(keys.size > 0, 'ключи не найдены — регэксп сломан?')
+  for (const key of keys) {
+    assert.ok(key in dict.ru, `нет в ru: ${key}`)
+    assert.ok(key in dict.en, `нет в en: ${key}`)
+  }
+})
