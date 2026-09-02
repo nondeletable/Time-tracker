@@ -955,14 +955,14 @@ function renderCalendarGrid(year, month, rows, avatars) {
     cell.appendChild(numEl)
 
     if (inMonth && dayMap[dayStr]) {
-      ;['Sasha', 'Maxim'].forEach(user => {
+      Object.keys(dayMap[dayStr]).forEach(user => {
         const secs = dayMap[dayStr][user]
         if (!secs) return
         const row  = document.createElement('div')
         row.className = 'cal-user-row'
         const img  = document.createElement('img')
         img.className = 'cal-avatar'
-        img.src = `../../assets/icons/${avatars[user]}`
+        img.src = `../../assets/icons/${avatars[user] || 'user.svg'}`
         const time = document.createElement('span')
         time.className = 'cal-user-time'
         time.textContent = formatCalDuration(secs)

@@ -293,18 +293,14 @@ function setupIPC() {
   })
 
   ipcMain.handle('db:get-user-avatars', () => {
-    const get = (key) => {
-      const stmt = db.prepare('SELECT value FROM settings WHERE key = ?')
-      stmt.bind([key])
-      const found = stmt.step()
-      const val = found ? stmt.getAsObject().value : null
-      stmt.free()
-      return val
+    const stmt = db.prepare("SELECT key, value FROM settings WHERE key LIKE 'avatar_%'")
+    const avatars = {}
+    while (stmt.step()) {
+      const row = stmt.getAsObject()
+      avatars[row.key.slice('avatar_'.length)] = row.value || 'user.svg'
     }
-    return {
-      Sasha: get('avatar_Sasha') ?? 'user.svg',
-      Maxim: get('avatar_Maxim') ?? 'user.svg',
-    }
+    stmt.free()
+    return avatars
   })
 
   ipcMain.handle('db:get-calendar-month', (_, { year, month }) => {
