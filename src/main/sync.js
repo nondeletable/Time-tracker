@@ -179,9 +179,18 @@ function sendSyncPayload(ws) {
 
 // ── Store received peer data in DB ─────────────────────────────────────────
 
+function localUserName() {
+  const stmt = _db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
+  const name = stmt.step() ? stmt.getAsObject().value : null
+  stmt.free()
+  return name
+}
+
 function storePeerData(payload) {
   const { user, avatar, days } = payload
   if (!user || !Array.isArray(days)) return
+  // Инвариант: не храним в peer_data собственного пользователя (иначе задвоение часов).
+  if (user === localUserName()) return
 
   _db.run('DELETE FROM peer_data WHERE user = ?', [user])
   const now = Date.now()

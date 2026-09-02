@@ -6,6 +6,7 @@ const initSqlJs = require('sql.js')
 const { startSync, syncNow, setSyncInterval, getLastSyncAt } = require('./sync')
 const { advancePeriod } = require('./period')
 const { pickPresetCategories } = require('./presets')
+const { purgeSelfFromPeerData } = require('./peer')
 const { detectLang } = require('../renderer/js/i18n/i18n')
 
 let db = null
@@ -121,6 +122,13 @@ async function initDB() {
     db.exec('ALTER TABLE categories ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
   } catch (_) {}
 
+  // Инвариант: локальный пользователь не должен присутствовать в peer_data
+  // (иначе его часы задваиваются). Чистим накопленный самодубль при старте.
+  const selfStmt = db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
+  const selfName = selfStmt.step() ? selfStmt.getAsObject().value : null
+  selfStmt.free()
+  purgeSelfFromPeerData(db, selfName)
+
   saveDB()
 }
 
@@ -181,6 +189,7 @@ function setupIPC() {
       return true
     }
     db.run('UPDATE sessions SET user = ? WHERE user = ?', [name, old])
+    purgeSelfFromPeerData(db, old)  // старое имя не должно остаться как «напарник»
     const av = db.prepare('SELECT value FROM settings WHERE key = ?')
     av.bind([`avatar_${old}`])
     const avatar = av.step() ? av.getAsObject().value : null
