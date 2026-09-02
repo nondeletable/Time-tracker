@@ -1,21 +1,16 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const os = require('os')
 const initSqlJs = require('sql.js')
 const { startSync, syncNow, setSyncInterval, getLastSyncAt } = require('./sync')
 const { advancePeriod } = require('./period')
+const { pickPresetCategories } = require('./presets')
+const { purgeSelfFromPeerData } = require('./peer')
+const { detectLang } = require('../renderer/js/i18n/i18n')
 
 let db = null
 let dbPath = null
-
-const PRESET_CATEGORIES = [
-  { name: 'Engine Development',           color: '#60a5fa', sort_order: 0 },
-  { name: 'Research, Writing, Scenario',  color: '#c084fc', sort_order: 1 },
-  { name: 'Design Document',             color: '#fb923c', sort_order: 2 },
-  { name: 'Illustrations, Content, Music',color: '#f472b6', sort_order: 3 },
-  { name: 'Bugfixes',                    color: '#f87171', sort_order: 4 },
-  { name: 'Administrative',              color: '#34d399', sort_order: 5 },
-]
 
 function saveDB() {
   if (db && dbPath) fs.writeFileSync(dbPath, Buffer.from(db.export()))
@@ -84,7 +79,8 @@ async function initDB() {
 
   const catCount = db.exec('SELECT COUNT(*) FROM categories')[0].values[0][0]
   if (catCount === 0) {
-    PRESET_CATEGORIES.forEach(cat =>
+    const presets = pickPresetCategories(detectLang(app.getLocale()))
+    presets.forEach(cat =>
       db.run('INSERT INTO categories (name, color, sort_order) VALUES (?, ?, ?)',
         [cat.name, cat.color, cat.sort_order])
     )
@@ -103,8 +99,6 @@ async function initDB() {
   seedSetting('period_start',         period.start)
   seedSetting('period_end',           period.end)
   seedSetting('monthly_limit_seconds', String(160 * 3600))
-  seedSetting('avatar_Sasha', 'user.svg')
-  seedSetting('avatar_Maxim', 'user.svg')
   seedSetting('sync_interval_seconds', '300')
 
   // Migration: move old 'avatar' key to avatar_<user>
@@ -127,6 +121,17 @@ async function initDB() {
   try {
     db.exec('ALTER TABLE categories ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
   } catch (_) {}
+
+  // Одноразовая чистка peer_data: убираем накопленные самодубли (данные локального
+  // пользователя под старыми/новыми именами), попавшие туда легаси-синком.
+  // Соло-режим = свои часы только из sessions; напарник вернётся в Этапе 4 через синк.
+  const resetDone = db.prepare("SELECT 1 FROM settings WHERE key = 'peer_data_reset_v1'")
+  const alreadyReset = resetDone.step()
+  resetDone.free()
+  if (!alreadyReset) {
+    db.run('DELETE FROM peer_data')
+    db.run("INSERT INTO settings (key, value) VALUES ('peer_data_reset_v1', '1')")
+  }
 
   saveDB()
 }
@@ -172,6 +177,36 @@ function advancePeriodIfNeeded() {
 }
 
 function setupIPC() {
+  ipcMain.handle('app:get-default-name', () => {
+    try { return os.userInfo().username || '' } catch { return '' }
+  })
+
+  ipcMain.handle('db:rename-user', (_, newName) => {
+    const name = String(newName || '').trim()
+    if (!name) return false
+    const stmt = db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
+    const old = stmt.step() ? stmt.getAsObject().value : null
+    stmt.free()
+    if (!old || old === name) {
+      db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('user_name', ?)", [name])
+      saveDB()
+      return true
+    }
+    db.run('UPDATE sessions SET user = ? WHERE user = ?', [name, old])
+    purgeSelfFromPeerData(db, old)  // старое имя не должно остаться как «напарник»
+    const av = db.prepare('SELECT value FROM settings WHERE key = ?')
+    av.bind([`avatar_${old}`])
+    const avatar = av.step() ? av.getAsObject().value : null
+    av.free()
+    if (avatar) {
+      db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [`avatar_${name}`, avatar])
+      db.run('DELETE FROM settings WHERE key = ?', [`avatar_${old}`])
+    }
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('user_name', ?)", [name])
+    saveDB()
+    return true
+  })
+
   ipcMain.handle('db:get-setting', (_, key) => {
     const stmt = db.prepare('SELECT value FROM settings WHERE key = ?')
     stmt.bind([key])
@@ -271,18 +306,14 @@ function setupIPC() {
   })
 
   ipcMain.handle('db:get-user-avatars', () => {
-    const get = (key) => {
-      const stmt = db.prepare('SELECT value FROM settings WHERE key = ?')
-      stmt.bind([key])
-      const found = stmt.step()
-      const val = found ? stmt.getAsObject().value : null
-      stmt.free()
-      return val
+    const stmt = db.prepare("SELECT key, value FROM settings WHERE key LIKE 'avatar_%'")
+    const avatars = {}
+    while (stmt.step()) {
+      const row = stmt.getAsObject()
+      avatars[row.key.slice('avatar_'.length)] = row.value || 'user.svg'
     }
-    return {
-      Sasha: get('avatar_Sasha') ?? 'user.svg',
-      Maxim: get('avatar_Maxim') ?? 'user.svg',
-    }
+    stmt.free()
+    return avatars
   })
 
   ipcMain.handle('db:get-calendar-month', (_, { year, month }) => {
@@ -401,11 +432,13 @@ app.whenReady().then(async () => {
   advancePeriodIfNeeded() // при запуске: окно откроется уже с актуальным периодом
   setupIPC()
   const win = createWindow()
-  startSync(db, saveDB, win)
 
-  const intStmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
-  if (intStmt.step()) setSyncInterval(Number(intStmt.getAsObject().value))
-  intStmt.free()
+  // Авто-синк отключён: соло-режим = без сети. Синк вернётся в Этапе 4 как opt-in
+  // (запуск только при активной группе, со стабильным per-install ID отправителя).
+  // startSync(db, saveDB, win)
+  // const intStmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
+  // if (intStmt.step()) setSyncInterval(Number(intStmt.getAsObject().value))
+  // intStmt.free()
 
   // Периодическая проверка: приложение может работать сутками, дата сменится без перезапуска.
   setInterval(() => {

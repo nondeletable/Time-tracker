@@ -11,11 +11,10 @@
   <!-- Экран выбора пользователя -->
   <div id="user-select-screen" class="screen hidden">
     <div class="user-select-box">
-      <p class="user-select-label">Кто ты?</p>
-      <div class="user-select-buttons">
-        <button class="user-btn" data-user="Sasha">Саша</button>
-        <button class="user-btn" data-user="Maxim">Максим</button>
-      </div>
+      <p class="user-select-label" data-i18n="onboarding_prompt">Как тебя зовут?</p>
+      <input type="text" id="onboarding-name-input" class="settings-input"
+             data-i18n-placeholder="onboarding_placeholder" placeholder="Имя" maxlength="32">
+      <button class="user-btn" id="onboarding-continue" data-i18n="btn_continue">Продолжить</button>
     </div>
   </div>
 
@@ -118,9 +117,8 @@
             <button class="settings-row-btn" id="user-name-edit-btn" data-i18n="btn_edit">Изменить</button>
           </div>
           <div class="settings-row hidden" id="user-name-picker">
-            <span class="settings-row-label"></span>
-            <button class="user-pick-btn" data-user="Sasha">Саша</button>
-            <button class="user-pick-btn" data-user="Maxim">Максим</button>
+            <input type="text" id="user-name-input" class="settings-input" maxlength="32">
+            <button class="settings-row-btn" id="user-name-save-btn" data-i18n="btn_save">Сохранить</button>
           </div>
           <div class="settings-row">
             <span class="settings-row-label" data-i18n="user_avatar">Аватар</span>
@@ -132,8 +130,8 @@
           <div class="avatar-grid hidden" id="avatar-grid"></div>
         </div>
         <div class="settings-pane hidden" id="pane-limit">
-          <p class="settings-admin-note hidden" id="limit-admin-note">
-            Изменить настройки может только Максим
+          <p class="settings-admin-note hidden" id="limit-admin-note" data-i18n="limit_readonly_note">
+            Изменить лимит может только владелец группы
           </p>
           <div class="settings-row">
             <span class="settings-row-label" data-i18n="limit_hours">Лимит (ч)</span>

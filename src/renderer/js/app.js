@@ -87,18 +87,29 @@ async function init() {
     currentUser = userName
     await showMainScreen()
   } else {
-    userSelectScreen.classList.remove('hidden')
+    await showUserSelect()
   }
 }
 
-document.querySelectorAll('.user-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    currentUser = btn.dataset.user
-    await window.api.setSetting('user_name', currentUser)
+async function showUserSelect() {
+  const input = document.getElementById('onboarding-name-input')
+  const btn   = document.getElementById('onboarding-continue')
+  input.value = (await window.api.getDefaultName()) || ''
+  const sync = () => { btn.disabled = input.value.trim().length === 0 }
+  sync()
+  input.addEventListener('input', sync)
+  const confirm = async () => {
+    const name = input.value.trim()
+    if (!name) return
+    currentUser = name
+    await window.api.setSetting('user_name', name)
     userSelectScreen.classList.add('hidden')
     await showMainScreen()
-  })
-})
+  }
+  btn.addEventListener('click', confirm)
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') confirm() })
+  userSelectScreen.classList.remove('hidden')
+}
 
 async function showMainScreen() {
   categories = await window.api.getCategories()
@@ -380,7 +391,7 @@ const AVATAR_FILES = [
 ]
 
 async function loadUserTab() {
-  userNameDisplay.textContent = currentUser === 'Sasha' ? 'Саша' : 'Максим'
+  userNameDisplay.textContent = currentUser
   userNamePicker.classList.add('hidden')
   userNameEditBtn.classList.remove('hidden')
 
@@ -410,21 +421,24 @@ function buildAvatarGrid(currentAvatar) {
   })
 }
 
+const userNameInput   = document.getElementById('user-name-input')
+const userNameSaveBtn = document.getElementById('user-name-save-btn')
+
 userNameEditBtn.addEventListener('click', () => {
+  userNameInput.value = currentUser
   userNamePicker.classList.remove('hidden')
   userNameEditBtn.classList.add('hidden')
 })
 
-document.querySelectorAll('.user-pick-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const newUser = btn.dataset.user
-    await window.api.setSetting('user_name', newUser)
-    currentUser = newUser
-    userNameDisplay.textContent = newUser === 'Sasha' ? 'Саша' : 'Максим'
-    userNamePicker.classList.add('hidden')
-    userNameEditBtn.classList.remove('hidden')
-    await refreshStats()
-  })
+userNameSaveBtn.addEventListener('click', async () => {
+  const name = userNameInput.value.trim()
+  if (!name) return
+  await window.api.renameUser(name)
+  currentUser = name
+  userNameDisplay.textContent = name
+  userNamePicker.classList.add('hidden')
+  userNameEditBtn.classList.remove('hidden')
+  await refreshStats()
 })
 
 avatarEditBtn.addEventListener('click', () => {
@@ -438,16 +452,14 @@ async function loadLimitTab() {
   periodStartInput.value = period.period_start
   periodEndInput.value = period.period_end
 
-  const isAdmin = currentUser === 'Maxim'
-  limitInput.disabled = !isAdmin
-  periodStartInput.disabled = !isAdmin
-  periodEndInput.disabled = !isAdmin
-  limitSaveBtn.classList.toggle('hidden', !isAdmin)
-  limitAdminNote.classList.toggle('hidden', isAdmin)
+  limitInput.disabled = false
+  periodStartInput.disabled = false
+  periodEndInput.disabled = false
+  limitSaveBtn.classList.remove('hidden')
+  limitAdminNote.classList.add('hidden')
 }
 
 limitSaveBtn.addEventListener('click', async () => {
-  if (currentUser !== 'Maxim') return
   const hours = parseInt(limitInput.value, 10)
   if (!hours || hours < 1) return
   const start = periodStartInput.value
@@ -943,14 +955,14 @@ function renderCalendarGrid(year, month, rows, avatars) {
     cell.appendChild(numEl)
 
     if (inMonth && dayMap[dayStr]) {
-      ;['Sasha', 'Maxim'].forEach(user => {
+      Object.keys(dayMap[dayStr]).forEach(user => {
         const secs = dayMap[dayStr][user]
         if (!secs) return
         const row  = document.createElement('div')
         row.className = 'cal-user-row'
         const img  = document.createElement('img')
         img.className = 'cal-avatar'
-        img.src = `../../assets/icons/${avatars[user]}`
+        img.src = `../../assets/icons/${avatars[user] || 'user.svg'}`
         const time = document.createElement('span')
         time.className = 'cal-user-time'
         time.textContent = formatCalDuration(secs)

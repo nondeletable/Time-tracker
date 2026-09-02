@@ -1,6 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('api', {
+  getDefaultName:   ()             => ipcRenderer.invoke('app:get-default-name'),
+  renameUser:       (newName)      => ipcRenderer.invoke('db:rename-user', newName),
   getSetting:       (key)          => ipcRenderer.invoke('db:get-setting', key),
   setSetting:       (key, value)   => ipcRenderer.invoke('db:set-setting', key, value),
   getCategories:    ()             => ipcRenderer.invoke('db:get-categories'),

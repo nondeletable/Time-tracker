@@ -6,6 +6,9 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   const ru = {
     // Меню/шапка
+    onboarding_prompt: 'Как тебя зовут?',
+    onboarding_placeholder: 'Имя',
+    btn_continue: 'Продолжить',
     menu_settings: 'Настройки',
     menu_about: 'О программе',
     sync_title: 'Синхронизация',
@@ -35,6 +38,7 @@
     user_avatar: 'Аватар',
     // Лимит
     limit_hours: 'Лимит (ч)',
+    limit_readonly_note: 'Изменить лимит может только владелец группы',
     period_from: 'Период с',
     period_to: 'Период по',
     // Категории
@@ -72,6 +76,9 @@
   }
 
   const en = {
+    onboarding_prompt: 'What is your name?',
+    onboarding_placeholder: 'Name',
+    btn_continue: 'Continue',
     menu_settings: 'Settings',
     menu_about: 'About',
     sync_title: 'Synchronization',
@@ -95,6 +102,7 @@
     btn_edit: 'Edit',
     user_avatar: 'Avatar',
     limit_hours: 'Limit (h)',
+    limit_readonly_note: 'Only the group owner can edit the limit',
     period_from: 'Period from',
     period_to: 'Period to',
     cat_subtab_active: 'Active',
