@@ -970,6 +970,14 @@ window.api.onSyncDone(ts => {
   if (el) el.textContent = formatLastSync(ts)
 })
 
+// Период продлился автоматически (сменился день во время работы приложения)
+window.api.onPeriodAdvanced(async () => {
+  await refreshStats()
+  if (!settingsModal.classList.contains('hidden')) {
+    await loadLimitTab()
+  }
+})
+
 // ── Start ─────────────────────────────────────────────────────────────────────
 
 init()

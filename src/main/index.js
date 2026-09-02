@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const initSqlJs = require('sql.js')
 const { startSync, syncNow, setSyncInterval, getLastSyncAt } = require('./sync')
+const { advancePeriod } = require('./period')
 
 let db = null
 let dbPath = null
@@ -152,6 +153,22 @@ function getPeriodSettings() {
     period_end:            get('period_end'),
     monthly_limit_seconds: Number(get('monthly_limit_seconds') ?? 160 * 3600),
   }
+}
+
+// Автопродление периода: если today вышло за period_end, сдвигаем период вперёд помесячно.
+// Период локальный (по LAN не синхронизируется) и вычисляется детерминированно.
+function advancePeriodIfNeeded() {
+  const { period_start, period_end } = getPeriodSettings()
+  if (!period_start || !period_end) return false
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const { start, end, changed } = advancePeriod(period_start, period_end, today)
+  if (changed) {
+    db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', ['period_start', start])
+    db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', ['period_end', end])
+    saveDB()
+  }
+  return changed
 }
 
 function setupIPC() {
@@ -381,6 +398,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   await initDB()
+  advancePeriodIfNeeded() // при запуске: окно откроется уже с актуальным периодом
   setupIPC()
   const win = createWindow()
   startSync(db, saveDB, win)
@@ -388,6 +406,13 @@ app.whenReady().then(async () => {
   const intStmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
   if (intStmt.step()) setSyncInterval(Number(intStmt.getAsObject().value))
   intStmt.free()
+
+  // Периодическая проверка: приложение может работать сутками, дата сменится без перезапуска.
+  setInterval(() => {
+    if (advancePeriodIfNeeded() && !win.isDestroyed()) {
+      win.webContents.send('period:advanced')
+    }
+  }, 60 * 60 * 1000)
 })
 
 app.on('window-all-closed', () => app.quit())
