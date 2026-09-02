@@ -391,7 +391,7 @@ const AVATAR_FILES = [
 ]
 
 async function loadUserTab() {
-  userNameDisplay.textContent = currentUser === 'Sasha' ? 'Саша' : 'Максим'
+  userNameDisplay.textContent = currentUser
   userNamePicker.classList.add('hidden')
   userNameEditBtn.classList.remove('hidden')
 
@@ -421,21 +421,24 @@ function buildAvatarGrid(currentAvatar) {
   })
 }
 
+const userNameInput   = document.getElementById('user-name-input')
+const userNameSaveBtn = document.getElementById('user-name-save-btn')
+
 userNameEditBtn.addEventListener('click', () => {
+  userNameInput.value = currentUser
   userNamePicker.classList.remove('hidden')
   userNameEditBtn.classList.add('hidden')
 })
 
-document.querySelectorAll('.user-pick-btn').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const newUser = btn.dataset.user
-    await window.api.setSetting('user_name', newUser)
-    currentUser = newUser
-    userNameDisplay.textContent = newUser === 'Sasha' ? 'Саша' : 'Максим'
-    userNamePicker.classList.add('hidden')
-    userNameEditBtn.classList.remove('hidden')
-    await refreshStats()
-  })
+userNameSaveBtn.addEventListener('click', async () => {
+  const name = userNameInput.value.trim()
+  if (!name) return
+  await window.api.renameUser(name)
+  currentUser = name
+  userNameDisplay.textContent = name
+  userNamePicker.classList.add('hidden')
+  userNameEditBtn.classList.remove('hidden')
+  await refreshStats()
 })
 
 avatarEditBtn.addEventListener('click', () => {

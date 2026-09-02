@@ -169,6 +169,31 @@ function setupIPC() {
     try { return os.userInfo().username || '' } catch { return '' }
   })
 
+  ipcMain.handle('db:rename-user', (_, newName) => {
+    const name = String(newName || '').trim()
+    if (!name) return false
+    const stmt = db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
+    const old = stmt.step() ? stmt.getAsObject().value : null
+    stmt.free()
+    if (!old || old === name) {
+      db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('user_name', ?)", [name])
+      saveDB()
+      return true
+    }
+    db.run('UPDATE sessions SET user = ? WHERE user = ?', [name, old])
+    const av = db.prepare('SELECT value FROM settings WHERE key = ?')
+    av.bind([`avatar_${old}`])
+    const avatar = av.step() ? av.getAsObject().value : null
+    av.free()
+    if (avatar) {
+      db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [`avatar_${name}`, avatar])
+      db.run('DELETE FROM settings WHERE key = ?', [`avatar_${old}`])
+    }
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('user_name', ?)", [name])
+    saveDB()
+    return true
+  })
+
   ipcMain.handle('db:get-setting', (_, key) => {
     const stmt = db.prepare('SELECT value FROM settings WHERE key = ?')
     stmt.bind([key])
