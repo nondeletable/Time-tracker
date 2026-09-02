@@ -5,7 +5,8 @@
   "main": "src/main/index.js",
   "scripts": {
     "dev": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "test": "node --test"
   },
   "dependencies": {
     "sql.js": "^1.12.0",

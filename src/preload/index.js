@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('api', {
   setSyncInterval:    (seconds)                  => ipcRenderer.invoke('sync:set-interval', seconds),
   getLastSync:        ()                         => ipcRenderer.invoke('sync:get-last-sync'),
   onSyncDone:         (cb)                       => ipcRenderer.on('sync:synced', (_, ts) => cb(ts)),
+  onPeriodAdvanced:   (cb)                       => ipcRenderer.on('period:advanced', cb),
   getDeletedCategories: ()     => ipcRenderer.invoke('db:get-deleted-categories'),
   softDeleteCategory:   (id)   => ipcRenderer.invoke('db:soft-delete-category', id),
   restoreCategory:      (id)   => ipcRenderer.invoke('db:restore-category', id),
