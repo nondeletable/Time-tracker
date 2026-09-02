@@ -122,12 +122,16 @@ async function initDB() {
     db.exec('ALTER TABLE categories ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
   } catch (_) {}
 
-  // Инвариант: локальный пользователь не должен присутствовать в peer_data
-  // (иначе его часы задваиваются). Чистим накопленный самодубль при старте.
-  const selfStmt = db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
-  const selfName = selfStmt.step() ? selfStmt.getAsObject().value : null
-  selfStmt.free()
-  purgeSelfFromPeerData(db, selfName)
+  // Одноразовая чистка peer_data: убираем накопленные самодубли (данные локального
+  // пользователя под старыми/новыми именами), попавшие туда легаси-синком.
+  // Соло-режим = свои часы только из sessions; напарник вернётся в Этапе 4 через синк.
+  const resetDone = db.prepare("SELECT 1 FROM settings WHERE key = 'peer_data_reset_v1'")
+  const alreadyReset = resetDone.step()
+  resetDone.free()
+  if (!alreadyReset) {
+    db.run('DELETE FROM peer_data')
+    db.run("INSERT INTO settings (key, value) VALUES ('peer_data_reset_v1', '1')")
+  }
 
   saveDB()
 }
@@ -428,11 +432,13 @@ app.whenReady().then(async () => {
   advancePeriodIfNeeded() // при запуске: окно откроется уже с актуальным периодом
   setupIPC()
   const win = createWindow()
-  startSync(db, saveDB, win)
 
-  const intStmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
-  if (intStmt.step()) setSyncInterval(Number(intStmt.getAsObject().value))
-  intStmt.free()
+  // Авто-синк отключён: соло-режим = без сети. Синк вернётся в Этапе 4 как opt-in
+  // (запуск только при активной группе, со стабильным per-install ID отправителя).
+  // startSync(db, saveDB, win)
+  // const intStmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
+  // if (intStmt.step()) setSyncInterval(Number(intStmt.getAsObject().value))
+  // intStmt.free()
 
   // Периодическая проверка: приложение может работать сутками, дата сменится без перезапуска.
   setInterval(() => {
