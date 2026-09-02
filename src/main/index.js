@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
+const os = require('os')
 const initSqlJs = require('sql.js')
 const { startSync, syncNow, setSyncInterval, getLastSyncAt } = require('./sync')
 const { advancePeriod } = require('./period')
@@ -164,6 +165,10 @@ function advancePeriodIfNeeded() {
 }
 
 function setupIPC() {
+  ipcMain.handle('app:get-default-name', () => {
+    try { return os.userInfo().username || '' } catch { return '' }
+  })
+
   ipcMain.handle('db:get-setting', (_, key) => {
     const stmt = db.prepare('SELECT value FROM settings WHERE key = ?')
     stmt.bind([key])
