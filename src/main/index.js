@@ -100,6 +100,7 @@ async function initDB() {
   seedSetting('period_end',           period.end)
   seedSetting('monthly_limit_seconds', String(160 * 3600))
   seedSetting('sync_interval_seconds', '300')
+  seedSetting('group_role',            'solo')
 
   // Migration: move old 'avatar' key to avatar_<user>
   const oldAvatarStmt = db.prepare("SELECT value FROM settings WHERE key = 'avatar'")

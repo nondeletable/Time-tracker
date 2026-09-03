@@ -452,11 +452,14 @@ async function loadLimitTab() {
   periodStartInput.value = period.period_start
   periodEndInput.value = period.period_end
 
-  limitInput.disabled = false
-  periodStartInput.disabled = false
-  periodEndInput.disabled = false
-  limitSaveBtn.classList.remove('hidden')
-  limitAdminNote.classList.add('hidden')
+  const role     = (await window.api.getSetting('group_role')) || 'solo'
+  const editable = window.ROLES.canEditLimit(role)
+
+  limitInput.disabled = !editable
+  periodStartInput.disabled = !editable
+  periodEndInput.disabled = !editable
+  limitSaveBtn.classList.toggle('hidden', !editable)
+  limitAdminNote.classList.toggle('hidden', editable)
 }
 
 limitSaveBtn.addEventListener('click', async () => {
