@@ -32,4 +32,9 @@ contextBridge.exposeInMainWorld('api', {
   joinGroup:          (code)  => ipcRenderer.invoke('group:join', code),
   leaveGroup:         ()      => ipcRenderer.invoke('group:leave'),
   onSyncLimitUpdated: (cb)    => ipcRenderer.on('sync:limit-updated', cb),
+  winMinimize:       ()   => ipcRenderer.invoke('win:minimize'),
+  winMaximizeToggle: ()   => ipcRenderer.invoke('win:maximize-toggle'),
+  winClose:          ()   => ipcRenderer.invoke('win:close'),
+  onWinMaximized:    (cb) => ipcRenderer.on('win:maximized', cb),
+  onWinUnmaximized:  (cb) => ipcRenderer.on('win:unmaximized', cb),
 })

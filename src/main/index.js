@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, screen } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const os = require('os')
@@ -8,6 +8,7 @@ const { advancePeriod } = require('./period')
 const { pickPresetCategories } = require('./presets')
 const { purgeSelfFromPeerData } = require('./peer')
 const { generateCode, normalizeCode } = require('./group')
+const { clampBoundsToScreen } = require('./window-bounds')
 const crypto = require('crypto')
 const { detectLang } = require('../renderer/js/i18n/i18n')
 
@@ -422,6 +423,14 @@ function setupIPC() {
     return { role: 'solo', code: '' }
   })
 
+  ipcMain.handle('win:minimize', () => { if (mainWin) mainWin.minimize() })
+  ipcMain.handle('win:maximize-toggle', () => {
+    if (!mainWin) return
+    if (mainWin.isMaximized()) mainWin.unmaximize()
+    else mainWin.maximize()
+  })
+  ipcMain.handle('win:close', () => { if (mainWin) mainWin.close() })
+
   ipcMain.handle('db:get-deleted-categories', () => {
     const stmt = db.prepare('SELECT id, name FROM categories WHERE deleted = 1 ORDER BY name')
     const rows = []
@@ -442,21 +451,60 @@ function setupIPC() {
 }
 
 function createWindow() {
-  const win = new BrowserWindow({
+  const opts = {
     width: 700,
     height: 600,
-    resizable: false,
+    minWidth: 700,
+    minHeight: 600,
+    frame: false,
+    resizable: true,
     icon: path.join(__dirname, '../../assets/icons/time-management.png'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false
     }
+  }
+
+  let restoreMaximized = false
+  const saved = readBoundsSetting()
+  if (saved) {
+    const clamped = clampBoundsToScreen(saved, screen.getAllDisplays())
+    if (clamped) {
+      opts.width = clamped.width
+      opts.height = clamped.height
+      opts.x = clamped.x
+      opts.y = clamped.y
+      restoreMaximized = !!saved.maximized
+    }
+  }
+
+  const win = new BrowserWindow(opts)
+  if (restoreMaximized) win.maximize()
+
+  win.on('maximize',   () => { if (!win.isDestroyed()) win.webContents.send('win:maximized') })
+  win.on('unmaximize', () => { if (!win.isDestroyed()) win.webContents.send('win:unmaximized') })
+
+  win.on('close', () => {
+    try {
+      const b = win.getNormalBounds()
+      const rec = { width: b.width, height: b.height, x: b.x, y: b.y, maximized: win.isMaximized() }
+      db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('window_bounds', ?)", [JSON.stringify(rec)])
+      saveDB()
+    } catch (_) {}
   })
 
   Menu.setApplicationMenu(null)
   win.loadFile(path.join(__dirname, '../renderer/index.html'))
   return win
+}
+
+function readBoundsSetting() {
+  const stmt = db.prepare("SELECT value FROM settings WHERE key = 'window_bounds'")
+  const val = stmt.step() ? stmt.getAsObject().value : null
+  stmt.free()
+  if (!val) return null
+  try { return JSON.parse(val) } catch (_) { return null }
 }
 
 app.whenReady().then(async () => {
