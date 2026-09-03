@@ -3,14 +3,17 @@ const path = require('path')
 const fs = require('fs')
 const os = require('os')
 const initSqlJs = require('sql.js')
-const { startSync, syncNow, setSyncInterval, getLastSyncAt } = require('./sync')
+const { startSync, stopSync, syncNow, setSyncInterval, getLastSyncAt } = require('./sync')
 const { advancePeriod } = require('./period')
 const { pickPresetCategories } = require('./presets')
 const { purgeSelfFromPeerData } = require('./peer')
+const { generateCode, normalizeCode } = require('./group')
+const crypto = require('crypto')
 const { detectLang } = require('../renderer/js/i18n/i18n')
 
 let db = null
 let dbPath = null
+let mainWin = null
 
 function saveDB() {
   if (db && dbPath) fs.writeFileSync(dbPath, Buffer.from(db.export()))
@@ -101,6 +104,7 @@ async function initDB() {
   seedSetting('monthly_limit_seconds', String(160 * 3600))
   seedSetting('sync_interval_seconds', '300')
   seedSetting('group_role',            'solo')
+  seedSetting('install_id',            crypto.randomUUID())
 
   // Migration: move old 'avatar' key to avatar_<user>
   const oldAvatarStmt = db.prepare("SELECT value FROM settings WHERE key = 'avatar'")
@@ -391,6 +395,33 @@ function setupIPC() {
 
   ipcMain.handle('sync:get-last-sync', () => getLastSyncAt())
 
+  ipcMain.handle('group:create', () => {
+    const code = generateCode()
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_role', 'owner')")
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_code', ?)", [code])
+    saveDB()
+    startSync(db, saveDB, mainWin)
+    return { role: 'owner', code }
+  })
+
+  ipcMain.handle('group:join', (_, rawCode) => {
+    const code = normalizeCode(rawCode)
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_role', 'member')")
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_code', ?)", [code])
+    saveDB()
+    startSync(db, saveDB, mainWin)
+    return { role: 'member', code }
+  })
+
+  ipcMain.handle('group:leave', () => {
+    stopSync()
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_role', 'solo')")
+    db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_code', '')")
+    db.run('DELETE FROM peer_data')
+    saveDB()
+    return { role: 'solo', code: '' }
+  })
+
   ipcMain.handle('db:get-deleted-categories', () => {
     const stmt = db.prepare('SELECT id, name FROM categories WHERE deleted = 1 ORDER BY name')
     const rows = []
@@ -432,14 +463,24 @@ app.whenReady().then(async () => {
   await initDB()
   advancePeriodIfNeeded() // при запуске: окно откроется уже с актуальным периодом
   setupIPC()
-  const win = createWindow()
+  mainWin = createWindow()
+  const win = mainWin
 
-  // Авто-синк отключён: соло-режим = без сети. Синк вернётся в Этапе 4 как opt-in
-  // (запуск только при активной группе, со стабильным per-install ID отправителя).
-  // startSync(db, saveDB, win)
-  // const intStmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
-  // if (intStmt.step()) setSyncInterval(Number(intStmt.getAsObject().value))
-  // intStmt.free()
+  // Синк — opt-in: стартует только при активной группе (owner/member + код).
+  {
+    const roleStmt = db.prepare("SELECT value FROM settings WHERE key = 'group_role'")
+    const bootRole = roleStmt.step() ? roleStmt.getAsObject().value : 'solo'
+    roleStmt.free()
+    const codeStmt = db.prepare("SELECT value FROM settings WHERE key = 'group_code'")
+    const bootCode = codeStmt.step() ? codeStmt.getAsObject().value : ''
+    codeStmt.free()
+    if ((bootRole === 'owner' || bootRole === 'member') && bootCode) {
+      startSync(db, saveDB, win)
+      const intStmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
+      if (intStmt.step()) setSyncInterval(Number(intStmt.getAsObject().value))
+      intStmt.free()
+    }
+  }
 
   // Периодическая проверка: приложение может работать сутками, дата сменится без перезапуска.
   setInterval(() => {

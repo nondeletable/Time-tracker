@@ -28,4 +28,8 @@ contextBridge.exposeInMainWorld('api', {
   getDeletedCategories: ()     => ipcRenderer.invoke('db:get-deleted-categories'),
   softDeleteCategory:   (id)   => ipcRenderer.invoke('db:soft-delete-category', id),
   restoreCategory:      (id)   => ipcRenderer.invoke('db:restore-category', id),
+  createGroup:        ()      => ipcRenderer.invoke('group:create'),
+  joinGroup:          (code)  => ipcRenderer.invoke('group:join', code),
+  leaveGroup:         ()      => ipcRenderer.invoke('group:leave'),
+  onSyncLimitUpdated: (cb)    => ipcRenderer.on('sync:limit-updated', cb),
 })

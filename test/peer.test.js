@@ -41,3 +41,47 @@ test('purgeSelfFromPeerData: пустое/невалидное имя — нич
   const total = db.exec('SELECT COUNT(*) FROM peer_data')[0].values[0][0]
   assert.equal(total, 1)
 })
+
+const { storePeerAggregates } = require('../src/main/peer')
+
+async function makeDbWithSettings() {
+  const SQL = await initSqlJs()
+  const db = new SQL.Database()
+  db.run(`CREATE TABLE peer_data (
+    user TEXT NOT NULL, day TEXT NOT NULL, total_seconds INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL, PRIMARY KEY (user, day))`)
+  db.run('CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT)')
+  return db
+}
+
+test('storePeerAggregates: свой install_id не пишется даже при совпадении имени', async () => {
+  const db = await makeDbWithSettings()
+  const stored = storePeerAggregates(
+    db,
+    { user: 'Alex', installId: 'me', avatar: 'a.svg', days: [{ day: '2026-09-01', total_seconds: 100 }] },
+    'me'
+  )
+  assert.equal(stored, false)
+  const total = db.exec('SELECT COUNT(*) FROM peer_data')[0].values[0][0]
+  assert.equal(total, 0)
+})
+
+test('storePeerAggregates: чужой install_id пишется (дни + аватар)', async () => {
+  const db = await makeDbWithSettings()
+  const stored = storePeerAggregates(
+    db,
+    { user: 'Alex', installId: 'other', avatar: 'a.svg', days: [{ day: '2026-09-01', total_seconds: 100 }] },
+    'me'
+  )
+  assert.equal(stored, true)
+  assert.equal(db.exec("SELECT total_seconds FROM peer_data WHERE user='Alex'")[0].values[0][0], 100)
+  assert.equal(db.exec("SELECT value FROM settings WHERE key='avatar_Alex'")[0].values[0][0], 'a.svg')
+})
+
+test('storePeerAggregates: перезапись — старые дни удаляются', async () => {
+  const db = await makeDbWithSettings()
+  storePeerAggregates(db, { user: 'Alex', installId: 'other', days: [{ day: '2026-09-01', total_seconds: 100 }] }, 'me')
+  storePeerAggregates(db, { user: 'Alex', installId: 'other', days: [{ day: '2026-09-02', total_seconds: 50 }] }, 'me')
+  const days = db.exec("SELECT day FROM peer_data WHERE user='Alex' ORDER BY day")[0].values.map(r => r[0])
+  assert.deepEqual(days, ['2026-09-02'])
+})

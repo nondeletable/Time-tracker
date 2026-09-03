@@ -784,6 +784,25 @@ body {
   background: #22c55e;
 }
 
+/* ── Sync: group states ─────────────────────────────────────────────────────── */
+#sync-solo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#group-create-btn {
+  align-self: flex-start;
+}
+
+#group-code-value {
+  user-select: text;
+  cursor: text;
+  font-family: monospace;
+  font-size: 1rem;
+  letter-spacing: 2px;
+}
+
 /* ── About dialog ──────────────────────────────────────────────────────────── */
 
 .about-name {

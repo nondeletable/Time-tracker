@@ -718,10 +718,23 @@ function formatLastSync(ts) {
 }
 
 async function loadSyncTab() {
-  const seconds = await window.api.getSyncInterval()
-  document.getElementById('sync-interval-select').value = String(seconds || 300)
-  const ts = await window.api.getLastSync()
-  document.getElementById('sync-last-time').textContent = formatLastSync(ts)
+  const role    = (await window.api.getSetting('group_role')) || 'solo'
+  const code    = (await window.api.getSetting('group_code')) || ''
+  const grouped = window.ROLES.isGrouped(role)
+
+  document.getElementById('sync-solo').classList.toggle('hidden', grouped)
+  document.getElementById('sync-grouped').classList.toggle('hidden', !grouped)
+
+  if (grouped) {
+    document.getElementById('group-role-value').textContent = t(`group_role_${role}`)
+    document.getElementById('group-code-value').textContent = code
+    const seconds = await window.api.getSyncInterval()
+    document.getElementById('sync-interval-select').value = String(seconds || 300)
+    const ts = await window.api.getLastSync()
+    document.getElementById('sync-last-time').textContent = formatLastSync(ts)
+  } else {
+    document.getElementById('group-join-input').value = ''
+  }
 }
 
 function secsToHHMM(seconds) {
@@ -1019,6 +1032,29 @@ syncBtn.addEventListener('click', () => {
 
 document.getElementById('sync-interval-select').addEventListener('change', async (e) => {
   await window.api.setSyncInterval(Number(e.target.value))
+})
+
+document.getElementById('group-create-btn').addEventListener('click', async () => {
+  await window.api.createGroup()
+  await loadSyncTab()
+})
+
+document.getElementById('group-join-btn').addEventListener('click', async () => {
+  const code = document.getElementById('group-join-input').value.trim()
+  if (code.length < 4) return
+  await window.api.joinGroup(code)
+  await loadSyncTab()
+})
+
+document.getElementById('group-leave-btn').addEventListener('click', async () => {
+  await window.api.leaveGroup()
+  await loadSyncTab()
+  await refreshStats()
+})
+
+window.api.onSyncLimitUpdated(async () => {
+  await refreshStats()
+  if (!settingsModal.classList.contains('hidden')) await loadLimitTab()
 })
 
 window.api.onSyncDone(ts => {
