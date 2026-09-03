@@ -15,7 +15,7 @@
     <a href="https://github.com/nondeletable/Time-tracker/blob/main/README/README-TT-RU.md">Русский </a>
     <br>
     <br>
-    <img src="/README/promo/tt_1.png" alt="Time Tracker by nondeletable" width="98%"/>
+    <img src="/README/promo/tt.png" alt="Time Tracker by nondeletable" width="98%"/>
     <br>
     <br>
   </p>
@@ -88,10 +88,6 @@ want it to - by creating a group and sharing a short code.
 4. Open the **Calendar** to see daily totals.
 5. Want to pair with someone? Open **Settings → Sync**, **Create a group**, and share the
    code. The other person picks **Join** and enters it - you're synced over the LAN.
-
-<p align="center">
-  <img src="/README/promo/tt.png" alt="Main window" width="60%"/>
-</p>
 &nbsp;
 &nbsp;
 
