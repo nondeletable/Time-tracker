@@ -188,22 +188,43 @@
           </div>
         </div>
         <div class="settings-pane hidden" id="pane-sync">
-          <div class="settings-row">
-            <span class="settings-row-label" data-i18n="sync_interval">Интервал</span>
-            <select class="settings-input" id="sync-interval-select">
-              <option value="60">1 мин</option>
-              <option value="120">2 мин</option>
-              <option value="300">5 мин</option>
-              <option value="600">10 мин</option>
-              <option value="900">15 мин</option>
-              <option value="1200">20 мин</option>
-              <option value="1800">30 мин</option>
-              <option value="3600">60 мин</option>
-            </select>
+          <!-- Соло: создать / присоединиться -->
+          <div id="sync-solo">
+            <button class="settings-save-btn" id="group-create-btn" data-i18n="group_create">Создать группу</button>
+            <div class="settings-row">
+              <input type="text" id="group-join-input" class="settings-input" maxlength="6"
+                     data-i18n-placeholder="group_join_placeholder" placeholder="Код">
+              <button class="settings-row-btn" id="group-join-btn" data-i18n="group_join">Присоединиться</button>
+            </div>
           </div>
-          <div class="settings-row">
-            <span class="settings-row-label" data-i18n="sync_last">Последняя синхронизация</span>
-            <span class="settings-row-value" id="sync-last-time">—</span>
+          <!-- В группе: статус + интервал + покинуть -->
+          <div id="sync-grouped" class="hidden">
+            <div class="settings-row">
+              <span class="settings-row-label" data-i18n="group_role_label">Роль</span>
+              <span class="settings-row-value" id="group-role-value"></span>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row-label" data-i18n="group_code_label">Код группы</span>
+              <span class="settings-row-value" id="group-code-value"></span>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row-label" data-i18n="sync_interval">Интервал</span>
+              <select class="settings-input" id="sync-interval-select">
+                <option value="60">1 мин</option>
+                <option value="120">2 мин</option>
+                <option value="300">5 мин</option>
+                <option value="600">10 мин</option>
+                <option value="900">15 мин</option>
+                <option value="1200">20 мин</option>
+                <option value="1800">30 мин</option>
+                <option value="3600">60 мин</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <span class="settings-row-label" data-i18n="sync_last">Последняя синхронизация</span>
+              <span class="settings-row-value" id="sync-last-time">—</span>
+            </div>
+            <button class="settings-save-btn" id="group-leave-btn" data-i18n="group_leave">Покинуть группу</button>
           </div>
         </div>
       </div>
