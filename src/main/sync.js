@@ -1,8 +1,10 @@
 const WebSocket = require('ws')
 const dgram     = require('dgram')
+const { validateHandshake, isSelf, shouldApplyLimit } = require('./group')
+const { storePeerAggregates } = require('./peer')
 
-const WS_PORT               = 43210
-const UDP_PORT              = 43211
+const WS_PORT  = 43210
+const UDP_PORT = 43211
 let syncIntervalMs = 5 * 60 * 1000
 let lastSyncAt     = null
 const BROADCAST_INTERVAL_MS = 30 * 1000
@@ -13,6 +15,10 @@ let _db     = null
 let _saveDB = null
 let _win    = null
 
+let started        = false
+let _wss           = null
+let _udp           = null
+let _broadcastTimer = null
 let peerSocket     = null
 let peerIP         = null
 let peerPort       = WS_PORT
@@ -20,134 +26,157 @@ let syncTimer      = null
 let reconnectTimer = null
 let serverClients  = new Set()
 
+// ── Локальные настройки ────────────────────────────────────────────────────
+
+function readLocal(key) {
+  const stmt = _db.prepare('SELECT value FROM settings WHERE key = ?')
+  stmt.bind([key])
+  const v = stmt.step() ? stmt.getAsObject().value : null
+  stmt.free()
+  return v
+}
+const myInstallId = () => readLocal('install_id')
+const myRole      = () => readLocal('group_role') || 'solo'
+const myCode      = () => readLocal('group_code') || ''
+
+// ── Жизненный цикл ──────────────────────────────────────────────────────────
+
 function startSync(db, saveDB, win) {
-  _db     = db
-  _saveDB = saveDB
-  _win    = win
+  _db = db; _saveDB = saveDB; _win = win
+  if (started) return
+  started = true
   startWSServer()
   startUDP()
 }
 
-// ── WebSocket server (accepts incoming connections from peer) ──────────────
+function stopSync() {
+  started = false
+  if (_wss)            { try { _wss.close() } catch (_) {} _wss = null }
+  if (_udp)            { try { _udp.close() } catch (_) {} _udp = null }
+  if (peerSocket)      { try { peerSocket.close() } catch (_) {} peerSocket = null }
+  if (syncTimer)       { clearInterval(syncTimer); syncTimer = null }
+  if (reconnectTimer)  { clearTimeout(reconnectTimer); reconnectTimer = null }
+  if (_broadcastTimer) { clearInterval(_broadcastTimer); _broadcastTimer = null }
+  serverClients.clear()
+  notifyStatus(false)
+}
+
+// ── WebSocket-сервер (входящие соединения) ─────────────────────────────────
+
+function sendHello(ws) {
+  if (ws.readyState !== WebSocket.OPEN) return
+  ws.send(JSON.stringify({ type: 'hello', installId: myInstallId(), code: myCode() }))
+}
 
 function startWSServer() {
   try {
-    const wss = new WebSocket.Server({ port: WS_PORT })
+    _wss = new WebSocket.Server({ port: WS_PORT })
     console.log(`[sync] WS server listening on port ${WS_PORT}`)
-    wss.on('connection', (ws, req) => {
-      console.log(`[sync] Incoming connection from ${req.socket.remoteAddress}`)
-      serverClients.add(ws)
-      notifyStatus(true)
+    _wss.on('connection', ws => {
+      ws._verified = false
       ws.on('message', data => {
-        try {
-          const payload = JSON.parse(data)
-          if (payload.type === 'sync') {
-            console.log(`[sync] Received data from ${payload.user}`)
-            storePeerData(payload)
-            sendSyncPayload(ws)
-          }
-        } catch (_) {}
+        let msg
+        try { msg = JSON.parse(data) } catch (_) { return }
+        if (msg.type === 'hello') {
+          if (!validateHandshake(myCode(), msg)) { ws.close(); return }
+          ws._verified = true
+          serverClients.add(ws)
+          notifyStatus(true)
+          sendHello(ws)
+          sendSyncPayload(ws)
+          return
+        }
+        if (msg.type === 'sync' && ws._verified) receiveSync(msg)
       })
       ws.on('close', () => {
-        console.log('[sync] Incoming connection closed')
         serverClients.delete(ws)
         if (serverClients.size === 0 && (!peerSocket || peerSocket.readyState !== WebSocket.OPEN)) {
           notifyStatus(false)
         }
       })
+      ws.on('error', () => {})
     })
-    wss.on('error', err => console.log('[sync] WS server error:', err.message))
+    _wss.on('error', err => console.log('[sync] WS server error:', err.message))
   } catch (err) {
     console.log('[sync] WS server failed to start:', err.message)
   }
 }
 
-// ── UDP broadcast (peer discovery) ─────────────────────────────────────────
+// ── UDP-broadcast (discovery, без кода) ────────────────────────────────────
 
 function startUDP() {
-  const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true })
-  sock.bind(UDP_PORT, () => {
-    sock.setBroadcast(true)
-    console.log(`[sync] UDP socket bound on port ${UDP_PORT}`)
-
+  _udp = dgram.createSocket({ type: 'udp4', reuseAddr: true })
+  _udp.bind(UDP_PORT, () => {
+    _udp.setBroadcast(true)
     const sendBroadcast = () => {
       const msg = Buffer.from(JSON.stringify({ instanceId: INSTANCE_ID, port: WS_PORT }))
-      sock.send(msg, 0, msg.length, UDP_PORT, '255.255.255.255', () => {})
-      console.log('[sync] UDP broadcast sent')
+      _udp.send(msg, 0, msg.length, UDP_PORT, '255.255.255.255', () => {})
     }
     sendBroadcast()
-    setInterval(sendBroadcast, BROADCAST_INTERVAL_MS)
+    _broadcastTimer = setInterval(sendBroadcast, BROADCAST_INTERVAL_MS)
 
-    sock.on('message', (msg, rinfo) => {
+    _udp.on('message', (buf, rinfo) => {
       try {
-        const data = JSON.parse(msg.toString())
+        const data = JSON.parse(buf.toString())
         if (data.instanceId === INSTANCE_ID) return
-        console.log(`[sync] UDP received from ${rinfo.address} — connecting...`)
         connectToPeer(rinfo.address, data.port || WS_PORT)
       } catch (_) {}
     })
-
-    sock.on('error', err => console.log('[sync] UDP error:', err.message))
+    _udp.on('error', err => console.log('[sync] UDP error:', err.message))
   })
 }
 
-// ── WebSocket client (outgoing connection to peer) ─────────────────────────
+// ── WebSocket-клиент (исходящее соединение) ────────────────────────────────
 
 function connectToPeer(ip, port) {
+  if (!started) return
   if (peerSocket && (
     peerSocket.readyState === WebSocket.OPEN ||
     peerSocket.readyState === WebSocket.CONNECTING
   )) return
 
   if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
+  peerIP = ip; peerPort = port
 
-  peerIP   = ip
-  peerPort = port
-
-  console.log(`[sync] Connecting to peer ${ip}:${port}`)
   const ws = new WebSocket(`ws://${ip}:${port}`)
 
   ws.on('open', () => {
-    console.log(`[sync] Connected to peer ${ip}:${port}`)
     peerSocket = ws
-    notifyStatus(true)
-    sendSyncPayload(ws)
+    ws._verified = false
+    sendHello(ws)                       // handshake первым
     if (syncTimer) clearInterval(syncTimer)
-    syncTimer = setInterval(() => sendSyncPayload(ws), syncIntervalMs)
+    syncTimer = setInterval(() => { if (ws._verified) sendSyncPayload(ws) }, syncIntervalMs)
   })
 
   ws.on('message', data => {
-    try {
-      const payload = JSON.parse(data)
-      if (payload.type === 'sync') storePeerData(payload)
-    } catch (_) {}
+    let msg
+    try { msg = JSON.parse(data) } catch (_) { return }
+    if (msg.type === 'hello') {
+      if (!validateHandshake(myCode(), msg)) { ws.close(); return }
+      ws._verified = true
+      notifyStatus(true)
+      sendSyncPayload(ws)
+      return
+    }
+    if (msg.type === 'sync' && ws._verified) receiveSync(msg)
   })
 
   ws.on('close', () => {
-    console.log(`[sync] Connection to peer ${ip}:${port} closed`)
     peerSocket = null
     notifyStatus(false)
     if (syncTimer) { clearInterval(syncTimer); syncTimer = null }
-    reconnectTimer = setTimeout(() => connectToPeer(peerIP, peerPort), RECONNECT_DELAY_MS)
+    if (started) reconnectTimer = setTimeout(() => connectToPeer(peerIP, peerPort), RECONNECT_DELAY_MS)
   })
 
   ws.on('error', () => {})
 }
 
-// ── Build sync payload from local DB ──────────────────────────────────────
+// ── Payload ────────────────────────────────────────────────────────────────
 
 function buildPayload() {
-  const userStmt = _db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
-  const hasUser  = userStmt.step()
-  const user     = hasUser ? userStmt.getAsObject().value : null
-  userStmt.free()
+  const user = readLocal('user_name')
   if (!user) return null
-
-  const avatarStmt = _db.prepare('SELECT value FROM settings WHERE key = ?')
-  avatarStmt.bind([`avatar_${user}`])
-  const hasAvatar = avatarStmt.step()
-  const avatar    = hasAvatar ? avatarStmt.getAsObject().value : 'user.svg'
-  avatarStmt.free()
+  const avatar = readLocal(`avatar_${user}`) || 'user.svg'
 
   const daysStmt = _db.prepare(`
     SELECT
@@ -163,7 +192,13 @@ function buildPayload() {
   while (daysStmt.step()) days.push(daysStmt.getAsObject())
   daysStmt.free()
 
-  return { type: 'sync', user, avatar, days }
+  const role = myRole()
+  const payload = { type: 'sync', installId: myInstallId(), role, user, avatar, days }
+  if (role === 'owner') {
+    payload.limit  = Number(readLocal('monthly_limit_seconds')) || 0
+    payload.period = { start: readLocal('period_start'), end: readLocal('period_end') }
+  }
+  return payload
 }
 
 function sendSyncPayload(ws) {
@@ -172,65 +207,43 @@ function sendSyncPayload(ws) {
   if (!payload) return
   ws.send(JSON.stringify(payload))
   lastSyncAt = Date.now()
-  if (_win && !_win.isDestroyed()) {
-    _win.webContents.send('sync:synced', lastSyncAt)
-  }
+  if (_win && !_win.isDestroyed()) _win.webContents.send('sync:synced', lastSyncAt)
 }
 
-// ── Store received peer data in DB ─────────────────────────────────────────
+// ── Приём данных ────────────────────────────────────────────────────────────
 
-function localUserName() {
-  const stmt = _db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
-  const name = stmt.step() ? stmt.getAsObject().value : null
-  stmt.free()
-  return name
-}
+function receiveSync(payload) {
+  if (isSelf(payload, myInstallId())) return
 
-function storePeerData(payload) {
-  const { user, avatar, days } = payload
-  if (!user || !Array.isArray(days)) return
-  // Инвариант: не храним в peer_data собственного пользователя (иначе задвоение часов).
-  if (user === localUserName()) return
+  const stored = storePeerAggregates(_db, payload, myInstallId())
 
-  _db.run('DELETE FROM peer_data WHERE user = ?', [user])
-  const now = Date.now()
-  days.forEach(d => {
-    if (d.day && d.total_seconds != null) {
-      _db.run(
-        'INSERT INTO peer_data (user, day, total_seconds, updated_at) VALUES (?, ?, ?, ?)',
-        [user, d.day, d.total_seconds, now]
-      )
+  let limitApplied = false
+  if (shouldApplyLimit(myRole(), payload.role) && payload.limit) {
+    _db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('monthly_limit_seconds', ?)", [String(payload.limit)])
+    if (payload.period && payload.period.start && payload.period.end) {
+      _db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('period_start', ?)", [payload.period.start])
+      _db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('period_end', ?)", [payload.period.end])
     }
-  })
-
-  if (avatar) {
-    _db.run(
-      'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
-      [`avatar_${user}`, avatar]
-    )
+    limitApplied = true
   }
 
-  _saveDB()
-
-  if (_win && !_win.isDestroyed()) {
-    _win.webContents.send('sync:peer-updated')
-  }
+  if (stored || limitApplied) _saveDB()
+  if (stored && _win && !_win.isDestroyed())       _win.webContents.send('sync:peer-updated')
+  if (limitApplied && _win && !_win.isDestroyed()) _win.webContents.send('sync:limit-updated')
 }
 
-// ── Status notification ────────────────────────────────────────────────────
+// ── Статус / ручной синк / интервал ─────────────────────────────────────────
 
 function notifyStatus(connected) {
-  if (_win && !_win.isDestroyed()) {
-    _win.webContents.send('sync:status-changed', connected)
-  }
+  if (_win && !_win.isDestroyed()) _win.webContents.send('sync:status-changed', connected)
 }
 
 function syncNow() {
-  if (peerSocket && peerSocket.readyState === WebSocket.OPEN) {
+  if (peerSocket && peerSocket.readyState === WebSocket.OPEN && peerSocket._verified) {
     sendSyncPayload(peerSocket)
   }
   serverClients.forEach(ws => {
-    if (ws.readyState === WebSocket.OPEN) sendSyncPayload(ws)
+    if (ws.readyState === WebSocket.OPEN && ws._verified) sendSyncPayload(ws)
   })
 }
 
@@ -238,12 +251,10 @@ function setSyncInterval(seconds) {
   syncIntervalMs = seconds * 1000
   if (syncTimer && peerSocket && peerSocket.readyState === WebSocket.OPEN) {
     clearInterval(syncTimer)
-    syncTimer = setInterval(() => sendSyncPayload(peerSocket), syncIntervalMs)
+    syncTimer = setInterval(() => { if (peerSocket && peerSocket._verified) sendSyncPayload(peerSocket) }, syncIntervalMs)
   }
 }
 
-function getLastSyncAt() {
-  return lastSyncAt
-}
+function getLastSyncAt() { return lastSyncAt }
 
-module.exports = { startSync, syncNow, setSyncInterval, getLastSyncAt }
+module.exports = { startSync, stopSync, syncNow, setSyncInterval, getLastSyncAt }
