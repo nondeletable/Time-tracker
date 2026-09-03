@@ -1057,6 +1057,15 @@ window.api.onSyncLimitUpdated(async () => {
   if (!settingsModal.classList.contains('hidden')) await loadLimitTab()
 })
 
+// ── Titlebar window controls ────────────────────────────────────────────────
+document.getElementById('win-min-btn').addEventListener('click', () => window.api.winMinimize())
+document.getElementById('win-max-btn').addEventListener('click', () => window.api.winMaximizeToggle())
+document.getElementById('win-close-btn').addEventListener('click', () => window.api.winClose())
+
+const winMaxIcon = document.getElementById('win-max-icon')
+window.api.onWinMaximized(()   => { winMaxIcon.src = '../../assets/icons/win-restore.svg' })
+window.api.onWinUnmaximized(() => { winMaxIcon.src = '../../assets/icons/win-max.svg' })
+
 window.api.onSyncDone(ts => {
   const el = document.getElementById('sync-last-time')
   if (el) el.textContent = formatLastSync(ts)

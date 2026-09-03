@@ -481,13 +481,72 @@ body {
 /* ── App header ────────────────────────────────────────────────────────────── */
 
 .app-header {
+  position: relative;
   height: 40px;
   background: #0d0d11;
   border-bottom: 1px solid #1a1a24;
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 4px 0 10px;
   flex-shrink: 0;
+  -webkit-app-region: drag;
+}
+
+.header-left,
+.burger-btn,
+.burger-dropdown,
+.sync-controls,
+.sync-text-btn,
+.win-btn {
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: 100%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.titlebar-title {
+  font-size: 13px;
+  color: #b0b0d0;
+  letter-spacing: 0.02em;
+}
+
+.window-controls {
+  display: flex;
+  align-items: center;
+  margin-left: 4px;
+}
+
+.win-btn {
+  width: 34px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.win-btn:hover {
+  background: #1a1a24;
+}
+
+.win-close:hover {
+  background: #f87171;
+}
+
+.win-close:hover img {
+  filter: brightness(0) invert(1);
 }
 
 .header-left {
