@@ -2,6 +2,13 @@
   "name": "time-tracker",
   "version": "1.0.0",
   "description": "Desktop time tracker for two users on a shared LAN",
+  "author": "nondeletable <nondeletable@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/nondeletable/Time-tracker",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nondeletable/Time-tracker.git"
+  },
   "main": "src/main/index.js",
   "scripts": {
     "dev": "electron .",
