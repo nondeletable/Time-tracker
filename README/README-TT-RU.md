@@ -15,7 +15,7 @@
     <a href="https://github.com/nondeletable/Time-tracker/blob/main/README/README-TT-RU.md">Русский </a>
     <br>
     <br>
-    <img src="promo/tt_1.png" alt="Time Tracker by nondeletable" width="98%"/>
+    <img src="promo/tt.png" alt="Time Tracker by nondeletable" width="98%"/>
     <br>
     <br>
   </p>
@@ -91,10 +91,6 @@ Time Tracker - небольшое десктоп-приложение, кото�
 5. Хотите работать в паре? Откройте **Настройки → Синхронизация**, **Создайте группу** и
    поделитесь кодом. Второй человек выбирает **Присоединиться** и вводит код - вы синхронизированы
    по локальной сети.
-
-<p align="center">
-  <img src="promo/tt.png" alt="Главное окно" width="60%"/>
-</p>
 &nbsp;
 &nbsp;
 
