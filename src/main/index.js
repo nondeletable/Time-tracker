@@ -454,8 +454,8 @@ function createWindow() {
   const opts = {
     width: 700,
     height: 600,
-    minWidth: 560,
-    minHeight: 500,
+    minWidth: 700,
+    minHeight: 600,
     frame: false,
     resizable: true,
     icon: path.join(__dirname, '../../assets/icons/time-management.png'),

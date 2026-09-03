@@ -207,7 +207,6 @@ body {
 
 .stats-container {
   width: 100%;
-  max-width: 360px;
   max-height: 140px;
   overflow-y: auto;
   display: flex;
@@ -278,10 +277,19 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  padding: 20px 40px;
+}
+
+.timer-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 20px;
-  padding: 24px 0;
 }
 
 .timer-ring {
@@ -525,7 +533,7 @@ body {
 .window-controls {
   display: flex;
   align-items: center;
-  margin-left: 4px;
+  margin-left: 12px;
 }
 
 .win-btn {
