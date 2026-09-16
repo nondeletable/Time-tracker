@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="ru" data-theme="dark" data-accent="emerald" data-mode="focus" data-wave="med" data-fxp="dust" data-fxl="off">
+<head>
+<meta charset="utf-8">
+<title>Time Tracker — Focus + Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   ТОКЕНЫ — 4 темы: emerald/indigo × dark/light.
+   Тема задаёт ВСЮ палитру, не только акцент: у emerald сине-графитовые
+   нейтралы, у indigo тёплые. Оба режима (Focus, Dashboard) берут одну
+   активную тему — режим и тема независимы.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --font-ui:  'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-num: 'JetBrains Mono', ui-monospace, monospace;
+
+  --c-work:#3b82f6; --c-study:#a855f7; --c-meet:#f97316;  --c-comm:#ec4899;
+  --c-person:#10b981; --c-design:#06b6d4; --c-review:#84cc16; --c-docs:#f59e0b;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
+  --r:12px; --r-lg:16px;
+  --t:180ms cubic-bezier(.4,0,.2,1);
+  --t-slow:420ms cubic-bezier(.16,1,.3,1);
+
+  --wave-ms: 900;   /* мс, за которые фронт доходит до дальнего угла */
+}
+/* пресеты скорости волны — переключаются в настройках */
+[data-wave="fast"] { --wave-ms: 520; }
+[data-wave="med"]  { --wave-ms: 900; }
+[data-wave="slow"] { --wave-ms: 1600; }
+
+/* ── EMERALD · LIGHT ─────────────────────────────────────────────────── */
+[data-accent="emerald"] {
+  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e5e8ee;
+  --text:#111827; --text-dim:#5a6478; --text-mute:#9aa3b4;
+  --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#ffffff; --danger:#dc2626;
+}
+/* ── EMERALD · DARK ──────────────────────────────────────────────────── */
+[data-accent="emerald"][data-theme="dark"] {
+  --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
+  --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
+  --accent:#34d399; --accent-soft:#0e2b22; --on-accent:#04231a; --danger:#f87171;
+}
+/* ── INDIGO · LIGHT ──────────────────────────────────────────────────── */
+[data-accent="indigo"] {
+  --bg:#f4f4f2; --surface:#ffffff; --surface-2:#ebebe7; --border:#e0e0da;
+  --text:#1c1c1a; --text-dim:#61615c; --text-mute:#97978f;
+  --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#ffffff; --danger:#dc2626;
+}
+/* ── INDIGO · DARK ───────────────────────────────────────────────────── */
+[data-accent="indigo"][data-theme="dark"] {
+  --bg:#0f0f0e; --surface:#171716; --surface-2:#1f1f1d; --border:#2b2b28;
+  --text:#f0efec; --text-dim:#a0a099; --text-mute:#6b6b64;
+  --accent:#818cf8; --accent-soft:#23234a; --on-accent:#10102a; --danger:#f87171;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font-ui); font-size:13.5px; line-height:1.5;
+       background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
+.num { font-family:var(--font-num); font-variant-numeric:tabular-nums; letter-spacing:-.03em; }
+button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:6px; }
+
+/* ═══ СЛУЖЕБНАЯ ПОЛОСА ПРОТОТИПА — не часть приложения ══════════════════ */
+.proto { display:flex; align-items:center; gap:var(--s4); padding:var(--s3) var(--s4);
+         background:var(--surface-2); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.proto b { font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--text-dim); }
+.proto .grp { display:flex; gap:2px; padding:2px; background:var(--surface); border:1px solid var(--border); border-radius:9px; }
+.proto .grp button { padding:5px 12px; border-radius:7px; font-size:12px; color:var(--text-dim); transition:background var(--t), color var(--t); }
+.proto .grp button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent); font-weight:600; }
+.proto .hint { margin-left:auto; font-size:11.5px; color:var(--text-mute); }
+.proto .sel { display:flex; align-items:center; gap:var(--s2); font-size:11.5px; color:var(--text-dim); }
+.proto .sel select, .row select { padding:5px 9px; background:var(--surface); color:var(--text);
+  border:1px solid var(--border); border-radius:8px; font:inherit; font-size:12px; }
+.proto .sel select:focus, .row select:focus { outline:none; border-color:var(--accent); }
+
+/* ═══ ОКНО ПРИЛОЖЕНИЯ ═══════════════════════════════════════════════════
+   Безрамочное: полоски ОС нет, окно тянется за .chrome, кнопки справа. */
+.app { position:relative; width:1280px; max-width:100%; height:812px; margin:var(--s4) auto;
+       background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg);
+       overflow:hidden; isolation:isolate;
+       box-shadow:0 24px 60px -24px rgba(0,0,0,.28); }
+[data-theme="dark"] .app { box-shadow:0 24px 60px -24px rgba(0,0,0,.7); }
+
+/* ── Неподвижная обвязка: T слева, кнопки окна справа.
+      Живёт НАД слоями и в волне не участвует — управление окном не должно
+      мигать во время перехода. ─────────────────────────────────────────── */
+/* padding-left 11px: центр T (34px) попадает на 28px — это центр рельса
+   Dashboard, иначе в нём T визуально съезжает правее иконок навигации */
+.chrome { position:absolute; inset:0 0 auto 0; height:64px; z-index:60;
+          display:flex; align-items:center; padding:0 var(--s4) 0 11px; pointer-events:none;
+          -webkit-app-region:drag; }
+.chrome > *, .chrome .dock { pointer-events:auto; -webkit-app-region:no-drag; }
+
+.tbtn { width:34px; height:34px; border-radius:10px; background:var(--accent); color:var(--on-accent);
+        display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;
+        transition:filter var(--t), background var(--t); }
+.tbtn:hover { filter:brightness(1.08); }
+/* Вращается только буква, квадрат стоит на месте — он же origin волны.
+   Буква доворачивает 180° и ОСТАЁТСЯ: ровная — Focus, перевёрнутая —
+   Dashboard. Следующее нажатие отматывает её обратно тем же ходом. */
+.tglyph { display:block; line-height:1; transition:transform 620ms cubic-bezier(.16,1,.3,1); }
+
+.chrome .sp { flex:1; }
+.win { display:flex; gap:2px; }
+/* без подсветки-квадратика: на наведении меняется цвет самого символа */
+.win button { width:32px; height:28px; color:var(--text-mute); font-size:13px; transition:color var(--t); }
+.win button:hover { color:var(--text); }
+.win button.x:hover { color:var(--danger); }
+
+/* ── Слои режимов ─────────────────────────────────────────────────────── */
+/* фон обязателен: под клипом внутри круга не должен просвечивать уходящий режим */
+.layer { position:absolute; inset:0; display:none; background:var(--bg); }
+[data-mode="focus"] .layer[data-layer="focus"] { display:flex; flex-direction:column; }
+[data-mode="dash"]  .layer[data-layer="dash"]  { display:grid; grid-template-columns:56px 1fr; grid-template-rows:minmax(0,1fr); }
+/* во время перехода показаны оба: уходящий снизу, приходящий поверх под клипом */
+.anim .layer[data-layer="focus"] { display:flex; flex-direction:column; }
+.anim .layer[data-layer="dash"]  { display:grid; grid-template-columns:56px 1fr; grid-template-rows:minmax(0,1fr); }
+.anim .layer.incoming { z-index:20; }
+
+/* фронт волны */
+.ring { position:absolute; border-radius:50%; border:2px solid var(--accent);
+        pointer-events:none; z-index:30; opacity:0;
+        box-shadow:0 0 28px 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* рождение элементов по фронту: задержка = дистанция / скорость */
+.layer.incoming [data-wave] { animation:waveIn 360ms cubic-bezier(.16,1,.3,1) both; animation-delay:var(--wd,0ms); }
+@keyframes waveIn { from { opacity:0; transform:translateY(10px) scale(.975) } to { opacity:1; transform:none } }
+
+/* режим «Fade»: уходящий слой сверху и гаснет, входящий проявляется под ним */
+.anim .layer.leaving { z-index:25; }
+.layer.fading [data-wave] { animation:fadeRise 420ms cubic-bezier(.16,1,.3,1) both; animation-delay:var(--wd,0ms); }
+@keyframes fadeRise { from { opacity:0; transform:translateY(18px) scale(.82) } to { opacity:1; transform:none } }
+
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   FOCUS MODE
+   ══════════════════════════════════════════════════════════════════════ */
+.f-bar { height:64px; flex-shrink:0; position:relative; z-index:1; }
+/* холст эффектов лежит под содержимым Focus */
+.fx { position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+
+/* Подвал лежит поверх сцены, а не в потоке: при раскрытии «Подробно» сцена
+   уезжает вверх лишь немного — кинематично, но панель успевает накрыть
+   бейджи категорий, а не гнать их вверх вместе с собой. */
+.stage { position:relative; z-index:1;
+         flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         gap:var(--s6); padding:0 var(--s5) 52px; min-height:0;
+         transition:transform var(--t-slow); }
+.layer.sheet-open .stage { transform:translateY(-44px); }
+/* Бейджи уходят под панель: между их рядами 8px, и нет подъёма, при котором
+   нижний ряд скрыт целиком, а верхний не липнет к краю панели. Поэтому не
+   подрезаем, а гасим — заодно они не отвлекают, пока читаешь статистику. */
+.chips { transition:opacity var(--t-slow), transform var(--t-slow); }
+.layer.sheet-open .chips { opacity:0; transform:translateY(14px); pointer-events:none; }
+.ring-wrap { position:relative; width:330px; height:330px; flex-shrink:0; }
+.dial { width:100%; height:100%; transform:rotate(-90deg); }
+.dial .track { fill:none; stroke:var(--surface-2); stroke-width:10; }
+.dial .prog { fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset var(--t-slow); }
+.dial-in { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--s2); }
+.dial-cat { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-dim); }
+.dial-cat .sw { width:9px; height:9px; border-radius:50%; }
+.dial-time { font-family:var(--font-num); font-weight:300; font-size:56px; letter-spacing:-.045em; line-height:1; }
+.dial-sub { font-size:12px; color:var(--text-mute); }
+.halo { position:absolute; inset:-30px; border-radius:50%; opacity:0; pointer-events:none;
+        background:radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 62%);
+        transition:opacity var(--t-slow); }
+.running .halo { opacity:1; animation:breathe 4.5s ease-in-out infinite; }
+@keyframes breathe { 0%,100% { transform:scale(1); opacity:.75 } 50% { transform:scale(1.045); opacity:1 } }
+
+.go { padding:15px 52px; border-radius:99px; background:var(--accent); color:var(--on-accent);
+      font-size:15px; font-weight:600; transition:transform var(--t), filter var(--t), background var(--t); }
+.go:hover { filter:brightness(1.07); transform:translateY(-1px); }
+.go:active { transform:scale(.985); }
+.go.stop { background:var(--surface-2); color:var(--text); }
+
+.chips { display:flex; flex-wrap:wrap; gap:var(--s2); justify-content:center; max-width:780px; }
+.chip { display:flex; align-items:center; gap:8px; padding:9px 16px; border-radius:99px;
+        border:1px solid var(--border); font-size:13px; color:var(--text-dim);
+        transition:border-color var(--t), color var(--t), background var(--t), transform var(--t); }
+.chip:hover { color:var(--text); transform:translateY(-1px); }
+.chip[aria-pressed="true"] { border-color:transparent; background:var(--accent-soft); color:var(--text); font-weight:600; }
+.chip .sw { width:8px; height:8px; border-radius:50%; }
+.chip .h { font-size:11.5px; color:var(--text-mute); font-family:var(--font-num); }
+
+/* подвал непрозрачный — иначе сцена просвечивает сквозь выезжающую панель */
+.foot { position:absolute; inset:auto 0 0 0; z-index:3; border-top:1px solid var(--border); background:var(--bg); }
+.foot-bar { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4); }
+.foot-bar .lab { font-size:12px; color:var(--text-mute); }
+.track { flex:1; height:6px; background:var(--surface-2); border-radius:99px; overflow:hidden; }
+.track span { display:block; height:100%; border-radius:99px; background:var(--accent); transition:width var(--t-slow); }
+.foot-num { font-size:13px; }
+.foot-num .of { color:var(--text-mute); }
+.expand { padding:6px 12px; border-radius:99px; font-size:12px; color:var(--text-dim); transition:background var(--t); }
+.expand:hover { background:var(--surface-2); }
+.sheet { max-height:0; overflow:hidden; background:var(--bg); transition:max-height var(--t-slow); }
+.sheet.open { max-height:240px; border-top:1px solid var(--border); }
+.sheet-in { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s5); padding:var(--s4) var(--s4) var(--s5); }
+.stat dt { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-mute); margin-bottom:6px; }
+.stat dd { font-size:24px; font-weight:600; letter-spacing:-.025em; font-family:var(--font-num); }
+.stat dd small { font-size:12px; color:var(--text-mute); font-weight:400; }
+.bars { grid-column:span 2; display:flex; flex-direction:column; gap:9px; }
+.bars-row { display:flex; align-items:center; gap:var(--s2); font-size:12px; }
+.bars-row .n { width:104px; color:var(--text-dim); }
+.bars-row .t { flex:1; height:5px; background:var(--surface-2); border-radius:99px; }
+.bars-row .t span { display:block; height:100%; border-radius:99px; }
+.bars-row .v { width:58px; text-align:right; font-family:var(--font-num); font-size:11.5px; color:var(--text-mute); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   DASHBOARD MODE
+   ══════════════════════════════════════════════════════════════════════ */
+.rail { background:var(--surface); border-right:1px solid var(--border);
+        display:flex; flex-direction:column; align-items:center; gap:var(--s2); padding:72px 0 var(--s3); }
+.rail button { width:36px; height:36px; border-radius:10px; color:var(--text-mute); font-size:15px; transition:background var(--t), color var(--t); }
+.rail button:hover { background:var(--surface-2); color:var(--text); }
+.rail button[aria-current="true"] { background:var(--accent-soft); color:var(--accent); }
+.rail .sp { flex:1; }
+
+.d-main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+/* Шапка ровно во всю верхнюю полосу: заголовок центрируется в тех же 64px,
+   где стоят T и правая панель, поэтому верхний отступ читается как боковой. */
+.d-head { display:flex; align-items:center; gap:var(--s4); height:64px; padding:0 var(--s5); flex-shrink:0; }
+.d-head h1 { font-size:19px; font-weight:600; letter-spacing:-.02em; line-height:1.15; }
+.d-head .sp { flex:1; }
+.d-head .pad { width:104px; }   /* зазор под кнопки окна справа сверху */
+
+/* Таймер — не обособленный блок, а такие же элементы строки-шапки, как
+   заголовок: никакой рамки вокруг, общий ритм отступов. */
+.dock { display:flex; align-items:center; gap:var(--s3); white-space:nowrap; }
+.dock > * { flex-shrink:0; }
+.dock-cat { display:flex; align-items:center; gap:7px; padding:6px 10px; border-radius:8px;
+            font-size:12.5px; color:var(--text-dim); transition:background var(--t), color var(--t); }
+.dock-cat:hover { background:var(--surface-2); color:var(--text); }
+.dock-cat .sw { width:8px; height:8px; border-radius:50%; }
+/* без min-width: в моноширинном цифры не пляшут, а лишняя ширина уходила
+   вправо и раздвигала промежуток перед кнопкой сильнее, чем слева */
+.dock-time { font-size:15px; font-weight:500; transition:color var(--t); }
+.dock.running .dock-time { color:var(--accent); }
+/* Кнопка без заливки: габарит как у дропдауна категории, шрифт и кегль как
+   у самого таймера — вся строка читается как один набор, а состояние несёт
+   цвет надписи, а не цветной прямоугольник. */
+.dock-btn { padding:6px 10px; border-radius:8px; background:none;
+            font-family:var(--font-num); font-size:15px; font-weight:500;
+            letter-spacing:.02em; color:var(--accent);
+            transition:background var(--t), color var(--t); }
+.dock-btn:hover { background:var(--surface-2); }
+.dock-btn.stop { color:var(--danger); }
+
+.scroll { flex:1; overflow-y:auto; padding:0 var(--s5) var(--s5); min-height:0; display:flex; flex-direction:column; }
+/* сетка тянется на всю высоту, последняя карточка добирает остаток —
+   иначе внизу копится бесхозная пустота */
+.grid { display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:auto auto minmax(0,1fr);
+        gap:var(--s3); flex:1; min-height:0; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s4); min-width:0; }
+.card h3 { font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--text-mute); margin-bottom:var(--s3); font-weight:600; }
+.span2 { grid-column:span 2; }
+.span4 { grid-column:span 4; display:flex; flex-direction:column; min-height:0; }
+
+.big { font-size:34px; font-weight:600; letter-spacing:-.035em; line-height:1.05; }
+.big .of { font-size:15px; color:var(--text-mute); font-weight:400; }
+.delta { display:inline-flex; font-size:11.5px; color:var(--text-dim); margin-top:6px; }
+.stack { display:flex; height:10px; border-radius:99px; overflow:hidden; background:var(--surface-2); margin-top:var(--s4); }
+.legend { display:flex; gap:var(--s4); margin-top:var(--s3); font-size:12px; color:var(--text-dim); flex-wrap:wrap; }
+.legend b { display:inline-flex; align-items:center; gap:6px; font-weight:400; }
+.legend i { width:8px; height:8px; border-radius:2px; }
+.legend .v { font-family:var(--font-num); color:var(--text); }
+.legend .sync { color:var(--text-mute); }
+
+.donut-wrap { display:flex; align-items:center; gap:var(--s4); }
+.donut { width:124px; height:124px; flex-shrink:0; transform:rotate(-90deg); }
+.donut circle { fill:none; stroke-width:16; }
+.dl { flex:1; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.dl-row { display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--text-dim); }
+.dl-row i { width:7px; height:7px; border-radius:2px; flex-shrink:0; }
+.dl-row .n { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dl-row .v { font-family:var(--font-num); color:var(--text); }
+
+/* карточка-колонка: график растягивается, поэтому нижний отступ совпадает
+   с верхним, а не копится пустотой под шкалой */
+.card.fill { display:flex; flex-direction:column; }
+.chart { display:flex; align-items:flex-end; gap:3px; flex:1; min-height:92px; }
+.chart .bar { flex:1; background:var(--accent); border-radius:2px 2px 0 0; min-height:2px; opacity:.85; transition:opacity var(--t), transform var(--t); }
+.chart .bar:hover { opacity:1; transform:scaleY(1.03); transform-origin:bottom; }
+.chart .bar.none { background:var(--surface-2); }
+.chart-x { display:flex; justify-content:space-between; font-size:10px; color:var(--text-mute); margin-top:6px; font-family:var(--font-num); }
+
+.tbl-wrap { flex:1; min-height:0; overflow-y:auto; }
+.tbl { width:100%; border-collapse:collapse; }
+.tbl th { font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--text-mute); text-align:left;
+          padding:0 0 var(--s2); font-weight:600; position:sticky; top:0; background:var(--surface); z-index:1; }
+.tbl th:last-child, .tbl td:last-child { text-align:right; }
+.tbl td { padding:7px 0; border-top:1px solid var(--border); font-size:12.5px; }
+.tbl .nm { display:flex; align-items:center; gap:8px; }
+.tbl .nm i { width:8px; height:8px; border-radius:2px; }
+.tbl .mini { width:78px; height:4px; background:var(--surface-2); border-radius:2px; display:inline-block; vertical-align:middle; }
+.tbl .mini span { display:block; height:100%; border-radius:2px; }
+
+/* ── Календарь: общий для обоих режимов ───────────────────────────────── */
+.cal { display:grid; grid-template-columns:repeat(7,1fr); gap:var(--s2); }
+.cal-wd { font-size:10px; letter-spacing:.08em; color:var(--text-mute); text-align:center; padding-bottom:2px; font-weight:600; }
+.cal-d { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 10px;
+         min-height:88px; display:flex; flex-direction:column; gap:4px; transition:border-color var(--t), transform var(--t); }
+.cal-d:hover { border-color:var(--accent); transform:translateY(-2px); }
+.cal-d.empty { background:transparent; border-color:transparent; }
+.cal-d.today { border-color:var(--accent); background:var(--accent-soft); }
+.cal-d .n { font-size:11.5px; font-weight:600; color:var(--text-dim); font-family:var(--font-num); }
+.cal-d .tot { font-size:15px; font-weight:600; letter-spacing:-.03em; font-family:var(--font-num); }
+.cal-d .split { display:flex; height:4px; border-radius:2px; overflow:hidden; background:var(--surface-2); margin-top:auto; }
+
+/* ── Настройки: общая разметка ────────────────────────────────────────── */
+.set-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s3); }
+.row { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) 0; border-bottom:1px solid var(--border); }
+.row:last-child { border-bottom:none; }
+.row .lab { flex:1; font-size:12.5px; color:var(--text-dim); }
+.inp { padding:7px 11px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font:inherit; font-size:12.5px; color:var(--text); }
+.inp:focus { outline:none; border-color:var(--accent); }
+.seg { display:flex; gap:2px; padding:2px; background:var(--surface-2); border-radius:9px; }
+.seg button { padding:5px 12px; border-radius:7px; font-size:12px; color:var(--text-dim); transition:background var(--t), color var(--t); }
+.seg button[aria-pressed="true"] { background:var(--surface); color:var(--text); font-weight:600; }
+.sw-dot { width:10px; height:10px; border-radius:50%; margin-right:6px; display:inline-block; vertical-align:-1px; }
+.note { font-size:11.5px; color:var(--text-mute); margin-top:var(--s3); }
+
+/* ── Тонкий скроллбар: в покое невидим, проявляется при прокрутке ─────── */
+.thin { scrollbar-width:thin; scrollbar-color:transparent transparent; }
+.thin.scrolling, .thin:hover { scrollbar-color:color-mix(in srgb, var(--text-mute) 60%, transparent) transparent; }
+.thin::-webkit-scrollbar { width:10px; }
+.thin::-webkit-scrollbar-track { background:transparent; }
+.thin::-webkit-scrollbar-thumb { background:transparent; border-radius:99px; border:3px solid transparent; background-clip:padding-box; }
+.thin.scrolling::-webkit-scrollbar-thumb, .thin:hover::-webkit-scrollbar-thumb {
+  background:color-mix(in srgb, var(--text-mute) 60%, transparent); background-clip:padding-box; }
+
+.view { display:none; } .view.on { display:block; }
+.view.on[data-view="main"] { display:flex; flex-direction:column; flex:1; min-height:0; }
+</style>
+</head>
+<body>
+
+<div class="proto">
+  <b>Focus + Dashboard</b>
+  <div class="grp" role="group" aria-label="Режим">
+    <button data-set="mode" data-val="focus" aria-pressed="true">Focus</button>
+    <button data-set="mode" data-val="dash">Dashboard</button>
+  </div>
+  <div class="grp" role="group" aria-label="Тема">
+    <button data-set="accent" data-val="emerald" aria-pressed="true">Emerald</button>
+    <button data-set="accent" data-val="indigo">Indigo</button>
+  </div>
+  <div class="grp" role="group" aria-label="Светлость">
+    <button data-set="theme" data-val="dark" aria-pressed="true">Тёмная</button>
+    <button data-set="theme" data-val="light">Светлая</button>
+  </div>
+  <label class="sel">Эффект
+    <select data-set="fxp">
+      <option value="off">нет</option>
+      <option value="dust">Пыль</option>
+      <option value="emit">Эмиссия</option>
+      <option value="universe">Вселенная</option>
+      <option value="grid">Сетка</option>
+    </select>
+  </label>
+  <label class="sel">Засветы
+    <select data-set="fxl">
+      <option value="off">нет</option>
+      <option value="bottom">снизу</option>
+      <option value="all">везде</option>
+      <option value="aurora">Сияние</option>
+    </select>
+  </label>
+  <span class="hint">Режим — <b>T</b> в углу окна или <b>Ctrl+M</b></span>
+</div>
+
+<div class="app" id="app">
+
+  <!-- Неподвижная обвязка поверх слоёв -->
+  <div class="chrome">
+    <button class="tbtn" id="tbtn" title="Сменить режим (Ctrl+M)"><span class="tglyph" id="tglyph">T</span></button>
+    <span class="sp"></span>
+    <div class="win"><button>—</button><button>▢</button><button class="x">✕</button></div>
+  </div>
+
+  <div class="ring" id="ring"></div>
+
+  <!-- ══════════ FOCUS ══════════════════════════════════════════════════ -->
+  <div class="layer" data-layer="focus" id="layer-focus">
+    <canvas class="fx" id="fx"></canvas>
+    <!-- Focus: в шапке пусто. Имя экрана тут называть нечем — экран один,
+         а марку держит иконка T. Календарь, настройки и статус синка живут
+         только в Dashboard, на то он и Focus. -->
+    <div class="f-bar"></div>
+
+    <div class="stage">
+      <div class="ring-wrap" data-wave>
+        <div class="halo"></div>
+        <svg class="dial" viewBox="0 0 330 330">
+          <circle class="track" cx="165" cy="165" r="156"></circle>
+          <circle class="prog" cx="165" cy="165" r="156" id="prog"></circle>
+        </svg>
+        <div class="dial-in">
+          <span class="dial-cat"><span class="sw" style="background:var(--c-study)"></span> Study</span>
+          <span class="dial-time" id="ftime">00:00:00</span>
+          <span class="dial-sub" id="fsub">сегодня 4h 41m из 8h</span>
+        </div>
+      </div>
+
+      <button class="go" id="go" data-wave>Начать</button>
+      <div class="chips" id="chips" data-wave></div>
+    </div>
+
+    <div class="foot" data-wave>
+      <div class="foot-bar">
+        <span class="lab">28 Aug — 27 Sep</span>
+        <div class="track"><span style="width:60.5%"></span></div>
+        <span class="foot-num num"><b>96h 48m</b> <span class="of">/ 160h</span></span>
+        <button class="expand" id="expand">Подробно ▾</button>
+      </div>
+      <div class="sheet" id="sheet">
+        <div class="sheet-in">
+          <dl class="stat"><dt>Осталось</dt><dd>63h 12m</dd></dl>
+          <dl class="stat"><dt>В среднем/день</dt><dd>3h 42m <small>· 16 дн.</small></dd></dl>
+          <div class="bars" id="bars"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════ DASHBOARD ══════════════════════════════════════════════ -->
+  <div class="layer" data-layer="dash" id="layer-dash">
+    <nav class="rail" data-wave>
+      <button aria-current="true" title="Сводка" data-nav="main">▦</button>
+      <button title="Календарь" data-nav="cal">▤</button>
+      <button title="Настройки" data-nav="set">⚙</button>
+      <span class="sp"></span>
+      <button title="Профиль">◍</button>
+    </nav>
+
+    <div class="d-main">
+      <!-- Одна строка-шапка: заголовок · категория · таймер · Start,
+           справа зарезервировано место под кнопки окна. Таймер здесь, а не
+           в обвязке, чтобы волна накрывала его наравне с остальным. -->
+      <div class="d-head">
+        <h1 id="dtitle" data-wave>Сводка периода</h1>
+        <span class="sp"></span>
+        <div class="dock" id="dock" data-wave>
+          <button class="dock-cat"><span class="sw" style="background:var(--c-study)"></span> Study ▾</button>
+          <span class="dock-time num" id="dtime">00:00:00</span>
+          <button class="dock-btn" id="dbtn">START</button>
+        </div>
+        <span class="pad"></span>
+      </div>
+
+      <div class="scroll thin">
+        <div class="view on" data-view="main">
+          <div class="grid">
+            <div class="card span2" data-wave>
+              <h3>Общий лимит · 28 Aug — 27 Sep</h3>
+              <div class="big num">96h 48m <span class="of">/ 160h</span></div>
+              <span class="delta">осталось 63h 12m · 11 дней · при текущем темпе хватит до 4 Oct</span>
+              <div class="stack">
+                <span style="width:41.8%;background:var(--accent)"></span>
+                <span style="width:18.7%;background:var(--c-comm)"></span>
+              </div>
+              <div class="legend">
+                <b><i style="background:var(--accent)"></i> Maxim <span class="v">66h 48m</span></b>
+                <b><i style="background:var(--c-comm)"></i> Sasha <span class="v">30h 00m</span> <span class="sync">· синк 2 мин назад</span></b>
+                <b><i style="background:var(--surface-2)"></i> свободно <span class="v">63h 12m</span></b>
+              </div>
+            </div>
+            <div class="card" data-wave><h3>Сегодня</h3><div class="big num">4h 41m</div><span class="delta">3 сессии · Study, Design</span></div>
+            <div class="card" data-wave><h3>В среднем за день</h3><div class="big num">3h 42m</div><span class="delta">16 активных дней из 30</span></div>
+            <div class="card span2" data-wave>
+              <h3>Распределение по категориям</h3>
+              <div class="donut-wrap"><svg class="donut" viewBox="0 0 124 124" id="donut"></svg><div class="dl" id="dl"></div></div>
+            </div>
+            <div class="card span2 fill" data-wave>
+              <h3>По дням · сентябрь</h3>
+              <div class="chart" id="chart"></div>
+              <div class="chart-x"><span>1</span><span>8</span><span>15</span><span>22</span><span>30</span></div>
+            </div>
+            <div class="card span4" data-wave>
+              <h3>Категории</h3>
+              <div class="tbl-wrap thin">
+                <table class="tbl"><thead><tr><th>Название</th><th>Доля</th><th>Сессий</th><th>Всего</th></tr></thead><tbody id="tbody"></tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="view" data-view="cal"><div class="cal" data-cal data-wave></div></div>
+        <div class="view" data-view="set"><div class="set-grid" data-settings data-wave></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const root = document.documentElement;
+const app  = document.getElementById('app');
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ═══ ДАННЫЕ ══════════════════════════════════════════════════════════ */
+const CATS = [
+  ['Study','c-study',15.53,12], ['Work','c-work',10.80,9],
+  ['Design','c-design',9.72,7], ['Documentation','c-docs',8.90,6],
+  ['Meetings','c-meet',7.35,5], ['Communication','c-comm',6.08,4],
+  ['Code Review','c-review',5.20,4], ['Personal','c-person',3.22,3],
+];
+const TOTAL = CATS.reduce((a,c) => a + c[2], 0);
+const HOURS = {1:6.2,2:8.1,3:4.1,4:8.8,5:2.4,6:2.25,7:5.5,8:8.5,9:4.7,10:4.75,11:3.8,13:3.6,14:8.9,15:6.6,16:8.1};
+const hm = h => `${Math.floor(h)}h ${String(Math.round((h%1)*60)).padStart(2,'0')}m`;
+
+/* ═══ РЕНДЕР ══════════════════════════════════════════════════════════ */
+document.getElementById('chips').innerHTML = CATS.map(([n,c,h],i) => `
+  <button class="chip" aria-pressed="${i===0}"><span class="sw" style="background:var(--${c})"></span>${n}<span class="h">${hm(h)}</span></button>`).join('');
+
+document.getElementById('bars').innerHTML = CATS.slice(0,5).map(([n,c,h]) => `
+  <div class="bars-row"><span class="n">${n}</span>
+  <span class="t"><span style="width:${h/CATS[0][2]*100}%;background:var(--${c})"></span></span>
+  <span class="v">${hm(h)}</span></div>`).join('');
+
+let off = 0; const C = 2 * Math.PI * 54;
+document.getElementById('donut').innerHTML = CATS.map(([n,c,h]) => {
+  const len = C * (h / TOTAL);
+  const el = `<circle cx="62" cy="62" r="54" stroke="var(--${c})" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}"></circle>`;
+  off += len; return el;
+}).join('');
+
+document.getElementById('dl').innerHTML = CATS.slice(0,5).map(([n,c,h]) => `
+  <div class="dl-row"><i style="background:var(--${c})"></i><span class="n">${n}</span><span class="v">${Math.round(h/TOTAL*100)}%</span></div>`).join('')
+  + `<div class="dl-row"><i style="background:var(--surface-2)"></i><span class="n">ещё 3</span><span class="v">22%</span></div>`;
+
+document.getElementById('tbody').innerHTML = CATS.map(([n,c,h,s]) => `
+  <tr><td><span class="nm"><i style="background:var(--${c})"></i>${n}</span></td>
+  <td><span class="mini"><span style="width:${h/CATS[0][2]*100}%;background:var(--${c})"></span></span></td>
+  <td class="num">${s}</td><td class="num">${hm(h)}</td></tr>`).join('');
+
+document.getElementById('chart').innerHTML = Array.from({length:30}, (_,i) => {
+  const h = HOURS[i+1] || 0;
+  return `<span class="bar ${h?'':'none'}" style="height:${h?Math.max(h/9*100,6):6}%" title="${i+1}: ${h?hm(h):'—'}"></span>`;
+}).join('');
+
+const calHTML = ['MON','TUE','WED','THU','FRI','SAT','SUN'].map(d => `<span class="cal-wd">${d}</span>`).join('')
+  + '<span class="cal-d empty"></span>'
+  + Array.from({length:30}, (_,i) => {
+      const d = i+1, h = HOURS[d];
+      if (!h) return `<span class="cal-d"><span class="n">${d}</span></span>`;
+      const me = h*.69, pe = d%3!==2 ? h*.31 : 0;
+      return `<span class="cal-d ${d===16?'today':''}"><span class="n">${d}</span><span class="tot">${hm(me+pe)}</span>
+        <span class="split"><span style="width:${me/(me+pe)*100}%;background:var(--accent)"></span>
+        <span style="width:${pe/(me+pe)*100}%;background:var(--c-comm)"></span></span></span>`;
+    }).join('');
+document.querySelectorAll('[data-cal]').forEach(el => el.innerHTML = calHTML);
+
+const settingsHTML = `
+  <div class="card">
+    <h3>Оформление</h3>
+    <div class="row"><span class="lab">Тема</span>
+      <div class="seg"><button data-set="accent" data-val="emerald"><span class="sw-dot" style="background:#34d399"></span>Emerald</button><button data-set="accent" data-val="indigo"><span class="sw-dot" style="background:#818cf8"></span>Indigo</button></div></div>
+    <div class="row"><span class="lab">Светлость</span>
+      <div class="seg"><button data-set="theme" data-val="dark">Тёмная</button><button data-set="theme" data-val="light">Светлая</button></div></div>
+    <div class="row"><span class="lab">Режим</span>
+      <div class="seg"><button data-set="mode" data-val="focus">Focus</button><button data-set="mode" data-val="dash">Dashboard</button></div></div>
+    <div class="row"><span class="lab">Переход между режимами</span>
+      <div class="seg"><button data-set="wave" data-val="fade">Fade</button><button data-set="wave" data-val="fast">Fast</button><button data-set="wave" data-val="med">Medium</button><button data-set="wave" data-val="slow">Slow</button></div></div>
+  </div>
+  <div class="card">
+    <h3>Лимит и период</h3>
+    <div class="row"><span class="lab">Месячный лимит, ч</span><input class="inp num" value="160" style="width:82px"></div>
+    <div class="row"><span class="lab">Начало</span><input class="inp num" value="2026-08-28" style="width:132px"></div>
+    <div class="row"><span class="lab">Конец</span><input class="inp num" value="2026-09-27" style="width:132px"></div>
+    <p class="note">Лимит общий на двоих: владелец группы меняет, участник получает по синхронизации.</p>
+  </div>
+  <div class="card">
+    <h3>Эффекты фона · Focus</h3>
+    <div class="row"><span class="lab">Эффект</span>
+      <select data-set="fxp">
+        <option value="off">Нет</option><option value="dust">Пыль</option>
+        <option value="emit">Эмиссия</option><option value="universe">Вселенная</option>
+        <option value="grid">Сетка</option>
+      </select></div>
+    <div class="row"><span class="lab">Засветы</span>
+      <select data-set="fxl">
+        <option value="off">Нет</option><option value="bottom">Снизу</option>
+        <option value="all">Везде</option><option value="aurora">Сияние</option>
+      </select></div>
+    <p class="note">Свечение вокруг таймера включено всегда. Цвета всех эффектов берутся из акцента темы и двух соседних оттенков.</p>
+  </div>
+  <div class="card">
+    <h3>Группа</h3>
+    <div class="row"><span class="lab">Код</span><span class="num">TT-4K9P</span></div>
+    <div class="row"><span class="lab">Роль</span><span>Владелец</span></div>
+    <div class="row"><span class="lab">Синхронизация</span><span>каждые 5 мин</span></div>
+  </div>
+  <div class="card">
+    <h3>Категории</h3>
+    <div class="row"><span class="lab">Активных</span><span class="num">8</span></div>
+    <div class="row"><span class="lab">В корзине</span><span class="num">1</span></div>
+    <div class="row"><span class="lab"></span><button class="inp" style="cursor:pointer">Управлять</button></div>
+  </div>`;
+document.querySelectorAll('[data-settings]').forEach(el => el.innerHTML = settingsHTML);
+
+/* ═══ ТАЙМЕР — один на оба режима ═════════════════════════════════════ */
+const prog = document.getElementById('prog');
+const LEN = 2 * Math.PI * 156;
+prog.style.strokeDasharray = LEN;
+const ftime = document.getElementById('ftime'), fsub = document.getElementById('fsub');
+const dtime = document.getElementById('dtime'), dock = document.getElementById('dock');
+const go = document.getElementById('go'), dbtn = document.getElementById('dbtn');
+const focusLayer = document.getElementById('layer-focus');
+let tick = null, sec = 0, running = false;
+
+function paint() {
+  const t = [sec/3600, sec/60%60, sec%60].map(n => String(Math.floor(n)).padStart(2,'0')).join(':');
+  ftime.textContent = dtime.textContent = t;
+  const done = 16860 + (running ? sec : 0);
+  prog.style.strokeDashoffset = LEN * (1 - Math.min(done / 28800, 1));
+  fsub.textContent = `сегодня ${hm(done/3600)} из 8h`;
+}
+function setRunning(on) {
+  running = on; clearInterval(tick);
+  focusLayer.classList.toggle('running', on);
+  dock.classList.toggle('running', on);
+  go.classList.toggle('stop', on);   go.textContent = on ? 'Остановить' : 'Начать';
+  dbtn.classList.toggle('stop', on); dbtn.textContent = on ? 'STOP' : 'START';
+  sec = on ? 4301 : 0;
+  paint();
+  if (on) tick = setInterval(() => { sec++; paint(); }, 1000);
+}
+setRunning(false);
+[go, dbtn].forEach(b => b.addEventListener('click', () => setRunning(!running)));
+
+/* ═══ ВОЛНА: переключение режимов ═════════════════════════════════════
+   Фронт — круг clip-path от центра кнопки T. Каждый элемент входящего
+   слоя получает задержку = расстояние до T / скорость фронта, поэтому
+   элементы рождаются ровно там, где волна прошла. Скорость линейная,
+   иначе фронт и элементы разъезжаются. */
+const layers = { focus: focusLayer, dash: document.getElementById('layer-dash') };
+const tbtn = document.getElementById('tbtn');
+const ringEl = document.getElementById('ring');
+let busy = false;
+
+const tglyph = document.getElementById('tglyph');
+let turns = 0;
+function spinT(D) {
+  turns++;
+  tglyph.style.transitionDuration = Math.min(D, 700) + 'ms';
+  tglyph.style.transform = `rotate(${turns * 180}deg)`;
+  // квадрат не вращается — он коротко пульсирует, как будто выстреливает волну
+  tbtn.animate(
+    [ { transform:'scale(1)' }, { transform:'scale(.9)', offset:.28 },
+      { transform:'scale(1.07)', offset:.58 }, { transform:'scale(1)' } ],
+    { duration:Math.min(D, 620), easing:'cubic-bezier(.16,1,.3,1)' }
+  );
+}
+
+/* Режим «Fade»: волны нет — уходящий слой гаснет, входящий проявляется
+   снизу вверх с подрастанием. */
+function fadeSwap(from, to) {
+  busy = true;
+  app.classList.add('anim');
+  from.classList.add('leaving');
+  to.classList.add('fading');
+  to.querySelectorAll('[data-wave]').forEach((el, i) => el.style.setProperty('--wd', 90 + i * 26 + 'ms'));
+
+  // fill:'forwards' держит прозрачность и ПОСЛЕ конца анимации, поэтому её
+  // обязательно нужно снять — иначе уходящий слой навсегда остаётся с
+  // opacity 0 и при следующем переключении экран оказывается пустым.
+  const out = from.animate([{ opacity:1 }, { opacity:0 }],
+    { duration:240, easing:'ease-in', fill:'forwards' });
+
+  setTimeout(() => {
+    out.cancel();                    // слой уже display:none — вспышки не будет
+    from.classList.remove('leaving');
+    app.classList.remove('anim');
+    to.classList.remove('fading');
+    to.querySelectorAll('[data-wave]').forEach(el => el.style.removeProperty('--wd'));
+    busy = false;
+    FX.refresh();
+  }, 900);
+}
+
+function setMode(next) {
+  const cur = root.dataset.mode;
+  if (cur === next || busy) return;
+  syncToggles('mode', next);
+
+  if (reduced) { root.dataset.mode = next; return; }
+
+  if (root.dataset.wave === 'fade') {
+    const from = layers[cur], to = layers[next];
+    root.dataset.mode = next;
+    spinT(560);
+    fadeSwap(from, to);
+    return;
+  }
+
+  busy = true;
+  const appBox = app.getBoundingClientRect();
+  const tBox = tbtn.getBoundingClientRect();
+  const ox = tBox.left - appBox.left + tBox.width / 2;
+  const oy = tBox.top - appBox.top + tBox.height / 2;
+
+  const R = Math.max(
+    Math.hypot(ox, oy), Math.hypot(appBox.width - ox, oy),
+    Math.hypot(ox, appBox.height - oy), Math.hypot(appBox.width - ox, appBox.height - oy)
+  );
+  const D = Number(getComputedStyle(root).getPropertyValue('--wave-ms')) || 900;
+  const speed = R / D;                       // px за мс
+
+  const to = layers[next];
+  app.classList.add('anim');
+  to.classList.add('incoming');
+  root.dataset.mode = next;
+
+  to.querySelectorAll('[data-wave]').forEach(el => {
+    const b = el.getBoundingClientRect();
+    const cx = b.left - appBox.left + b.width / 2;
+    const cy = b.top - appBox.top + b.height / 2;
+    const d = Math.hypot(cx - ox, cy - oy);
+    el.style.setProperty('--wd', Math.max(0, d / speed - 70) + 'ms');
+  });
+
+  spinT(D);
+
+  ringEl.style.cssText = `left:${ox}px; top:${oy}px; width:0; height:0; transform:translate(-50%,-50%); opacity:1`;
+  ringEl.animate(
+    [ { width:'0px', height:'0px', opacity:.9 }, { width:R*2+'px', height:R*2+'px', opacity:0 } ],
+    { duration:D, easing:'linear', fill:'forwards' }
+  );
+
+  to.animate(
+    [ { clipPath:`circle(0px at ${ox}px ${oy}px)` }, { clipPath:`circle(${R}px at ${ox}px ${oy}px)` } ],
+    { duration:D, easing:'linear' }
+  ).finished.finally(() => {
+    app.classList.remove('anim');
+    to.classList.remove('incoming');
+    to.querySelectorAll('[data-wave]').forEach(el => el.style.removeProperty('--wd'));
+    ringEl.style.opacity = 0;
+    busy = false;
+    FX.refresh();
+  });
+}
+
+tbtn.addEventListener('click', () => setMode(root.dataset.mode === 'focus' ? 'dash' : 'focus'));
+addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') { e.preventDefault(); tbtn.click(); }
+});
+
+/* ═══ Переключатели режима / темы / светлости ═════════════════════════ */
+function syncToggles(key, val) {
+  document.querySelectorAll(`[data-set="${key}"]`).forEach(el => {
+    if (el.tagName === 'SELECT') el.value = val;
+    else el.setAttribute('aria-pressed', el.dataset.val === val);
+  });
+}
+
+// выпадающие списки эффектов — их несколько (полоса прототипа и настройки),
+// поэтому значение раскидывается по всем сразу
+document.addEventListener('change', e => {
+  const sel = e.target.closest('select[data-set]');
+  if (!sel) return;
+  root.dataset[sel.dataset.set] = sel.value;
+  syncToggles(sel.dataset.set, sel.value);
+  FX.refresh();
+});
+['mode','accent','theme','wave','fxp','fxl'].forEach(k => syncToggles(k, root.dataset[k]));
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-set]');
+  // клик по <select> сюда тоже долетает, а data-val у него нет — без этой
+  // проверки в состояние уезжает undefined и пресет перестаёт существовать
+  if (!b || b.tagName === 'SELECT' || b.dataset.val === undefined) return;
+  const { set, val } = b.dataset;
+  if (set === 'mode') { setMode(val); return; }
+  root.dataset[set] = val;
+  syncToggles(set, val);
+  if (set === 'fxp' || set === 'fxl' || set === 'accent' || set === 'theme') FX.refresh();
+});
+
+/* ═══ Виды Dashboard ══════════════════════════════════════════════════ */
+const TITLES = { main:'Сводка периода', cal:'Календарь', set:'Настройки' };
+document.querySelectorAll('[data-nav]').forEach(b => b.addEventListener('click', () => {
+  const v = b.dataset.nav;
+  document.querySelectorAll('[data-nav]').forEach(x => x.setAttribute('aria-current', x === b));
+  document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.dataset.view === v));
+  document.getElementById('dtitle').textContent = TITLES[v];
+}));
+
+document.getElementById('expand').addEventListener('click', e => {
+  const open = document.getElementById('sheet').classList.toggle('open');
+  focusLayer.classList.toggle('sheet-open', open);
+  e.target.textContent = open ? 'Свернуть ▴' : 'Подробно ▾';
+});
+
+/* ═══ Эффекты фона в Focus ════════════════════════════════════════════
+   Палитра строится из акцента темы: сам акцент плюс два соседних оттенка
+   (± 26° по кругу) — одна гамма, ничего пёстрого.
+   Всё, что рисуется, домножается на общий `fade`: после смены режима или
+   пресета эффект нарастает за 700мс, а не включается рубильником. */
+const FX = (() => {
+  const cv = document.getElementById('fx');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, cx = 0, cy = 0, rRing = 150, rMax = 1;
+  let raf = null, prev = 0, fade = 0;
+  let dust = [], uni = [], emit = [], leaks = [], dots = [], blobs = [];
+  const sprites = new Map();
+
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  /* ── палитра ─────────────────────────────────────────────────────── */
+  function accentHSL() {
+    const hex = getComputedStyle(root).getPropertyValue('--accent').trim();
+    const n = parseInt(hex.slice(1), 16);
+    const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    const l = (mx + mn) / 2;
+    const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    let h = 0;
+    if (d) {
+      if (mx === r) h = ((g - b) / d) % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h = h * 60; if (h < 0) h += 360;
+    }
+    return [h, s, l];
+  }
+  let HSL = [160, .7, .6];
+  const hue = i => (HSL[0] + [0, -26, 26][i] + 360) % 360;
+  const col = (i, a, dl = 0) =>
+    `hsla(${hue(i)},${Math.round(HSL[1] * 100)}%,${Math.round((HSL[2] + dl) * 100)}%,${a})`;
+
+  /* мягкий кружок рисуется спрайтом — быстрее, чем градиент на каждый кадр */
+  function sprite(i) {
+    const key = 'c' + i;
+    if (sprites.has(key)) return sprites.get(key);
+    const s = document.createElement('canvas');
+    s.width = s.height = 64;
+    const sc = s.getContext('2d');
+    const g = sc.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, col(i, 1, .05));
+    g.addColorStop(.45, col(i, .4, .05));
+    g.addColorStop(1, col(i, 0, .05));
+    sc.fillStyle = g; sc.fillRect(0, 0, 64, 64);
+    sprites.set(key, s);
+    return s;
+  }
+
+  function measure() {
+    const b = cv.getBoundingClientRect();
+    if (!b.width) return false;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = b.width; H = b.height;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const r = document.querySelector('.ring-wrap').getBoundingClientRect();
+    cx = r.left - b.left + r.width / 2;
+    cy = r.top - b.top + r.height / 2;
+    rRing = r.width / 2 - 5;                       // по центру полоски кольца
+    rMax = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy));
+    return true;
+  }
+
+  function spawnEmit(o) {
+    o.a = Math.random() * 6.28;
+    // эмиттер — широкая полоса ВНУТРЬ и наружу от кольца, «толщиной с палец»:
+    // частицы видны и под циферблатом, чёткой границы у круга не возникает
+    o.r = rRing + rnd(-52, 24);
+    o.r0 = o.r;
+    o.sp = rnd(34, 80);
+    o.reach = rnd(55, 125);                        // держатся кучно у кольца
+    o.sz = rnd(5.6, 12);                           // крупные кружки, как конфетти
+    o.ph = rnd(0, 6.28);
+    o.c = (Math.random() * 3) | 0;
+    return o;
+  }
+
+  /* ── построение пресетов ─────────────────────────────────────────── */
+  function build() {
+    HSL = accentHSL();
+    sprites.clear();
+    dust = []; uni = []; emit = []; dots = []; blobs = [];
+    const p = root.dataset.fxp;
+
+    if (p === 'dust') {
+      // равномерно по всему полю, безо всякого центра
+      dust = Array.from({ length: 90 }, () => ({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: rnd(-7, 7), vy: rnd(-7, 7),
+        sz: rnd(.8, 2.4), ph: rnd(0, 6.28), tw: rnd(.4, 1.3), c: (Math.random() * 3) | 0,
+      }));
+    }
+
+    if (p === 'universe') {
+      // радиус берётся по корню из равномерного по ПЛОЩАДИ: при линейном
+      // random центр забивается, а края пустуют. Внутрь кольца не заходим —
+      // под циферблатом частицам делать нечего.
+      const rIn = rRing * 1.02, rOut = rMax * 1.05;
+      uni = Array.from({ length: 300 }, () => {
+        const r = Math.sqrt(rnd(rIn * rIn, rOut * rOut));
+        return {
+          r, a: Math.random() * 6.28,
+          w: rnd(.035, .14) * (rRing / r),          // дальние вращаются медленнее
+          sz: rnd(.7, 2.3), ph: rnd(0, 6.28), tw: rnd(.5, 1.5), c: (Math.random() * 3) | 0,
+        };
+      });
+    }
+
+    if (p === 'emit') emit = Array.from({ length: 124 }, () => spawnEmit({}));
+
+    if (p === 'grid') {
+      const step = 26;
+      for (let y = step / 2; y < H; y += step)
+        for (let x = step / 2; x < W; x += step) dots.push([x, y]);
+      // три разных блоба, чтобы поле не было однородным: крупный, обычный
+      // и большой, но еле заметный — лёгкий акцент по краю
+      const KIND = [{ rad: 440, k: 1 }, { rad: 190, k: 1 }, { rad: 340, k: .5 }];
+      blobs = KIND.map((b, i) => ({
+        ph: i * 2.3, sx: rnd(.11, .19), sy: rnd(.09, .17), rad: b.rad, k: b.k,
+      }));
+    }
+
+    // «Сияние» живёт во втором списке вместе с засветами — так его можно
+    // сочетать с любыми частицами, а не выбирать вместо них
+    const lm = root.dataset.fxl;
+    leaks = (lm === 'off' || lm === 'aurora') ? [] : Array.from({ length: 3 }, (_, i) => ({
+      ph: i * 2.1, sp: rnd(.05, .11), rad: rnd(.32, .52), c: i % 3,
+    }));
+  }
+
+  /* ── отрисовка ───────────────────────────────────────────────────── */
+  function drawDust(dt, t) {
+    for (const p of dust) {
+      p.x += (p.vx + Math.sin(t * .0004 + p.ph) * 6) * dt;
+      p.y += (p.vy + Math.cos(t * .0005 + p.ph * 1.4) * 6) * dt;
+      if (p.x < -6) p.x = W + 6; if (p.x > W + 6) p.x = -6;
+      if (p.y < -6) p.y = H + 6; if (p.y > H + 6) p.y = -6;
+      const a = (.22 + .28 * Math.sin(t * .002 * p.tw + p.ph)) * fade;
+      ctx.fillStyle = col(p.c, Math.max(a, 0).toFixed(3));
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.sz, 0, 6.2832); ctx.fill();
+    }
+  }
+
+  function drawUniverse(dt, t) {
+    for (const p of uni) {
+      p.a += p.w * dt;
+      const x = cx + Math.cos(p.a) * p.r, y = cy + Math.sin(p.a) * p.r;
+      const a = (.2 + .3 * Math.sin(t * .002 * p.tw + p.ph)) * fade;
+      ctx.fillStyle = col(p.c, Math.max(a, 0).toFixed(3));
+      ctx.beginPath(); ctx.arc(x, y, p.sz, 0, 6.2832); ctx.fill();
+    }
+  }
+
+  function drawEmit(dt, t) {
+    // чёткие кружки, без спрайта и без сложения света — конфетти, а не искры
+    for (const p of emit) {
+      p.r += p.sp * dt;
+      // воронка: угловая скорость обратна радиусу, как в водовороте —
+      // у кольца закручивает сильно, к краю раскручивается в спираль
+      p.a += (58 / Math.max(p.r, 40)) * dt;
+      p.a += Math.sin(t * .0006 + p.ph) * .03 * dt;   // турбулентность слабая
+      const gone = (p.r - p.r0) / p.reach;
+      if (gone >= 1) { spawnEmit(p); continue; }
+      const a = Math.sin(gone * Math.PI) * .55 * fade;  // 0 → пик → 0
+      if (a <= .004) continue;
+      const x = cx + Math.cos(p.a) * p.r, y = cy + Math.sin(p.a) * p.r;
+      ctx.fillStyle = col(p.c, a.toFixed(3), .05);
+      ctx.beginPath(); ctx.arc(x, y, p.sz, 0, 6.2832); ctx.fill();
+    }
+  }
+
+  function drawAurora(t) {
+    // Горизонтальные ленты, но уведённые в сильный блюр: без него видны
+    // грани многоугольника, с ним лента читается как свечение.
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.filter = 'blur(30px)';
+    for (let i = 0; i < 3; i++) {
+      const k = t * .00016 * (1 + i * .35) + i * 1.9;
+      const base = H * (.34 + i * .1);
+      const amp = 46 + i * 22, thick = 130 + i * 40;
+      ctx.beginPath();
+      ctx.moveTo(-60, base);
+      for (let x = -60; x <= W + 60; x += 14) {
+        const y = base + Math.sin(x * .0042 + k) * amp + Math.sin(x * .0111 + k * 1.7) * amp * .45;
+        ctx.lineTo(x, y);
+      }
+      for (let x = W + 60; x >= -60; x -= 14) {
+        const y = base + thick + Math.sin(x * .0042 + k + .6) * amp * 1.15;
+        ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      const g = ctx.createLinearGradient(0, base - amp, 0, base + thick + amp);
+      g.addColorStop(0, col(i, 0));
+      g.addColorStop(.45, col(i, (.13 * fade).toFixed(4), .04));
+      g.addColorStop(1, col(i, 0));
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawGrid(t) {
+    // точки видны только в поле притяжения блоба: ближе к центру — крупнее
+    const bs = blobs.map(b => [
+      W * (.5 + .4 * Math.sin(t * .001 * b.sx + b.ph)),
+      H * (.5 + .4 * Math.cos(t * .001 * b.sy + b.ph * 1.3)),
+      b.rad, b.k,
+    ]);
+    for (const [x, y] of dots) {
+      // яркость блоба применяется ТОЛЬКО к прозрачности: если гасить ею и
+      // геометрию, тусклый блоб после возведения в квадрат исчезает совсем
+      let inf = 0, k = 1;
+      for (const b of bs) {
+        const d = Math.hypot(x - b[0], y - b[1]);
+        if (d >= b[2]) continue;
+        const v = 1 - d / b[2];
+        if (v > inf) { inf = v; k = b[3]; }
+      }
+      if (inf <= .02) continue;
+      const e = inf * inf;
+      ctx.fillStyle = col(0, (e * k * .8 * fade).toFixed(3));
+      ctx.beginPath(); ctx.arc(x, y, .5 + e * 2.6, 0, 6.2832); ctx.fill();
+    }
+  }
+
+  function drawLeaks(t) {
+    if (root.dataset.fxl === 'aurora') { drawAurora(t); return; }
+    if (!leaks.length) return;
+    const bottom = root.dataset.fxl === 'bottom';
+    ctx.globalCompositeOperation = 'lighter';
+    for (const l of leaks) {
+      const k = t * .001 * l.sp;
+      const x = W * (.5 + .42 * Math.sin(k + l.ph));
+      const y = bottom ? H * (.92 + .06 * Math.sin(k * 1.6 + l.ph))
+                       : H * (.5 + .44 * Math.cos(k * .8 + l.ph * 1.7));
+      const rad = Math.min(W, H) * l.rad;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+      g.addColorStop(0, col(l.c, (.11 * fade).toFixed(4)));
+      g.addColorStop(.3, col(l.c, (.075 * fade).toFixed(4)));
+      g.addColorStop(.55, col(l.c, (.04 * fade).toFixed(4)));
+      g.addColorStop(.8, col(l.c, (.015 * fade).toFixed(4)));
+      g.addColorStop(1, col(l.c, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  const DRAW = { dust: drawDust, universe: drawUniverse, emit: drawEmit };
+
+  function frame(t) {
+    const dt = Math.min((t - prev) / 1000, .05);
+    prev = t;
+    fade = Math.min(1, fade + dt / .7);            // общий плавный ввод
+    ctx.clearRect(0, 0, W, H);
+    drawLeaks(t);
+    const p = root.dataset.fxp;
+    if (p === 'grid') drawGrid(t);
+    else if (DRAW[p]) DRAW[p](dt, t);
+    raf = requestAnimationFrame(frame);
+  }
+
+  function refresh() {
+    const live = !reduced && root.dataset.mode === 'focus'
+      && (root.dataset.fxp !== 'off' || root.dataset.fxl !== 'off');
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    ctx.clearRect(0, 0, W, H);
+    if (!live) return;
+    if (!measure()) return;
+    build();
+    fade = 0;
+    prev = performance.now();
+    raf = requestAnimationFrame(frame);
+  }
+
+  addEventListener('resize', () => { if (raf) { measure(); build(); } });
+  return { refresh };
+})();
+FX.refresh();
+
+/* ═══ Скроллбар виден только пока крутят ══════════════════════════════ */
+document.querySelectorAll('.thin').forEach(el => {
+  let idle;
+  el.addEventListener('scroll', () => {
+    el.classList.add('scrolling');
+    clearTimeout(idle);
+    idle = setTimeout(() => el.classList.remove('scrolling'), 700);
+  }, { passive:true });
+});
+</script>
+</body>
+</html>
