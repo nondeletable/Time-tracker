@@ -12,6 +12,13 @@ let calYear  = 0
 let calMonth = 0
 
 let currentLang = 'ru'
+let currentTheme  = 'dark'
+let currentAccent = 'emerald'
+
+function applyTheme(theme, accent) {
+  document.documentElement.dataset.theme  = theme
+  document.documentElement.dataset.accent = accent
+}
 
 function t(key) {
   return window.I18N.translate(window.DICT, currentLang, key)
@@ -81,6 +88,14 @@ async function init() {
   currentLang = savedLang || window.I18N.detectLang(navigator.language)
   if (!savedLang) await window.api.setSetting('lang', currentLang)
   applyI18n()
+
+  const savedTheme  = await window.api.getSetting('theme')
+  const savedAccent = await window.api.getSetting('accent')
+  currentTheme  = savedTheme  || 'dark'
+  currentAccent = savedAccent || 'emerald'
+  if (!savedTheme)  await window.api.setSetting('theme', currentTheme)
+  if (!savedAccent) await window.api.setSetting('accent', currentAccent)
+  applyTheme(currentTheme, currentAccent)
 
   const userName = await window.api.getSetting('user_name')
   if (userName) {
@@ -341,6 +356,8 @@ function openSettings() {
   document.getElementById('pane-user').classList.remove('hidden')
 
   document.getElementById('lang-select').value = currentLang
+  document.getElementById('accent-select').value = currentAccent
+  document.getElementById('theme-select').value  = currentTheme
   settingsModal.classList.remove('hidden')
   loadUserTab()
 }
@@ -359,6 +376,18 @@ document.getElementById('lang-select').addEventListener('change', async e => {
   renderDialogCategories()
   await refreshStats()
   if (!calendarModal.classList.contains('hidden')) await loadCalendarMonth()
+})
+
+document.getElementById('accent-select').addEventListener('change', async e => {
+  currentAccent = e.target.value
+  await window.api.setSetting('accent', currentAccent)
+  applyTheme(currentTheme, currentAccent)
+})
+
+document.getElementById('theme-select').addEventListener('change', async e => {
+  currentTheme = e.target.value
+  await window.api.setSetting('theme', currentTheme)
+  applyTheme(currentTheme, currentAccent)
 })
 
 settingsTabs.forEach(tab => {
