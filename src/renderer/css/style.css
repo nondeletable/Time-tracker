@@ -388,12 +388,12 @@ body {
 }
 
 .timer-btn.stop {
-  background: #f87171;
-  color: #fff;
+  background: var(--danger);
+  color: var(--on-danger);
 }
 
 .timer-btn.stop:hover {
-  background: #ef4444;
+  background: var(--danger-hover);
 }
 
 .reset-btn {
@@ -415,7 +415,7 @@ body {
 
 .reset-btn:hover {
   border-color: var(--danger);
-  color: #f87171;
+  color: var(--danger);
 }
 
 .no-category-hint {
@@ -586,7 +586,7 @@ body {
 }
 
 .win-close:hover {
-  background: #f87171;
+  background: var(--danger);
 }
 
 .win-close:hover img {
@@ -693,7 +693,7 @@ body {
 }
 
 .modal-close:hover {
-  color: #f87171;
+  color: var(--danger);
 }
 
 .settings-nav {
@@ -999,12 +999,12 @@ body {
 /* ── Danger dialog button ───────────────────────────────────────────────────── */
 
 .dialog-btn.danger {
-  background: #7f1d1d;
-  color: #fca5a5;
+  background: var(--danger-strong);
+  color: var(--danger-soft-text);
 }
 
 .dialog-btn.danger:hover {
-  background: #991b1b;
+  background: var(--danger-strong);
 }
 
 /* ── Categories settings tab ───────────────────────────────────────────────── */
@@ -1195,7 +1195,7 @@ body {
 }
 
 .hours-del-btn:hover {
-  color: #f87171 !important;
+  color: var(--danger) !important;
   border-color: var(--danger) !important;
 }
 
@@ -1213,10 +1213,10 @@ body {
 
 .hours-confirm-yes {
   padding: 5px 12px;
-  background: #3a1515;
+  background: var(--danger-soft);
   border: 1px solid var(--danger);
   border-radius: 6px;
-  color: #f87171;
+  color: var(--danger);
   font-size: 0.8rem;
   cursor: pointer;
   font-family: inherit;
@@ -1224,7 +1224,7 @@ body {
 }
 
 .hours-confirm-yes:hover {
-  background: #4a1f1f;
+  background: var(--danger-soft);
 }
 
 .hours-empty {
@@ -1369,7 +1369,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .cal-close:hover {
-  color: #f87171;
+  color: var(--danger);
 }
 
 .calendar-weekdays {
