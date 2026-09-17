@@ -41,7 +41,7 @@
 body {
   font-family: system-ui, sans-serif;
   background: var(--bg);
-  color: #e0e0e0;
+  color: var(--text);
   height: 100vh;
   display: flex;
   align-items: center;
@@ -76,7 +76,7 @@ body {
 .user-select-label {
   font-size: 1.3rem;
   font-weight: 300;
-  color: #8080a0;
+  color: var(--text-mute);
   letter-spacing: 0.02em;
 }
 
@@ -90,7 +90,7 @@ body {
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
-  color: #d0d0e0;
+  color: var(--text-2);
   font-size: 1.1rem;
   font-weight: 400;
   cursor: pointer;
@@ -100,7 +100,7 @@ body {
 
 .user-btn:hover {
   border-color: var(--accent);
-  color: #f0f0f0;
+  color: var(--text);
   background: var(--surface-2);
 }
 
@@ -143,7 +143,7 @@ body {
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #4a4a6a;
+  color: var(--text-disabled);
 }
 
 .categories-list {
@@ -181,12 +181,12 @@ body {
 
 .category-name {
   font-size: 0.84rem;
-  color: #a0a0c0;
+  color: var(--text-mute);
   line-height: 1.35;
 }
 
 .category-item.active .category-name {
-  color: #d8d8f0;
+  color: var(--text-2);
 }
 
 /* ── Limit bar ─────────────────────────────────────────────────────────────── */
@@ -211,15 +211,14 @@ body {
 
 .limit-bar-label {
   font-size: 0.75rem;
-  color: #6060808;
+  color: var(--text-faint);
   letter-spacing: 0.04em;
-  color: #6a6a8a;
 }
 
 .limit-bar-time {
   font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
-  color: #5a5a7a;
+  color: var(--text-faint);
   white-space: nowrap;
 }
 
@@ -275,7 +274,7 @@ body {
 .stat-name {
   flex: 1;
   font-size: 0.8rem;
-  color: #9090b0;
+  color: var(--text-mute);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -283,7 +282,7 @@ body {
 
 .stat-time {
   font-size: 0.78rem;
-  color: #5a5a7a;
+  color: var(--text-faint);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
@@ -352,7 +351,7 @@ body {
   font-weight: 300;
   letter-spacing: 0.05em;
   font-variant-numeric: tabular-nums;
-  color: #f0f0f0;
+  color: var(--text);
 }
 
 .timer-actions {
@@ -403,7 +402,7 @@ body {
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
-  color: #4a4a6a;
+  color: var(--text-disabled);
   cursor: pointer;
   font-size: 0.9rem;
   display: flex;
@@ -421,7 +420,7 @@ body {
 
 .no-category-hint {
   font-size: 0.82rem;
-  color: #3a3a5a;
+  color: var(--text-disabled);
   letter-spacing: 0.02em;
 }
 
@@ -453,7 +452,7 @@ body {
 .dialog-title {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #8080a0;
+  color: var(--text-mute);
   letter-spacing: 0.03em;
 }
 
@@ -462,7 +461,7 @@ body {
   font-weight: 300;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.05em;
-  color: #f0f0f0;
+  color: var(--text);
 }
 
 .dialog-category-select {
@@ -470,7 +469,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: 8px;
-  color: #c0c0d8;
+  color: var(--text-dim);
   padding: 10px 12px;
   font-size: 0.88rem;
   cursor: pointer;
@@ -507,7 +506,7 @@ body {
 
 .dialog-btn.cancel {
   background: var(--control);
-  color: #8080a0;
+  color: var(--text-mute);
 }
 
 .dialog-btn.cancel:hover {
@@ -560,7 +559,7 @@ body {
 
 .titlebar-title {
   font-size: 13px;
-  color: #b0b0d0;
+  color: var(--text-dim);
   letter-spacing: 0.02em;
 }
 
@@ -639,7 +638,7 @@ body {
   padding: 10px 16px;
   background: transparent;
   border: none;
-  color: #c0c0d8;
+  color: var(--text-dim);
   font-size: 0.88rem;
   text-align: left;
   cursor: pointer;
@@ -683,7 +682,7 @@ body {
   right: 14px;
   background: transparent;
   border: none;
-  color: #4a4a6a;
+  color: var(--text-disabled);
   font-size: 1.3rem;
   cursor: pointer;
   line-height: 1;
@@ -712,7 +711,7 @@ body {
   background: transparent;
   border: none;
   border-left: 2px solid transparent;
-  color: #8080a0;
+  color: var(--text-mute);
   font-size: 0.84rem;
   text-align: left;
   cursor: pointer;
@@ -727,7 +726,7 @@ body {
 .settings-tab.active {
   background: var(--surface);
   border-left-color: var(--accent);
-  color: #d8d8f0;
+  color: var(--text-2);
 }
 
 .settings-body {
@@ -742,7 +741,7 @@ body {
 }
 
 .settings-stub {
-  color: #3a3a5a;
+  color: var(--text-disabled);
   font-size: 0.88rem;
 }
 
@@ -757,7 +756,7 @@ body {
 
 .settings-row-label {
   font-size: 0.82rem;
-  color: #6a6a8a;
+  color: var(--text-faint);
   width: 80px;
   flex-shrink: 0;
 }
@@ -765,7 +764,7 @@ body {
 .settings-row-value {
   flex: 1;
   font-size: 0.88rem;
-  color: #c0c0d8;
+  color: var(--text-dim);
 }
 
 .settings-row-btn {
@@ -773,7 +772,7 @@ body {
   background: var(--control);
   border: 1px solid var(--border);
   border-radius: 6px;
-  color: #9090b0;
+  color: var(--text-mute);
   font-size: 0.8rem;
   cursor: pointer;
   font-family: inherit;
@@ -782,7 +781,7 @@ body {
 
 .settings-row-btn:hover {
   background: var(--control-hover);
-  color: #c0c0d8;
+  color: var(--text-dim);
 }
 
 .user-pick-btn {
@@ -790,7 +789,7 @@ body {
   background: var(--control);
   border: 1px solid var(--border);
   border-radius: 8px;
-  color: #c0c0d8;
+  color: var(--text-dim);
   font-size: 0.88rem;
   cursor: pointer;
   font-family: inherit;
@@ -840,7 +839,7 @@ body {
 
 .settings-admin-note {
   font-size: 0.8rem;
-  color: #6a6a8a;
+  color: var(--text-faint);
   margin-bottom: 20px;
   padding: 8px 12px;
   background: var(--surface);
@@ -853,7 +852,7 @@ body {
   background: var(--surface);
   border: 1px solid var(--border-soft);
   border-radius: 6px;
-  color: #c0c0d8;
+  color: var(--text-dim);
   padding: 7px 10px;
   font-size: 0.88rem;
   font-family: inherit;
@@ -912,17 +911,17 @@ body {
 .about-name {
   font-size: 1.3rem;
   font-weight: 500;
-  color: #e0e0f0;
+  color: var(--text);
 }
 
 .about-version {
   font-size: 0.85rem;
-  color: #6a6a8a;
+  color: var(--text-faint);
 }
 
 .about-copy {
   font-size: 0.82rem;
-  color: #5a5a7a;
+  color: var(--text-faint);
 }
 
 /* ── Category sub-tabs ─────────────────────────────────────────────────────── */
@@ -938,7 +937,7 @@ body {
   border-radius: 6px;
   border: 1px solid var(--border-strong);
   background: transparent;
-  color: #6a6a8a;
+  color: var(--text-faint);
   font-size: 0.82rem;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -946,13 +945,13 @@ body {
 
 .cat-subtab:hover {
   background: var(--surface);
-  color: #b0b0d0;
+  color: var(--text-dim);
 }
 
 .cat-subtab.active {
   background: var(--surface);
   border-color: var(--accent);
-  color: #d8d8f0;
+  color: var(--text-2);
 }
 
 /* ── Category delete button ─────────────────────────────────────────────────── */
@@ -975,25 +974,25 @@ body {
 /* ── Deleted categories ─────────────────────────────────────────────────────── */
 
 .cat-settings-item--deleted .cat-settings-name {
-  color: #4a4a6a;
+  color: var(--text-disabled);
 }
 
 .cat-deleted-empty {
   font-size: 0.82rem;
-  color: #4a4a6a;
+  color: var(--text-disabled);
   margin: 8px 0 0;
 }
 
 .cat-delete-name-display {
   font-size: 0.95rem;
-  color: #c0c0d8;
+  color: var(--text-dim);
   margin: 8px 0 6px;
   font-style: italic;
 }
 
 .cat-delete-hint {
   font-size: 0.82rem;
-  color: #6a6a8a;
+  color: var(--text-faint);
   margin: 0 0 16px;
 }
 
@@ -1040,7 +1039,7 @@ body {
 .cat-settings-name {
   flex: 1;
   font-size: 0.85rem;
-  color: #c0c0d8;
+  color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1051,7 +1050,7 @@ body {
   background: var(--control);
   border: 1px solid var(--border);
   border-radius: 8px;
-  color: #9090b0;
+  color: var(--text-mute);
   font-size: 0.84rem;
   cursor: pointer;
   font-family: inherit;
@@ -1061,7 +1060,7 @@ body {
 
 .cat-add-btn:hover {
   background: var(--control-hover);
-  color: #c0c0d8;
+  color: var(--text-dim);
 }
 
 .cat-edit-form {
@@ -1128,7 +1127,7 @@ body {
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 6px;
-  color: #8080a0;
+  color: var(--text-mute);
   font-size: 0.84rem;
   cursor: pointer;
   font-family: inherit;
@@ -1137,7 +1136,7 @@ body {
 
 .cat-edit-cancel:hover {
   border-color: var(--text-disabled);
-  color: #c0c0d8;
+  color: var(--text-dim);
 }
 
 .cat-edit-actions .settings-save-btn {
@@ -1176,7 +1175,7 @@ body {
 
 .hours-list-time {
   font-size: 0.82rem;
-  color: #6a6a8a;
+  color: var(--text-faint);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
   min-width: 38px;
@@ -1208,7 +1207,7 @@ body {
 
 .hours-confirm-text {
   font-size: 0.82rem;
-  color: #8080a0;
+  color: var(--text-mute);
   white-space: nowrap;
 }
 
@@ -1230,7 +1229,7 @@ body {
 
 .hours-empty {
   font-size: 0.84rem;
-  color: #3a3a5a;
+  color: var(--text-disabled);
   margin-bottom: 12px;
 }
 
@@ -1325,7 +1324,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-align: center;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #d0d0e8;
+  color: var(--text-2);
   letter-spacing: 0.03em;
 }
 
@@ -1335,7 +1334,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: transparent;
   border: 1px solid var(--border);
   border-radius: 6px;
-  color: #8080a0;
+  color: var(--text-mute);
   font-size: 1rem;
   cursor: pointer;
   display: flex;
@@ -1348,7 +1347,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .cal-nav-btn:hover {
   border-color: var(--text-disabled);
-  color: #d0d0e8;
+  color: var(--text-2);
 }
 
 .cal-close {
@@ -1356,7 +1355,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   height: 30px;
   background: transparent;
   border: none;
-  color: #4a4a6a;
+  color: var(--text-disabled);
   font-size: 1.3rem;
   cursor: pointer;
   border-radius: 4px;
@@ -1386,7 +1385,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #4a4a6a;
+  color: var(--text-disabled);
 }
 
 .calendar-grid {
@@ -1417,12 +1416,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .cal-day-num {
   font-size: 0.78rem;
   font-weight: 500;
-  color: #3a3a5a;
+  color: var(--text-disabled);
   line-height: 1;
 }
 
 .cal-cell:not(.cal-other-month) .cal-day-num {
-  color: #c0c0d8;
+  color: var(--text-dim);
 }
 
 .cal-user-row {
@@ -1441,7 +1440,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .cal-user-time {
   font-size: 0.7rem;
-  color: #9090b0;
+  color: var(--text-mute);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
@@ -1461,7 +1460,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: var(--surface-3);
   border: 1px solid var(--border-strong);
   border-radius: 6px;
-  color: #b0b0d0;
+  color: var(--text-dim);
   font-size: 13px;
   padding: 4px 10px;
   cursor: pointer;
