@@ -40,7 +40,7 @@
 
 body {
   font-family: system-ui, sans-serif;
-  background: #0f0f13;
+  background: var(--bg);
   color: #e0e0e0;
   height: 100vh;
   display: flex;
@@ -89,7 +89,7 @@ body {
   padding: 14px 48px;
   border-radius: 12px;
   border: 1px solid #2a2a3a;
-  background: #16161e;
+  background: var(--surface);
   color: #d0d0e0;
   font-size: 1.1rem;
   font-weight: 400;
@@ -101,7 +101,7 @@ body {
 .user-btn:hover {
   border-color: #4ade80;
   color: #f0f0f0;
-  background: #1a1a24;
+  background: var(--surface-2);
 }
 
 /* ── Main layout ───────────────────────────────────────────────────────────── */
@@ -129,7 +129,7 @@ body {
 .categories-panel {
   width: 230px;
   height: 100%;
-  background: #0d0d11;
+  background: var(--bg);
   border-right: 1px solid #1a1a24;
   display: flex;
   flex-direction: column;
@@ -164,11 +164,11 @@ body {
 }
 
 .category-item:hover {
-  background: #161620;
+  background: var(--surface);
 }
 
 .category-item.active {
-  background: #14141e;
+  background: var(--surface);
   border-left-color: var(--cat-color);
 }
 
@@ -194,7 +194,7 @@ body {
 .limit-bar-wrap {
   width: 100%;
   padding: 12px 20px 10px;
-  background: #0d0d11;
+  background: var(--bg);
   border-bottom: 1px solid #1a1a24;
   display: flex;
   flex-direction: column;
@@ -225,7 +225,7 @@ body {
 
 .limit-bar-track {
   height: 6px;
-  background: #1e1e2a;
+  background: var(--surface-3);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -290,7 +290,7 @@ body {
 
 .stat-bar-track {
   height: 4px;
-  background: #1e1e2a;
+  background: var(--surface-3);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -336,7 +336,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 20px;
-  background: #16161e;
+  background: var(--surface);
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
   transition: border-color 0.3s, box-shadow 0.3s;
   flex-shrink: 0;
@@ -438,7 +438,7 @@ body {
 }
 
 .dialog {
-  background: #191924;
+  background: var(--surface-2);
   border: 1px solid #26263a;
   border-radius: 16px;
   padding: 32px 28px 24px;
@@ -467,7 +467,7 @@ body {
 
 .dialog-category-select {
   width: 100%;
-  background: #11111a;
+  background: var(--surface);
   border: 1px solid #26263a;
   border-radius: 8px;
   color: #c0c0d8;
@@ -506,7 +506,7 @@ body {
 }
 
 .dialog-btn.cancel {
-  background: #22222e;
+  background: var(--control);
   color: #8080a0;
 }
 
@@ -528,7 +528,7 @@ body {
 .app-header {
   position: relative;
   height: 40px;
-  background: #0d0d11;
+  background: var(--bg);
   border-bottom: 1px solid #1a1a24;
   display: flex;
   align-items: center;
@@ -583,7 +583,7 @@ body {
 }
 
 .win-btn:hover {
-  background: #1a1a24;
+  background: var(--surface-2);
 }
 
 .win-close:hover {
@@ -615,7 +615,7 @@ body {
 
 .burger-btn:hover {
   opacity: 1;
-  background: #1e1e2a;
+  background: var(--surface-3);
 }
 
 /* ── Dropdown ──────────────────────────────────────────────────────────────── */
@@ -624,7 +624,7 @@ body {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  background: #191924;
+  background: var(--surface-2);
   border: 1px solid #26263a;
   border-radius: 8px;
   overflow: hidden;
@@ -648,7 +648,7 @@ body {
 }
 
 .dropdown-item:hover {
-  background: #22222e;
+  background: var(--control);
 }
 
 /* ── Modal overlay (reusable) ──────────────────────────────────────────────── */
@@ -666,7 +666,7 @@ body {
 /* ── Settings modal ────────────────────────────────────────────────────────── */
 
 .settings-modal {
-  background: #191924;
+  background: var(--surface-2);
   border: 1px solid #26263a;
   border-radius: 16px;
   width: 620px;
@@ -699,7 +699,7 @@ body {
 
 .settings-nav {
   width: 160px;
-  background: #0d0d11;
+  background: var(--bg);
   border-right: 1px solid #1a1a24;
   display: flex;
   flex-direction: column;
@@ -721,11 +721,11 @@ body {
 }
 
 .settings-tab:hover {
-  background: #161620;
+  background: var(--surface);
 }
 
 .settings-tab.active {
-  background: #14141e;
+  background: var(--surface);
   border-left-color: #4ade80;
   color: #d8d8f0;
 }
@@ -770,7 +770,7 @@ body {
 
 .settings-row-btn {
   padding: 5px 14px;
-  background: #22222e;
+  background: var(--control);
   border: 1px solid #2a2a3a;
   border-radius: 6px;
   color: #9090b0;
@@ -781,13 +781,13 @@ body {
 }
 
 .settings-row-btn:hover {
-  background: #2a2a3e;
+  background: var(--control-hover);
   color: #c0c0d8;
 }
 
 .user-pick-btn {
   padding: 6px 20px;
-  background: #22222e;
+  background: var(--control);
   border: 1px solid #2a2a3a;
   border-radius: 8px;
   color: #c0c0d8;
@@ -843,14 +843,14 @@ body {
   color: #6a6a8a;
   margin-bottom: 20px;
   padding: 8px 12px;
-  background: #111118;
+  background: var(--surface);
   border-radius: 6px;
   border-left: 2px solid #3a3a5a;
 }
 
 .settings-input {
   flex: 1;
-  background: #11111a;
+  background: var(--surface);
   border: 1px solid #26263a;
   border-radius: 6px;
   color: #c0c0d8;
@@ -945,12 +945,12 @@ body {
 }
 
 .cat-subtab:hover {
-  background: #161620;
+  background: var(--surface);
   color: #b0b0d0;
 }
 
 .cat-subtab.active {
-  background: #14141e;
+  background: var(--surface);
   border-color: #4ade80;
   color: #d8d8f0;
 }
@@ -1048,7 +1048,7 @@ body {
 
 .cat-add-btn {
   padding: 7px 16px;
-  background: #22222e;
+  background: var(--control);
   border: 1px solid #2a2a3a;
   border-radius: 8px;
   color: #9090b0;
@@ -1060,12 +1060,12 @@ body {
 }
 
 .cat-add-btn:hover {
-  background: #2a2a3e;
+  background: var(--control-hover);
   color: #c0c0d8;
 }
 
 .cat-edit-form {
-  background: #111118;
+  background: var(--surface);
   border: 1px solid #26263a;
   border-radius: 8px;
   padding: 14px;
@@ -1254,12 +1254,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e1e2a;
+  background: var(--surface-3);
   border-radius: 5px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #0f0f13;
+  background: var(--bg);
   border-radius: 5px;
   border: 2px solid #1e1e2a;
 }
@@ -1301,7 +1301,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 /* ── Calendar modal ────────────────────────────────────────────────────────── */
 
 .calendar-modal {
-  background: #191924;
+  background: var(--surface-2);
   border: 1px solid #26263a;
   border-radius: 16px;
   width: 740px;
@@ -1458,7 +1458,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .sync-text-btn {
-  background: #1e1e2e;
+  background: var(--surface-3);
   border: 1px solid #2e2e4e;
   border-radius: 6px;
   color: #b0b0d0;
@@ -1470,7 +1470,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .sync-text-btn:hover,
 .sync-text-btn:active {
-  background: #2a2a3e;
+  background: var(--control-hover);
 }
 
 .sync-text-btn:disabled {
