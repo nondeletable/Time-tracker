@@ -222,6 +222,10 @@ body {
   white-space: nowrap;
 }
 
+.limit-bar-time.over {
+  color: var(--danger);
+}
+
 .limit-bar-track {
   height: 6px;
   background: var(--surface-3);
@@ -234,6 +238,10 @@ body {
   border-radius: 3px;
   background: var(--accent);
   transition: width 0.4s ease, background 0.3s;
+}
+
+.limit-bar-fill.over {
+  background: var(--danger);
 }
 
 /* ── Stats ─────────────────────────────────────────────────────────────────── */

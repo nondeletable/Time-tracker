@@ -181,21 +181,19 @@ function renderLimitBar(totalSeconds, period) {
   const limit = period.monthly_limit_seconds
   const over  = totalSeconds > limit
 
-  let pct, color
+  let pct
   if (!over) {
-    pct   = limit > 0 ? Math.round((totalSeconds / limit) * 100) : 0
-    color = '#4ade80'
+    pct = limit > 0 ? Math.round((totalSeconds / limit) * 100) : 0
   } else {
     // перезаполняем красным: показываем сколько сверх лимита
     const overflow = totalSeconds - limit
-    pct   = Math.min(Math.round((overflow / limit) * 100), 100)
-    color = '#f87171'
+    pct = Math.min(Math.round((overflow / limit) * 100), 100)
   }
 
-  limitBarFill.style.width      = pct + '%'
-  limitBarFill.style.background = color
-  limitBarTime.textContent      = `${formatDuration(totalSeconds)} / ${formatDuration(limit)}`
-  limitBarTime.style.color      = over ? '#f87171' : '#5a5a7a'
+  limitBarFill.style.width = pct + '%'
+  limitBarFill.classList.toggle('over', over)
+  limitBarTime.textContent = `${formatDuration(totalSeconds)} / ${formatDuration(limit)}`
+  limitBarTime.classList.toggle('over', over)
 
   const fmtDate = iso => {
     const [, m, d] = iso.split('-')
