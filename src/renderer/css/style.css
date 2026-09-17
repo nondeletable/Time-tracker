@@ -510,7 +510,7 @@ body {
 }
 
 .dialog-btn.cancel:hover {
-  background: #2a2a3a;
+  background: var(--border);
 }
 
 .dialog-btn.save {
@@ -1490,7 +1490,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2a2a3a;
+  background: var(--border);
   flex-shrink: 0;
   transition: background 0.3s;
 }
