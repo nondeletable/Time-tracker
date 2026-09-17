@@ -1,3 +1,37 @@
+:root {
+  /* Surfaces */
+  --bg:            #0f0f13;
+  --surface:       #16161e;
+  --surface-2:     #191924;
+  --surface-3:     #1e1e2a;
+  --control:       #22222e;
+  --control-hover: #2a2a3e;
+  /* Borders */
+  --border:        #2a2a3a;
+  --border-soft:   #26263a;
+  --border-strong: #2e2e4e;
+  /* Text */
+  --text:          #f0f0f0;
+  --text-2:        #d8d8f0;
+  --text-dim:      #c0c0d8;
+  --text-mute:     #8080a0;
+  --text-faint:    #6a6a8a;
+  --text-disabled: #4a4a6a;
+  /* Accent */
+  --accent:            #4ade80;
+  --accent-hover:      #22c55e;
+  --accent-soft:       #1e3028;
+  --accent-soft-text:  #3a5a3a;
+  --on-accent:         #0f0f13;
+  /* Danger */
+  --danger:            #f87171;
+  --danger-hover:      #ef4444;
+  --danger-strong:     #991b1b;
+  --danger-soft:       #4a1f1f;
+  --danger-soft-text:  #fca5a5;
+  --on-danger:         #ffffff;
+}
+
 * {
   margin: 0;
   padding: 0;
