@@ -237,6 +237,49 @@ async function refreshStats() {
   renderStats(stats)
   renderCategories()
   paintRing()
+  renderAverage(await periodBreakdown(period))
+}
+
+// Период не совпадает с календарным месяцем (28 авг — 27 сен пересекает два),
+// поэтому собираем каждый месяц, который он задевает, и отбрасываем дни за
+// границами. getCalendarMonth отдаёт сразу и свои сессии, и данные партнёра,
+// так что суммы получаются общими на двоих — как и полоса лимита рядом.
+async function periodBreakdown(period) {
+  const [sy, sm] = period.period_start.split('-').map(Number)
+  const [ey, em] = period.period_end.split('-').map(Number)
+
+  const months = []
+  let y = sy, m = sm
+  while (y < ey || (y === ey && m <= em)) {
+    months.push([y, m])
+    m++
+    if (m > 12) { m = 1; y++ }
+  }
+
+  const rows = (await Promise.all(
+    months.map(([yy, mm]) => window.api.getCalendarMonth(yy, mm))
+  )).flat()
+
+  const perDay = new Map()
+  rows.forEach(row => {
+    if (row.day < period.period_start || row.day > period.period_end) return
+    perDay.set(row.day, (perDay.get(row.day) || 0) + (row.total_seconds || 0))
+  })
+
+  const worked = [...perDay.values()].filter(v => v > 0)
+  const total = worked.reduce((a, b) => a + b, 0)
+
+  return {
+    perDay,
+    activeDays: worked.length,
+    avg: worked.length ? Math.round(total / worked.length) : 0,
+  }
+}
+
+function renderAverage({ activeDays, avg }) {
+  statAvg.innerHTML = activeDays
+    ? `${formatHM(avg)} <small>· ${activeDays} ${t('stat_days')}</small>`
+    : '—'
 }
 
 function renderLimitBar(totalSeconds, period) {
