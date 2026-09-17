@@ -62,6 +62,12 @@
   --font-ui:  'Plus Jakarta Sans', 'Golos Text', system-ui, sans-serif;
   --font-num: 'JetBrains Mono', ui-monospace, monospace;
 
+  /* ── Rhythm, radii, easing (from the prototype) ── */
+  --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
+  --r:12px; --r-lg:16px;
+  --t:180ms cubic-bezier(.4,0,.2,1);
+  --t-slow:420ms cubic-bezier(.16,1,.3,1);
+
   /* ── Anchors: emerald · dark (fallback default) ── */
   --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
   --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
@@ -189,321 +195,299 @@ body {
   background: var(--surface-2);
 }
 
-/* ── Main layout ───────────────────────────────────────────────────────────── */
+/* ── Focus mode ────────────────────────────────────────────────────────────── */
 
 #main-screen {
   align-items: stretch;
   justify-content: flex-start;
 }
 
-.main-wrapper {
-  display: flex;
-  flex-direction: column;
+.app {
+  position: relative;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
 }
 
-.layout {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
+/* ── Обвязка окна ──────────────────────────────────────────────────────────── */
 
-/* ── Categories panel ──────────────────────────────────────────────────────── */
-
-.categories-panel {
-  width: 230px;
-  height: 100%;
-  background: var(--bg);
-  border-right: 1px solid var(--border-soft);
-  display: flex;
-  flex-direction: column;
-  padding-top: 24px;
-  flex-shrink: 0;
-}
-
-.categories-header {
-  padding: 0 18px 14px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-disabled);
-}
-
-.categories-list {
-  list-style: none;
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
-}
-
-.category-item {
+/* Живёт НАД слоями режимов и в переходах не участвует: управление окном не
+   должно мигать. Отступ слева 11px — центр T (34px) попадает на 28px, это
+   центр будущего рельса Dashboard, иначе T в нём визуально съедет правее
+   иконок навигации. */
+.chrome {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 64px;
+  z-index: 60;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 9px 18px;
-  cursor: pointer;
-  border-left: 2px solid transparent;
-  transition: background 0.15s, border-color 0.15s;
+  padding: 0 var(--s4) 0 11px;
+  pointer-events: none;
+  -webkit-app-region: drag;
 }
 
-.category-item:hover {
-  background: var(--surface);
+.chrome > * {
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
 }
 
-.category-item.active {
-  background: var(--surface);
-  border-left-color: var(--cat-color);
+.chrome .sp {
+  flex: 1;
+  pointer-events: none;
+  -webkit-app-region: drag;
 }
 
-.category-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.category-name {
-  font-size: 0.84rem;
-  color: var(--text-mute);
-  line-height: 1.35;
-}
-
-.category-item.active .category-name {
-  color: var(--text-2);
-}
-
-/* ── Limit bar ─────────────────────────────────────────────────────────────── */
-
-.limit-bar-wrap {
-  width: 100%;
-  padding: 12px 20px 10px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border-soft);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.limit-bar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.limit-bar-label {
-  font-size: 0.75rem;
-  color: var(--text-faint);
-  letter-spacing: 0.04em;
-}
-
-.limit-bar-time {
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-
-.limit-bar-time.over {
-  color: var(--danger);
-}
-
-.limit-bar-track {
-  height: 6px;
-  background: var(--surface-3);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.limit-bar-fill {
-  height: 100%;
-  border-radius: 3px;
+.tbtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   background: var(--accent);
-  transition: width 0.4s ease, background 0.3s;
+  color: var(--on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
-.limit-bar-fill.over {
+.tglyph {
+  display: block;
+  line-height: 1;
+}
+
+.win {
+  display: flex;
+  gap: 2px;
+}
+
+.win-btn {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.55;
+  padding: 0;
+  transition: opacity var(--t), background var(--t);
+}
+
+.win-btn:hover {
+  opacity: 1;
+  background: var(--surface-2);
+}
+
+.win-close:hover {
   background: var(--danger);
 }
 
-/* ── Stats ─────────────────────────────────────────────────────────────────── */
+.win-close:hover img {
+  filter: brightness(0) invert(1);
+}
 
-.stats-container {
+/* Слой режима. Фон непрозрачный: когда рядом встанет Dashboard, под клипом
+   перехода не должен просвечивать уходящий режим. */
+.layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/* Холст эффектов лежит под содержимым Focus */
+.fx {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  max-height: 140px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-right: 4px;
-}
-
-.stats-container:empty {
-  display: none;
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.stat-header {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.stat-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.stat-name {
-  flex: 1;
-  font-size: 0.8rem;
-  color: var(--text-mute);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.stat-time {
-  font-size: 0.78rem;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
-.stat-bar-track {
-  height: 4px;
-  background: var(--surface-3);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.stat-bar-fill {
   height: 100%;
-  border-radius: 2px;
-  transition: width 0.4s ease;
-  opacity: 0.75;
+  z-index: 0;
+  pointer-events: none;
 }
 
-/* ── Timer section ─────────────────────────────────────────────────────────── */
-
-.timer-section {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 16px;
-  padding: 20px 40px;
+/* Распорка под .chrome: обвязка позиционирована абсолютно, содержимому нужен
+   свой отступ той же высоты */
+.f-bar {
+  height: 64px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
-.timer-main {
+/* Подвал лежит поверх сцены, а не в потоке: при раскрытии «Подробно» сцена
+   уезжает вверх лишь немного — панель успевает накрыть бейджи категорий,
+   а не гонит их вверх вместе с собой. */
+.stage {
+  position: relative;
+  z-index: 1;
   flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: var(--s6);
+  padding: 0 var(--s5) 52px;
+  min-height: 0;
+  transition: transform var(--t-slow);
 }
 
-.timer-ring {
-  width: 260px;
-  height: 260px;
-  border-radius: 50%;
-  border: 3px solid var(--control-hover);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  background: var(--surface);
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-  transition: border-color 0.3s, box-shadow 0.3s;
+.layer.sheet-open .stage {
+  transform: translateY(-44px);
+}
+
+/* ── Кольцо ────────────────────────────────────────────────────────────────── */
+
+.ring-wrap {
+  position: relative;
+  width: 330px;
+  height: 330px;
   flex-shrink: 0;
 }
 
-.timer-ring.running {
-  border-color: var(--accent);
-  box-shadow: 0 0 40px color-mix(in srgb, var(--accent) 12%, transparent);
+.dial {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
 }
 
-.timer-display {
-  font-size: 2.4rem;
-  font-weight: 300;
-  letter-spacing: 0.05em;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
+.dial .track {
+  fill: none;
+  stroke: var(--surface-2);
+  stroke-width: 10;
 }
 
-.timer-actions {
+.dial .prog {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--t-slow);
+}
+
+.dial-in {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+}
+
+.dial-cat {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+  min-height: 1.2em;
 }
 
-.timer-btn {
-  padding: 8px 28px;
-  border-radius: 20px;
+.dial-cat .sw {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.dial-time {
+  font-weight: 300;
+  font-size: 56px;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.dial-sub {
+  font-size: 12px;
+  color: var(--text-mute);
+  min-height: 1.2em;
+}
+
+.halo {
+  position: absolute;
+  inset: -30px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 62%);
+  transition: opacity var(--t-slow);
+}
+
+.layer.running .halo {
+  opacity: 1;
+  animation: breathe 4.5s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50%      { transform: scale(1.045); opacity: 1; }
+}
+
+/* ── Кнопка запуска ────────────────────────────────────────────────────────── */
+
+.go-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.go {
+  padding: 15px 52px;
+  border-radius: 99px;
   border: none;
   cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  transition: background 0.2s, transform 0.1s;
   background: var(--accent);
   color: var(--on-accent);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  transition: transform var(--t), filter var(--t), background var(--t);
 }
 
-.timer-btn:disabled {
+.go:hover:not(:disabled) {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+}
+
+.go:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.go:disabled {
   background: var(--accent-soft);
   color: var(--accent-soft-text);
   cursor: not-allowed;
 }
 
-.timer-btn:not(:disabled):hover {
-  background: var(--accent-hover);
+.go.stop {
+  background: var(--surface-2);
+  color: var(--text);
 }
 
-.timer-btn:not(:disabled):active {
-  transform: scale(0.96);
-}
-
-.timer-btn.stop {
-  background: var(--danger);
-  color: var(--on-danger);
-}
-
-.timer-btn.stop:hover {
-  background: var(--danger-hover);
-}
-
+/* Сброс накопленного времени. В прототипе кнопки нет — он макет, в нём нечего
+   сбрасывать. Здесь она нужна: отменённый диалог сохранения оставляет время
+   в счётчике, и без сброса от него не избавиться. */
 .reset-btn {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
-  color: var(--text-disabled);
+  color: var(--text-mute);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 0.2s, color 0.2s;
   padding: 0;
   line-height: 1;
+  transition: border-color var(--t), color var(--t);
 }
 
 .reset-btn:hover {
@@ -511,10 +495,227 @@ body {
   color: var(--danger);
 }
 
-.no-category-hint {
-  font-size: 0.82rem;
-  color: var(--text-disabled);
-  letter-spacing: 0.02em;
+/* ── Бейджи категорий ──────────────────────────────────────────────────────── */
+
+/* Уходят под панель «Подробно»: между рядами 8px, и нет такого подъёма, при
+   котором нижний ряд скрыт целиком, а верхний не липнет к краю панели.
+   Поэтому не подрезаем, а гасим — заодно не отвлекают, пока читаешь цифры. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  justify-content: center;
+  max-width: 780px;
+  transition: opacity var(--t-slow), transform var(--t-slow);
+}
+
+.layer.sheet-open .chips {
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-dim);
+  transition: border-color var(--t), color var(--t), background var(--t), transform var(--t);
+}
+
+.chip:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.chip[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.chip .sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chip .h {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  font-family: var(--font-num);
+}
+
+/* ── Подвал периода ────────────────────────────────────────────────────────── */
+
+/* Непрозрачный — иначе сцена просвечивает сквозь выезжающую панель */
+.foot {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 3;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.foot-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+}
+
+.foot-bar .lab {
+  font-size: 12px;
+  color: var(--text-mute);
+  white-space: nowrap;
+}
+
+.foot-bar .track {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.foot-bar .track span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width var(--t-slow);
+}
+
+.foot-bar .track span.over {
+  background: var(--danger);
+}
+
+.foot-num {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.foot-num .of {
+  color: var(--text-mute);
+}
+
+.foot-num.over {
+  color: var(--danger);
+}
+
+.expand {
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition: background var(--t);
+}
+
+.expand:hover {
+  background: var(--surface-2);
+}
+
+.sheet {
+  max-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  transition: max-height var(--t-slow);
+}
+
+.sheet.open {
+  max-height: 240px;
+  border-top: 1px solid var(--border);
+}
+
+.sheet-in {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s5);
+  padding: var(--s4) var(--s4) var(--s5);
+}
+
+.stat dt {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: 6px;
+}
+
+.stat dd {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.stat dd small {
+  font-size: 12px;
+  color: var(--text-mute);
+  font-weight: 400;
+}
+
+.bars {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.bars-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 12px;
+}
+
+.bars-row .n {
+  width: 104px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bars-row .t {
+  flex: 1;
+  height: 5px;
+  background: var(--surface-2);
+  border-radius: 99px;
+}
+
+.bars-row .t span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+}
+
+.bars-row .v {
+  width: 58px;
+  text-align: right;
+  font-family: var(--font-num);
+  font-size: 11.5px;
+  color: var(--text-mute);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 /* ── Save dialog ───────────────────────────────────────────────────────────── */
@@ -613,134 +814,6 @@ body {
 
 .dialog-btn.save:hover {
   background: var(--accent-hover);
-}
-
-/* ── App header ────────────────────────────────────────────────────────────── */
-
-.app-header {
-  position: relative;
-  height: 40px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border-soft);
-  display: flex;
-  align-items: center;
-  padding: 0 4px 0 10px;
-  flex-shrink: 0;
-  -webkit-app-region: drag;
-}
-
-.header-left,
-.burger-btn,
-.burger-dropdown,
-.sync-controls,
-.sync-text-btn,
-.win-btn {
-  -webkit-app-region: no-drag;
-}
-
-.titlebar-center {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  height: 100%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  pointer-events: none;
-}
-
-.titlebar-title {
-  font-size: 13px;
-  color: var(--text-dim);
-  letter-spacing: 0.02em;
-}
-
-.window-controls {
-  display: flex;
-  align-items: center;
-  margin-left: 12px;
-}
-
-.win-btn {
-  width: 34px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.win-btn:hover {
-  background: var(--surface-2);
-}
-
-.win-close:hover {
-  background: var(--danger);
-}
-
-.win-close:hover img {
-  filter: brightness(0) invert(1);
-}
-
-.header-left {
-  position: relative;
-}
-
-.burger-btn {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  border-radius: 6px;
-  opacity: 0.55;
-  transition: opacity 0.15s, background 0.15s;
-  padding: 0;
-}
-
-.burger-btn:hover {
-  opacity: 1;
-  background: var(--surface-3);
-}
-
-/* ── Dropdown ──────────────────────────────────────────────────────────────── */
-
-.burger-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  background: var(--surface-2);
-  border: 1px solid var(--border-soft);
-  border-radius: 8px;
-  overflow: hidden;
-  z-index: 200;
-  min-width: 160px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-}
-
-.dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  font-size: 0.88rem;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-
-.dropdown-item:hover {
-  background: var(--control);
 }
 
 /* ── Modal overlay (reusable) ──────────────────────────────────────────────── */
@@ -1356,40 +1429,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: 2px solid var(--surface-3);
 }
 
-/* ── Calendar button ───────────────────────────────────────────────────────── */
-
-.calendar-btn-wrap {
-  padding: 15px 18px;
-  flex-shrink: 0;
-}
-
-.calendar-btn {
-  width: 100%;
-  padding: 9px 14px;
-  background: var(--accent);
-  color: var(--on-accent);
-  border: none;
-  border-radius: 8px;
-  font-size: 0.88rem;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: background 0.2s;
-}
-
-.calendar-btn:hover {
-  background: var(--accent-hover);
-}
-
-.calendar-btn img {
-  filter: brightness(0);
-  flex-shrink: 0;
-}
-
 /* ── Calendar modal ────────────────────────────────────────────────────────── */
 
 .calendar-modal {
@@ -1540,36 +1579,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-overflow: ellipsis;
 }
 
-/* ── Sync status dot ───────────────────────────────────────────────────────── */
-
-.sync-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
-}
-
-.sync-text-btn {
-  background: var(--surface-3);
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  color: var(--text-dim);
-  font-size: 13px;
-  padding: 4px 10px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.sync-text-btn:hover,
-.sync-text-btn:active {
-  background: var(--control-hover);
-}
-
-.sync-text-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
 #pane-sync .settings-row-label {
   width: auto;
   white-space: nowrap;
@@ -1579,15 +1588,3 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   text-align: right;
 }
 
-.sync-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--border);
-  flex-shrink: 0;
-  transition: background 0.3s;
-}
-
-.sync-dot.connected {
-  background: var(--accent);
-}

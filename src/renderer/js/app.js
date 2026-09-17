@@ -15,6 +15,15 @@ let currentLang = 'ru'
 let currentTheme  = 'dark'
 let currentAccent = 'emerald'
 
+// Сегодняшние секунды, уже лежащие в базе. Ход текущего таймера прибавляется
+// поверх — в базу он попадёт только после сохранения сессии.
+let todaySeconds = 0
+let dailyGoalSeconds = 8 * 3600
+let lastStats = []
+
+// Длина окружности прогресса: r=156 из viewBox кольца
+const RING_LEN = 2 * Math.PI * 156
+
 function applyTheme(theme, accent) {
   document.documentElement.dataset.theme  = theme
   document.documentElement.dataset.accent = accent
@@ -43,26 +52,28 @@ function applyI18n() {
 
 const userSelectScreen     = document.getElementById('user-select-screen')
 const mainScreen           = document.getElementById('main-screen')
-const categoriesList       = document.getElementById('categories-list')
-const limitBarWrap         = document.getElementById('limit-bar-wrap')
+const focusLayer           = document.getElementById('layer-focus')
+const chips                = document.getElementById('chips')
+const dialCat              = document.getElementById('dial-cat')
+const dialSub              = document.getElementById('dial-sub')
+const prog                 = document.getElementById('prog')
 const limitBarLabel        = document.getElementById('limit-bar-label')
 const limitBarTime         = document.getElementById('limit-bar-time')
 const limitBarFill         = document.getElementById('limit-bar-fill')
-const statsContainer       = document.getElementById('stats-container')
+const expandBtn            = document.getElementById('expand')
+const sheet                = document.getElementById('sheet')
+const statLeftLabel        = document.getElementById('stat-left-label')
+const statLeft             = document.getElementById('stat-left')
+const statAvg              = document.getElementById('stat-avg')
+const bars                 = document.getElementById('bars')
 const timerDisplay         = document.getElementById('timer-display')
 const timerBtn             = document.getElementById('timer-btn')
-const timerRing            = document.getElementById('timer-ring')
 const resetBtn             = document.getElementById('reset-btn')
-const noCategoryHint       = document.getElementById('no-category-hint')
 const saveDialog           = document.getElementById('save-dialog')
 const dialogTime           = document.getElementById('dialog-time')
 const dialogCategorySelect = document.getElementById('dialog-category-select')
 const dialogCancel         = document.getElementById('dialog-cancel')
 const dialogSave           = document.getElementById('dialog-save')
-const burgerBtn            = document.getElementById('burger-btn')
-const burgerDropdown       = document.getElementById('burger-dropdown')
-const menuSettings         = document.getElementById('menu-settings')
-const menuAbout            = document.getElementById('menu-about')
 const settingsModal        = document.getElementById('settings-modal')
 const settingsClose        = document.getElementById('settings-close')
 const settingsTabs         = document.querySelectorAll('.settings-tab')
@@ -96,6 +107,12 @@ async function init() {
   if (!savedTheme)  await window.api.setSetting('theme', currentTheme)
   if (!savedAccent) await window.api.setSetting('accent', currentAccent)
   applyTheme(currentTheme, currentAccent)
+
+  // Дневная цель локальная и не синхронизируется: общий лимит — ограничение
+  // на двоих, а норма дня у каждого своя.
+  const savedGoal = await window.api.getSetting('daily_goal_seconds')
+  if (savedGoal) dailyGoalSeconds = Number(savedGoal)
+  else await window.api.setSetting('daily_goal_seconds', String(dailyGoalSeconds))
 
   const userName = await window.api.getSetting('user_name')
   if (userName) {
@@ -137,18 +154,24 @@ async function showMainScreen() {
 // ── Categories ────────────────────────────────────────────────────────────────
 
 function renderCategories() {
-  categoriesList.innerHTML = ''
+  // Часы на бейдже берутся из той же статистики, что рисует панель «Подробно»,
+  // отдельного запроса на это не нужно. Сопоставление по имени, а не по id:
+  // db:get-monthly-stats группирует по категории, но самого id не возвращает,
+  // а трогать main-процесс на этом этапе нельзя.
+  const hours = new Map(lastStats.map(row => [row.name, row.total]))
+  chips.innerHTML = ''
   categories.forEach(cat => {
-    const li = document.createElement('li')
-    li.className = 'category-item'
-    li.dataset.id = cat.id
-    li.style.setProperty('--cat-color', cat.color)
-    li.innerHTML = `
-      <span class="category-dot" style="background:${cat.color}"></span>
-      <span class="category-name">${cat.name}</span>
+    const btn = document.createElement('button')
+    btn.className = 'chip'
+    btn.dataset.id = cat.id
+    btn.setAttribute('aria-pressed', String(cat.id === selectedCategoryId))
+    const spent = hours.get(cat.name)
+    btn.innerHTML = `
+      <span class="sw" style="background:${cat.color}"></span>${cat.name}
+      ${spent ? `<span class="h">${formatHM(spent)}</span>` : ''}
     `
-    li.addEventListener('click', () => selectCategory(cat.id))
-    categoriesList.appendChild(li)
+    btn.addEventListener('click', () => selectCategory(cat.id))
+    chips.appendChild(btn)
   })
 }
 
@@ -165,11 +188,14 @@ function renderDialogCategories() {
 function selectCategory(id) {
   if (running) return
   selectedCategoryId = id
-  document.querySelectorAll('.category-item').forEach(el => {
-    el.classList.toggle('active', Number(el.dataset.id) === id)
+  chips.querySelectorAll('.chip').forEach(el => {
+    el.setAttribute('aria-pressed', String(Number(el.dataset.id) === id))
   })
+  const cat = categories.find(c => c.id === id)
+  dialCat.innerHTML = cat
+    ? `<span class="sw" style="background:${cat.color}"></span>${cat.name}`
+    : ''
   timerBtn.disabled = false
-  noCategoryHint.classList.add('hidden')
   dialogCategorySelect.value = id
 }
 
@@ -182,14 +208,35 @@ function formatDuration(seconds) {
   return `${h}${t('unit_h')} ${m}${t('unit_m')} ${s}${t('unit_s')}`
 }
 
+// Без секунд: на бейджах, в кольце и в подвале они только шумят.
+// Нулевая часть тоже опускается — «160ч», а не «160ч 0м».
+function formatHM(seconds) {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (!h) return `${m}${t('unit_m')}`
+  if (!m) return `${h}${t('unit_h')}`
+  return `${h}${t('unit_h')} ${m}${t('unit_m')}`
+}
+
+function todayISO() {
+  const d = new Date()
+  const p = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
 async function refreshStats() {
-  const [stats, sharedTotal, period] = await Promise.all([
+  const [stats, sharedTotal, period, todaySessions] = await Promise.all([
     window.api.getMonthlyStats(currentUser),
     window.api.getSharedTotal(),
     window.api.getPeriodSettings(),
+    window.api.getSessionsByDate(currentUser, todayISO()),
   ])
+  lastStats = stats
+  todaySeconds = todaySessions.reduce((sum, s) => sum + s.duration_seconds, 0)
   renderLimitBar(sharedTotal, period)
   renderStats(stats)
+  renderCategories()
+  paintRing()
 }
 
 function renderLimitBar(totalSeconds, period) {
@@ -207,7 +254,7 @@ function renderLimitBar(totalSeconds, period) {
 
   limitBarFill.style.width = pct + '%'
   limitBarFill.classList.toggle('over', over)
-  limitBarTime.textContent = `${formatDuration(totalSeconds)} / ${formatDuration(limit)}`
+  limitBarTime.innerHTML = `${formatHM(totalSeconds)} <span class="of">/ ${formatHM(limit)}</span>`
   limitBarTime.classList.toggle('over', over)
 
   const fmtDate = iso => {
@@ -216,31 +263,43 @@ function renderLimitBar(totalSeconds, period) {
     return `${Number(d)} ${months[Number(m) - 1]}`
   }
   limitBarLabel.textContent = `${fmtDate(period.period_start)} — ${fmtDate(period.period_end)}`
+
+  // «Осталось» живёт в той же арифметике, что и полоса, поэтому считается здесь
+  const left = limit - totalSeconds
+  statLeftLabel.textContent = over ? t('stat_over') : t('stat_left')
+  statLeft.textContent = formatHM(Math.abs(left))
 }
 
+// Полосы по категориям в панели «Подробно»: длина относительно первой строки,
+// stats приходит уже отсортированным по убыванию.
 function renderStats(stats) {
-  statsContainer.innerHTML = ''
+  bars.innerHTML = ''
   if (!stats.length) return
 
   const maxTotal = stats[0].total
 
-  stats.forEach(row => {
+  stats.slice(0, 5).forEach(row => {
     const pct = Math.round((row.total / maxTotal) * 100)
-
     const item = document.createElement('div')
-    item.className = 'stat-item'
+    item.className = 'bars-row'
     item.innerHTML = `
-      <div class="stat-header">
-        <span class="stat-dot" style="background:${row.color}"></span>
-        <span class="stat-name">${row.name}</span>
-        <span class="stat-time">${formatDuration(row.total)}</span>
-      </div>
-      <div class="stat-bar-track">
-        <div class="stat-bar-fill" style="width:${pct}%;background:${row.color}"></div>
-      </div>
+      <span class="n">${row.name}</span>
+      <span class="t"><span style="width:${pct}%;background:${row.color}"></span></span>
+      <span class="v">${formatHM(row.total)}</span>
     `
-    statsContainer.appendChild(item)
+    bars.appendChild(item)
   })
+}
+
+// Кольцо и подпись под таймером: доля сегодняшнего времени от дневной цели
+function paintRing() {
+  const done = todaySeconds + (running ? Math.floor((Date.now() - startTime + elapsed) / 1000) : Math.floor(elapsed / 1000))
+  const share = dailyGoalSeconds > 0 ? Math.min(done / dailyGoalSeconds, 1) : 0
+  prog.style.strokeDasharray  = RING_LEN
+  prog.style.strokeDashoffset = RING_LEN * (1 - share)
+  dialSub.textContent = t('focus_sub')
+    .replace('{done}', formatHM(done))
+    .replace('{goal}', formatHM(dailyGoalSeconds))
 }
 
 // ── Timer ─────────────────────────────────────────────────────────────────────
@@ -255,6 +314,7 @@ function formatTime(ms) {
 
 function tick() {
   timerDisplay.textContent = formatTime(elapsed + (Date.now() - startTime))
+  paintRing()
 }
 
 function start() {
@@ -264,8 +324,9 @@ function start() {
   interval = setInterval(tick, 500)
   timerBtn.textContent = t('timer_stop')
   timerBtn.classList.add('stop')
-  timerRing.classList.add('running')
+  focusLayer.classList.add('running')
   resetBtn.classList.add('hidden')
+  paintRing()
 }
 
 function stop() {
@@ -276,8 +337,9 @@ function stop() {
   timerDisplay.textContent = formatTime(elapsed)
   timerBtn.textContent = t('timer_start')
   timerBtn.classList.remove('stop')
-  timerRing.classList.remove('running')
+  focusLayer.classList.remove('running')
   resetBtn.classList.remove('hidden')
+  paintRing()
   openSaveDialog()
 }
 
@@ -286,6 +348,7 @@ function resetTimer() {
   sessionStartedAt = null
   timerDisplay.textContent = '00:00:00'
   resetBtn.classList.add('hidden')
+  paintRing()
 }
 
 timerBtn.addEventListener('click', () => {
@@ -295,6 +358,12 @@ timerBtn.addEventListener('click', () => {
 
 resetBtn.addEventListener('click', () => {
   if (!running) resetTimer()
+})
+
+expandBtn.addEventListener('click', () => {
+  const open = sheet.classList.toggle('open')
+  focusLayer.classList.toggle('sheet-open', open)
+  expandBtn.textContent = t(open ? 'focus_collapse' : 'focus_expand')
 })
 
 // ── Save dialog ───────────────────────────────────────────────────────────────
@@ -327,26 +396,10 @@ dialogSave.addEventListener('click', async () => {
   await refreshStats()
 })
 
-// ── Burger menu ───────────────────────────────────────────────────────────────
+// ── Settings ──────────────────────────────────────────────────────────────────
 
-burgerBtn.addEventListener('click', e => {
-  e.stopPropagation()
-  burgerDropdown.classList.toggle('hidden')
-})
-
-document.addEventListener('click', () => {
-  burgerDropdown.classList.add('hidden')
-})
-
-menuSettings.addEventListener('click', () => {
-  burgerDropdown.classList.add('hidden')
-  openSettings()
-})
-
-menuAbout.addEventListener('click', () => {
-  burgerDropdown.classList.add('hidden')
-  openAbout()
-})
+// Точки входа в настройки, календарь и «О программе» появятся в рельсе
+// Dashboard на следующем этапе. В шапке Focus их нет по прототипу.
 
 function openSettings() {
   // reset to user tab
@@ -719,15 +772,12 @@ const hoursTimeInput  = document.getElementById('hours-time-input')
 const hoursEditCancel = document.getElementById('hours-edit-cancel')
 const hoursEditSave   = document.getElementById('hours-edit-save')
 
-const calendarBtn   = document.getElementById('calendar-btn')
 const calendarModal = document.getElementById('calendar-modal')
 const calendarClose = document.getElementById('calendar-close')
 const calPrev       = document.getElementById('cal-prev')
 const calNext       = document.getElementById('cal-next')
 const calTitle      = document.getElementById('cal-title')
 const calGrid       = document.getElementById('calendar-grid')
-const syncDot       = document.getElementById('sync-dot')
-const syncBtn       = document.getElementById('sync-btn')
 
 function formatLastSync(ts) {
   if (!ts) return '—'
@@ -930,8 +980,6 @@ function renderWeekdays() {
   spans.forEach((span, i) => { if (wd[i]) span.textContent = wd[i] })
 }
 
-calendarBtn.addEventListener('click', openCalendar)
-
 calendarClose.addEventListener('click', () => {
   calendarModal.classList.add('hidden')
 })
@@ -1040,21 +1088,6 @@ window.api.onPeerUpdated(async () => {
   if (!calendarModal.classList.contains('hidden')) {
     await loadCalendarMonth()
   }
-})
-
-window.api.onSyncStatus(connected => {
-  syncDot.classList.toggle('connected', connected)
-})
-
-syncBtn.addEventListener('click', () => {
-  if (syncBtn.disabled) return
-  syncBtn.textContent = 'Sync...'
-  syncBtn.disabled = true
-  window.api.syncNow()
-  setTimeout(() => {
-    syncBtn.textContent = 'Sync'
-    syncBtn.disabled = false
-  }, 1500)
 })
 
 document.getElementById('sync-interval-select').addEventListener('change', async (e) => {
