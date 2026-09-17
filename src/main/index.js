@@ -452,10 +452,13 @@ function setupIPC() {
 
 function createWindow() {
   const opts = {
+    // Высота Focus складывается из шапки, кольца 330px, кнопки, двух-трёх
+    // рядов бейджей и подвала периода. Ниже 780 они начинают наезжать друг
+    // на друга, поэтому минимум поднят с 600.
     width: 700,
-    height: 600,
+    height: 780,
     minWidth: 700,
-    minHeight: 600,
+    minHeight: 780,
     frame: false,
     resizable: true,
     icon: path.join(__dirname, '../../assets/icons/time-management.png'),
