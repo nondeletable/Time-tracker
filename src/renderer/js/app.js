@@ -27,6 +27,15 @@ const RING_LEN = 2 * Math.PI * 156
 function applyTheme(theme, accent) {
   document.documentElement.dataset.theme  = theme
   document.documentElement.dataset.accent = accent
+  // Палитра эффектов строится из --accent, поэтому после смены темы холст
+  // надо перерисовать.
+  window.FX?.refresh()
+}
+
+function applyFx(particles, leaks) {
+  document.documentElement.dataset.fxp = particles
+  document.documentElement.dataset.fxl = leaks
+  window.FX?.refresh()
 }
 
 function t(key) {
@@ -113,6 +122,10 @@ async function init() {
   const savedGoal = await window.api.getSetting('daily_goal_seconds')
   if (savedGoal) dailyGoalSeconds = Number(savedGoal)
   else await window.api.setSetting('daily_goal_seconds', String(dailyGoalSeconds))
+
+  const savedFxP = await window.api.getSetting('fx_particles')
+  const savedFxL = await window.api.getSetting('fx_leaks')
+  applyFx(savedFxP || 'off', savedFxL || 'off')
 
   const userName = await window.api.getSetting('user_name')
   if (userName) {
@@ -454,6 +467,9 @@ function openSettings() {
   document.getElementById('lang-select').value = currentLang
   document.getElementById('accent-select').value = currentAccent
   document.getElementById('theme-select').value  = currentTheme
+  document.getElementById('daily-goal-input').value = dailyGoalSeconds / 3600
+  document.getElementById('fx-particles-select').value = document.documentElement.dataset.fxp || 'off'
+  document.getElementById('fx-leaks-select').value = document.documentElement.dataset.fxl || 'off'
   settingsModal.classList.remove('hidden')
   loadUserTab()
 }
@@ -484,6 +500,27 @@ document.getElementById('theme-select').addEventListener('change', async e => {
   currentTheme = e.target.value
   await window.api.setSetting('theme', currentTheme)
   applyTheme(currentTheme, currentAccent)
+})
+
+document.getElementById('daily-goal-input').addEventListener('change', async e => {
+  const hours = Number(e.target.value)
+  if (!hours || hours < 1 || hours > 24) {
+    e.target.value = dailyGoalSeconds / 3600
+    return
+  }
+  dailyGoalSeconds = Math.round(hours * 3600)
+  await window.api.setSetting('daily_goal_seconds', String(dailyGoalSeconds))
+  paintRing()
+})
+
+document.getElementById('fx-particles-select').addEventListener('change', async e => {
+  await window.api.setSetting('fx_particles', e.target.value)
+  applyFx(e.target.value, document.documentElement.dataset.fxl)
+})
+
+document.getElementById('fx-leaks-select').addEventListener('change', async e => {
+  await window.api.setSetting('fx_leaks', e.target.value)
+  applyFx(document.documentElement.dataset.fxp, e.target.value)
 })
 
 settingsTabs.forEach(tab => {
