@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="ru" data-theme="dark" data-accent="emerald" data-mode="focus" data-wave="med" data-fxp="dust" data-fxl="off">
+<head>
+<meta charset="utf-8">
+<title>Time Tracker — Focus + Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   ТОКЕНЫ — 4 темы: emerald/indigo × dark/light.
+   Тема задаёт ВСЮ палитру, не только акцент: у emerald сине-графитовые
+   нейтралы, у indigo тёплые. Оба режима (Focus, Dashboard) берут одну
+   активную тему — режим и тема независимы.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --font-ui:  'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-num: 'JetBrains Mono', ui-monospace, monospace;
+
+  --c-work:#3b82f6; --c-study:#a855f7; --c-meet:#f97316;  --c-comm:#ec4899;
+  --c-person:#10b981; --c-design:#06b6d4; --c-review:#84cc16; --c-docs:#f59e0b;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
+  --r:12px; --r-lg:16px;
+  --t:180ms cubic-bezier(.4,0,.2,1);
+  --t-slow:420ms cubic-bezier(.16,1,.3,1);
+
+  --wave-ms: 900;   /* мс, за которые фронт доходит до дальнего угла */
+}
+/* пресеты скорости волны — переключаются в настройках */
+[data-wave="fast"] { --wave-ms: 520; }
+[data-wave="med"]  { --wave-ms: 900; }
+[data-wave="slow"] { --wave-ms: 1600; }
+
+/* ── EMERALD · LIGHT ─────────────────────────────────────────────────── */
+[data-accent="emerald"] {
+  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e5e8ee;
+  --text:#111827; --text-dim:#5a6478; --text-mute:#9aa3b4;
+  --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#ffffff; --danger:#dc2626;
+}
+/* ── EMERALD · DARK ──────────────────────────────────────────────────── */
+[data-accent="emerald"][data-theme="dark"] {
+  --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
+  --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
+  --accent:#34d399; --accent-soft:#0e2b22; --on-accent:#04231a; --danger:#f87171;
+}
+/* ── INDIGO · LIGHT ──────────────────────────────────────────────────── */
+[data-accent="indigo"] {
+  --bg:#f4f4f2; --surface:#ffffff; --surface-2:#ebebe7; --border:#e0e0da;
+  --text:#1c1c1a; --text-dim:#61615c; --text-mute:#97978f;
+  --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#ffffff; --danger:#dc2626;
+}
+/* ── INDIGO · DARK ───────────────────────────────────────────────────── */
+[data-accent="indigo"][data-theme="dark"] {
+  --bg:#0f0f0e; --surface:#171716; --surface-2:#1f1f1d; --border:#2b2b28;
+  --text:#f0efec; --text-dim:#a0a099; --text-mute:#6b6b64;
+  --accent:#818cf8; --accent-soft:#23234a; --on-accent:#10102a; --danger:#f87171;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font-ui); font-size:13.5px; line-height:1.5;
+       background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
+.num { font-family:var(--font-num); font-variant-numeric:tabular-nums; letter-spacing:-.03em; }
+button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:6px; }
+
+/* ═══ СЛУЖЕБНАЯ ПОЛОСА ПРОТОТИПА — не часть приложения ══════════════════ */
+.proto { display:flex; align-items:center; gap:var(--s4); padding:var(--s3) var(--s4);
+         background:var(--surface-2); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.proto b { font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--text-dim); }
+.proto .grp { display:flex; gap:2px; padding:2px; background:var(--surface); border:1px solid var(--border); border-radius:9px; }
+.proto .grp button { padding:5px 12px; border-radius:7px; font-size:12px; color:var(--text-dim); transition:background var(--t), color var(--t); }
+.proto .grp button[aria-pressed="true"] { background:var(--accent); color:var(--on-accent); font-weight:600; }
+.proto .hint { margin-left:auto; font-size:11.5px; color:var(--text-mute); }
+.proto .sel { display:flex; align-items:center; gap:var(--s2); font-size:11.5px; color:var(--text-dim); }
+.proto .sel select, .row select { padding:5px 9px; background:var(--surface); color:var(--text);
+  border:1px solid var(--border); border-radius:8px; font:inherit; font-size:12px; }
+.proto .sel select:focus, .row select:focus { outline:none; border-color:var(--accent); }
+
+/* ═══ ОКНО ПРИЛОЖЕНИЯ ═══════════════════════════════════════════════════
+   Безрамочное: полоски ОС нет, окно тянется за .chrome, кнопки справа. */
+.app { position:relative; width:1280px; max-width:100%; height:812px; margin:var(--s4) auto;
+       background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg);
+       overflow:hidden; isolation:isolate;
+       box-shadow:0 24px 60px -24px rgba(0,0,0,.28); }
+[data-theme="dark"] .app { box-shadow:0 24px 60px -24px rgba(0,0,0,.7); }
+
+/* ── Неподвижная обвязка: T слева, кнопки окна справа.
+      Живёт НАД слоями и в волне не участвует — управление окном не должно
+      мигать во время перехода. ─────────────────────────────────────────── */
+/* padding-left 11px: центр T (34px) попадает на 28px — это центр рельса
+   Dashboard, иначе в нём T визуально съезжает правее иконок навигации */
+.chrome { position:absolute; inset:0 0 auto 0; height:64px; z-index:60;
+          display:flex; align-items:center; padding:0 var(--s4) 0 11px; pointer-events:none;
+          -webkit-app-region:drag; }
+.chrome > *, .chrome .dock { pointer-events:auto; -webkit-app-region:no-drag; }
+
+.tbtn { width:34px; height:34px; border-radius:10px; background:var(--accent); color:var(--on-accent);
+        display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;
+        transition:filter var(--t), background var(--t); }
+.tbtn:hover { filter:brightness(1.08); }
+/* Вращается только буква, квадрат стоит на месте — он же origin волны.
+   Буква доворачивает 180° и ОСТАЁТСЯ: ровная — Focus, перевёрнутая —
+   Dashboard. Следующее нажатие отматывает её обратно тем же ходом. */
+.tglyph { display:block; line-height:1; transition:transform 620ms cubic-bezier(.16,1,.3,1); }
+
+.chrome .sp { flex:1; }
+.win { display:flex; gap:2px; }
+/* без подсветки-квадратика: на наведении меняется цвет самого символа */
+.win button { width:32px; height:28px; color:var(--text-mute); font-size:13px; transition:color var(--t); }
+.win button:hover { color:var(--text); }
+.win button.x:hover { color:var(--danger); }
+
+/* ── Слои режимов ─────────────────────────────────────────────────────── */
+/* фон обязателен: под клипом внутри круга не должен просвечивать уходящий режим */
+.layer { position:absolute; inset:0; display:none; background:var(--bg); }
+[data-mode="focus"] .layer[data-layer="focus"] { display:flex; flex-direction:column; }
+[data-mode="dash"]  .layer[data-layer="dash"]  { display:grid; grid-template-columns:56px 1fr; grid-template-rows:minmax(0,1fr); }
+/* во время перехода показаны оба: уходящий снизу, приходящий поверх под клипом */
+.anim .layer[data-layer="focus"] { display:flex; flex-direction:column; }
+.anim .layer[data-layer="dash"]  { display:grid; grid-template-columns:56px 1fr; grid-template-rows:minmax(0,1fr); }
+.anim .layer.incoming { z-index:20; }
+
+/* фронт волны */
+.ring { position:absolute; border-radius:50%; border:2px solid var(--accent);
+        pointer-events:none; z-index:30; opacity:0;
+        box-shadow:0 0 28px 2px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* рождение элементов по фронту: задержка = дистанция / скорость */
+.layer.incoming [data-wave] { animation:waveIn 360ms cubic-bezier(.16,1,.3,1) both; animation-delay:var(--wd,0ms); }
+@keyframes waveIn { from { opacity:0; transform:translateY(10px) scale(.975) } to { opacity:1; transform:none } }
+
+/* режим «Fade»: уходящий слой сверху и гаснет, входящий проявляется под ним */
+.anim .layer.leaving { z-index:25; }
+.layer.fading [data-wave] { animation:fadeRise 420ms cubic-bezier(.16,1,.3,1) both; animation-delay:var(--wd,0ms); }
+@keyframes fadeRise { from { opacity:0; transform:translateY(18px) scale(.82) } to { opacity:1; transform:none } }
+
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   FOCUS MODE
+   ══════════════════════════════════════════════════════════════════════ */
+.f-bar { height:64px; flex-shrink:0; position:relative; z-index:1; }
+/* холст эффектов лежит под содержимым Focus */
+.fx { position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+
+/* Подвал лежит поверх сцены, а не в потоке: при раскрытии «Подробно» сцена
+   уезжает вверх лишь немного — кинематично, но панель успевает накрыть
+   бейджи категорий, а не гнать их вверх вместе с собой. */
+.stage { position:relative; z-index:1;
+         flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+         gap:var(--s6); padding:0 var(--s5) 52px; min-height:0;
+         transition:transform var(--t-slow); }
+.layer.sheet-open .stage { transform:translateY(-44px); }
+/* Бейджи уходят под панель: между их рядами 8px, и нет подъёма, при котором
+   нижний ряд скрыт целиком, а верхний не липнет к краю панели. Поэтому не
+   подрезаем, а гасим — заодно они не отвлекают, пока читаешь статистику. */
+.chips { transition:opacity var(--t-slow), transform var(--t-slow); }
+.layer.sheet-open .chips { opacity:0; transform:translateY(14px); pointer-events:none; }
+.ring-wrap { position:relative; width:330px; height:330px; flex-shrink:0; }
+.dial { width:100%; height:100%; transform:rotate(-90deg); }
+.dial .track { fill:none; stroke:var(--surface-2); stroke-width:10; }
+.dial .prog { fill:none; stroke:var(--accent); stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset var(--t-slow); }
+.dial-in { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:var(--s2); }
+.dial-cat { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-dim); }
+.dial-cat .sw { width:9px; height:9px; border-radius:50%; }
+.dial-time { font-family:var(--font-num); font-weight:300; font-size:56px; letter-spacing:-.045em; line-height:1; }
+.dial-sub { font-size:12px; color:var(--text-mute); }
+.halo { position:absolute; inset:-30px; border-radius:50%; opacity:0; pointer-events:none;
+        background:radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 62%);
+        transition:opacity var(--t-slow); }
+.running .halo { opacity:1; animation:breathe 4.5s ease-in-out infinite; }
+@keyframes breathe { 0%,100% { transform:scale(1); opacity:.75 } 50% { transform:scale(1.045); opacity:1 } }
+
+.go { padding:15px 52px; border-radius:99px; background:var(--accent); color:var(--on-accent);
+      font-size:15px; font-weight:600; transition:transform var(--t), filter var(--t), background var(--t); }
+.go:hover { filter:brightness(1.07); transform:translateY(-1px); }
+.go:active { transform:scale(.985); }
+.go.stop { background:var(--surface-2); color:var(--text); }
+
+.chips { display:flex; flex-wrap:wrap; gap:var(--s2); justify-content:center; max-width:780px; }
+.chip { display:flex; align-items:center; gap:8px; padding:9px 16px; border-radius:99px;
+        border:1px solid var(--border); font-size:13px; color:var(--text-dim);
+        transition:border-color var(--t), color var(--t), background var(--t), transform var(--t); }
+.chip:hover { color:var(--text); transform:translateY(-1px); }
+.chip[aria-pressed="true"] { border-color:transparent; background:var(--accent-soft); color:var(--text); font-weight:600; }
+.chip .sw { width:8px; height:8px; border-radius:50%; }
+.chip .h { font-size:11.5px; color:var(--text-mute); font-family:var(--font-num); }
+
+/* подвал непрозрачный — иначе сцена просвечивает сквозь выезжающую панель */
+.foot { position:absolute; inset:auto 0 0 0; z-index:3; border-top:1px solid var(--border); background:var(--bg); }
+.foot-bar { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) var(--s4); }
+.foot-bar .lab { font-size:12px; color:var(--text-mute); }
+.track { flex:1; height:6px; background:var(--surface-2); border-radius:99px; overflow:hidden; }
+.track span { display:block; height:100%; border-radius:99px; background:var(--accent); transition:width var(--t-slow); }
+.foot-num { font-size:13px; }
+.foot-num .of { color:var(--text-mute); }
+.expand { padding:6px 12px; border-radius:99px; font-size:12px; color:var(--text-dim); transition:background var(--t); }
+.expand:hover { background:var(--surface-2); }
+.sheet { max-height:0; overflow:hidden; background:var(--bg); transition:max-height var(--t-slow); }
+.sheet.open { max-height:240px; border-top:1px solid var(--border); }
+.sheet-in { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s5); padding:var(--s4) var(--s4) var(--s5); }
+.stat dt { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-mute); margin-bottom:6px; }
+.stat dd { font-size:24px; font-weight:600; letter-spacing:-.025em; font-family:var(--font-num); }
+.stat dd small { font-size:12px; color:var(--text-mute); font-weight:400; }
+.bars { grid-column:span 2; display:flex; flex-direction:column; gap:9px; }
+.bars-row { display:flex; align-items:center; gap:var(--s2); font-size:12px; }
+.bars-row .n { width:104px; color:var(--text-dim); }
+.bars-row .t { flex:1; height:5px; background:var(--surface-2); border-radius:99px; }
+.bars-row .t span { display:block; height:100%; border-radius:99px; }
+.bars-row .v { width:58px; text-align:right; font-family:var(--font-num); font-size:11.5px; color:var(--text-mute); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   DASHBOARD MODE
+   ══════════════════════════════════════════════════════════════════════ */
+.rail { background:var(--surface); border-right:1px solid var(--border);
+        display:flex; flex-direction:column; align-items:center; gap:var(--s2); padding:72px 0 var(--s3); }
+.rail button { width:36px; height:36px; border-radius:10px; color:var(--text-mute); font-size:15px; transition:background var(--t), color var(--t); }
+.rail button:hover { background:var(--surface-2); color:var(--text); }
+.rail button[aria-current="true"] { background:var(--accent-soft); color:var(--accent); }
+.rail .sp { flex:1; }
+
+.d-main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+/* Шапка ровно во всю верхнюю полосу: заголовок центрируется в тех же 64px,
+   где стоят T и правая панель, поэтому верхний отступ читается как боковой. */
+.d-head { display:flex; align-items:center; gap:var(--s4); height:64px; padding:0 var(--s5); flex-shrink:0; }
+.d-head h1 { font-size:19px; font-weight:600; letter-spacing:-.02em; line-height:1.15; }
+.d-head .sp { flex:1; }
+.d-head .pad { width:104px; }   /* зазор под кнопки окна справа сверху */
+
+/* Таймер — не обособленный блок, а такие же элементы строки-шапки, как
+   заголовок: никакой рамки вокруг, общий ритм отступов. */
+.dock { display:flex; align-items:center; gap:var(--s3); white-space:nowrap; }
+.dock > * { flex-shrink:0; }
+.dock-cat { display:flex; align-items:center; gap:7px; padding:6px 10px; border-radius:8px;
+            font-size:12.5px; color:var(--text-dim); transition:background var(--t), color var(--t); }
+.dock-cat:hover { background:var(--surface-2); color:var(--text); }
+.dock-cat .sw { width:8px; height:8px; border-radius:50%; }
+/* без min-width: в моноширинном цифры не пляшут, а лишняя ширина уходила
+   вправо и раздвигала промежуток перед кнопкой сильнее, чем слева */
+.dock-time { font-size:15px; font-weight:500; transition:color var(--t); }
+.dock.running .dock-time { color:var(--accent); }
+/* Кнопка без заливки: габарит как у дропдауна категории, шрифт и кегль как
+   у самого таймера — вся строка читается как один набор, а состояние несёт
+   цвет надписи, а не цветной прямоугольник. */
+.dock-btn { padding:6px 10px; border-radius:8px; background:none;
+            font-family:var(--font-num); font-size:15px; font-weight:500;
+            letter-spacing:.02em; color:var(--accent);
+            transition:background var(--t), color var(--t); }
+.dock-btn:hover { background:var(--surface-2); }
+.dock-btn.stop { color:var(--danger); }
+
+.scroll { flex:1; overflow-y:auto; padding:0 var(--s5) var(--s5); min-height:0; display:flex; flex-direction:column; }
+/* сетка тянется на всю высоту, последняя карточка добирает остаток —
+   иначе внизу копится бесхозная пустота */
+.grid { display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:auto auto minmax(0,1fr);
+        gap:var(--s3); flex:1; min-height:0; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s4); min-width:0; }
+.card h3 { font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--text-mute); margin-bottom:var(--s3); font-weight:600; }
+.span2 { grid-column:span 2; }
+.span4 { grid-column:span 4; display:flex; flex-direction:column; min-height:0; }
+
+.big { font-size:34px; font-weight:600; letter-spacing:-.035em; line-height:1.05; }
+.big .of { font-size:15px; color:var(--text-mute); font-weight:400; }
+.delta { display:inline-flex; font-size:11.5px; color:var(--text-dim); margin-top:6px; }
+.stack { display:flex; height:10px; border-radius:99px; overflow:hidden; background:var(--surface-2); margin-top:var(--s4); }
+.legend { display:flex; gap:var(--s4); margin-top:var(--s3); font-size:12px; color:var(--text-dim); flex-wrap:wrap; }
+.legend b { display:inline-flex; align-items:center; gap:6px; font-weight:400; }
+.legend i { width:8px; height:8px; border-radius:2px; }
+.legend .v { font-family:var(--font-num); color:var(--text); }
+.legend .sync { color:var(--text-mute); }
+
+.donut-wrap { display:flex; align-items:center; gap:var(--s4); }
+.donut { width:124px; height:124px; flex-shrink:0; transform:rotate(-90deg); }
+.donut circle { fill:none; stroke-width:16; }
+.dl { flex:1; display:flex; flex-direction:column; gap:5px; min-width:0; }
+.dl-row { display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--text-dim); }
+.dl-row i { width:7px; height:7px; border-radius:2px; flex-shrink:0; }
+.dl-row .n { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dl-row .v { font-family:var(--font-num); color:var(--text); }
+
+/* карточка-колонка: график растягивается, поэтому нижний отступ совпадает
+   с верхним, а не копится пустотой под шкалой */
+.card.fill { display:flex; flex-direction:column; }
+.chart { display:flex; align-items:flex-end; gap:3px; flex:1; min-height:92px; }
+.chart .bar { flex:1; background:var(--accent); border-radius:2px 2px 0 0; min-height:2px; opacity:.85; transition:opacity var(--t), transform var(--t); }
+.chart .bar:hover { opacity:1; transform:scaleY(1.03); transform-origin:bottom; }
+.chart .bar.none { background:var(--surface-2); }
+.chart-x { display:flex; justify-content:space-between; font-size:10px; color:var(--text-mute); margin-top:6px; font-family:var(--font-num); }
+
+.tbl-wrap { flex:1; min-height:0; overflow-y:auto; }
+.tbl { width:100%; border-collapse:collapse; }
+.tbl th { font-size:10px; letter-spacing:.07em; text-transform:uppercase; color:var(--text-mute); text-align:left;
+          padding:0 0 var(--s2); font-weight:600; position:sticky; top:0; background:var(--surface); z-index:1; }
+.tbl th:last-child, .tbl td:last-child { text-align:right; }
+.tbl td { padding:7px 0; border-top:1px solid var(--border); font-size:12.5px; }
+.tbl .nm { display:flex; align-items:center; gap:8px; }
+.tbl .nm i { width:8px; height:8px; border-radius:2px; }
+.tbl .mini { width:78px; height:4px; background:var(--surface-2); border-radius:2px; display:inline-block; vertical-align:middle; }
+.tbl .mini span { display:block; height:100%; border-radius:2px; }
+
+/* ── Календарь: общий для обоих режимов ───────────────────────────────── */
+.cal { display:grid; grid-template-columns:repeat(7,1fr); gap:var(--s2); }
+.cal-wd { font-size:10px; letter-spacing:.08em; color:var(--text-mute); text-align:center; padding-bottom:2px; font-weight:600; }
+.cal-d { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:9px 10px;
+         min-height:88px; display:flex; flex-direction:column; gap:4px; transition:border-color var(--t), transform var(--t); }
+.cal-d:hover { border-color:var(--accent); transform:translateY(-2px); }
+.cal-d.empty { background:transparent; border-color:transparent; }
+.cal-d.today { border-color:var(--accent); background:var(--accent-soft); }
+.cal-d .n { font-size:11.5px; font-weight:600; color:var(--text-dim); font-family:var(--font-num); }
+.cal-d .tot { font-size:15px; font-weight:600; letter-spacing:-.03em; font-family:var(--font-num); }
+.cal-d .split { display:flex; height:4px; border-radius:2px; overflow:hidden; background:var(--surface-2); margin-top:auto; }
+
+/* ── Настройки: общая разметка ────────────────────────────────────────── */
+.set-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--s3); }
+.row { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) 0; border-bottom:1px solid var(--border); }
+.row:last-child { border-bottom:none; }
+.row .lab { flex:1; font-size:12.5px; color:var(--text-dim); }
+.inp { padding:7px 11px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font:inherit; font-size:12.5px; color:var(--text); }
+.inp:focus { outline:none; border-color:var(--accent); }
+.seg { display:flex; gap:2px; padding:2px; background:var(--surface-2); border-radius:9px; }
+.seg button { padding:5px 12px; border-radius:7px; font-size:12px; color:var(--text-dim); transition:background var(--t), color var(--t); }
+.seg button[aria-pressed="true"] { background:var(--surface); color:var(--text); font-weight:600; }
+.sw-dot { width:10px; height:10px; border-radius:50%; margin-right:6px; display:inline-block; vertical-align:-1px; }
+.note { font-size:11.5px; color:var(--text-mute); margin-top:var(--s3); }
+
+/* ── Тонкий скроллбар: в покое невидим, проявляется при прокрутке ─────── */
+.thin { scrollbar-width:thin; scrollbar-color:transparent transparent; }
+.thin.scrolling, .thin:hover { scrollbar-color:color-mix(in srgb, var(--text-mute) 60%, transparent) transparent; }
+.thin::-webkit-scrollbar { width:10px; }
+.thin::-webkit-scrollbar-track { background:transparent; }
+.thin::-webkit-scrollbar-thumb { background:transparent; border-radius:99px; border:3px solid transparent; background-clip:padding-box; }
+.thin.scrolling::-webkit-scrollbar-thumb, .thin:hover::-webkit-scrollbar-thumb {
+  background:color-mix(in srgb, var(--text-mute) 60%, transparent); background-clip:padding-box; }
+
+.view { display:none; } .view.on { display:block; }
+.view.on[data-view="main"] { display:flex; flex-direction:column; flex:1; min-height:0; }
+</style>
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   МАКЕТ ЭТАПА 3 — только то, что добавляется сверх прототипа.
+   Всё выше — CSS прототипа d-merged.html без единой правки.
+   ════════════════════════════════════════════════════════════════════════ */
+.grid.set { grid-template-rows:none; align-content:start; flex:none; }
+
+.card-head { display:flex; align-items:center; gap:var(--s3); margin-bottom:var(--s3); min-height:32px; }
+/* всё, что стоит справа в шапке карточки, — одной высоты и одной фактуры */
+.card-head .seg, .card-head .hint, .card-head .date-f .val { height:32px; display:flex; align-items:center; }
+.card-head .hint { padding:0 12px; border-radius:9px; background:var(--surface-2);
+                   color:var(--text-dim); font-size:12px; gap:6px; }
+.card-head .hint .num { color:var(--text); }
+.card-head .date-f .val { justify-content:center; padding:0 10px; background:var(--surface-2); border-color:transparent; }
+.card-head .date-f:hover .val { border-color:var(--accent); }
+.card-head h3 { margin-bottom:0; }
+.card-head .sp { flex:1; }
+
+/* разделитель между строками, а не под каждой */
+.row { border-bottom:none; position:relative; }
+.row + .row { border-top:1px solid var(--border); }
+.row .lab { display:flex; align-items:center; gap:6px; }
+
+.btn-s { padding:5px 10px; border-radius:8px; font-size:11.5px; color:var(--text-dim);
+         background:var(--surface-2); transition:background var(--t), color var(--t); }
+.btn-s:hover { background:var(--border); color:var(--text); }
+.btn-s.primary { background:var(--accent); color:var(--on-accent); }
+.btn-s.danger:hover { background:var(--danger); color:#fff; }
+.btn-s.add { align-self:flex-start; margin-top:var(--s3); }
+
+.icon-btn { width:32px; height:32px; border-radius:9px; background:var(--surface-2); color:var(--text-dim);
+            display:grid; place-items:center; transition:background var(--t), color var(--t); }
+.icon-btn:hover { background:var(--border); color:var(--text); }
+.icon-btn.danger:hover { background:var(--danger); color:#fff; }
+
+/* значок справки: текст всплывает по наведению */
+.help { width:16px; height:16px; border-radius:50%; background:var(--surface-2); color:var(--text-mute);
+        font-size:10px; line-height:1; position:relative; flex-shrink:0; }
+.help:hover { background:var(--accent); color:var(--on-accent); }
+.help::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:-6px; width:268px;
+        padding:10px 12px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border);
+        color:var(--text-dim); font-size:11.5px; line-height:1.5; text-align:left; white-space:pre-line;
+        opacity:0; pointer-events:none; transition:opacity var(--t); z-index:20; }
+.help:hover::after { opacity:1; }
+
+/* поле даты: день и месяц, год живёт в значении */
+.dates { display:flex; align-items:center; gap:8px; }
+.dates .dash { color:var(--text-mute); font-size:12px; }
+.date-f { position:relative; width:76px; }
+.date-f .val { display:block; padding:7px 10px; background:var(--bg); border:1px solid var(--border);
+        border-radius:8px; font-family:var(--font-num); font-size:12.5px; color:var(--text); text-align:center; }
+.date-f:hover .val { border-color:var(--accent); }
+.date-f input { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+
+/* аватар: карандаш по наведению, попап с выбором по клику */
+.av-btn { position:relative; width:40px; height:40px; border-radius:50%; overflow:hidden; flex-shrink:0; }
+.av-btn img { width:100%; height:100%; object-fit:cover; display:block; }
+.av-btn .pen { position:absolute; inset:0; display:grid; place-items:center; color:#fff;
+        background:rgba(0,0,0,.5); opacity:0; transition:opacity var(--t); }
+.av-btn:hover .pen { opacity:1; }
+.pop { position:absolute; z-index:30; top:calc(100% + 6px); right:0; width:196px; padding:10px;
+       border-radius:12px; background:var(--surface-2); border:1px solid var(--border);
+       display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pop img { width:48px; height:48px; border-radius:50%; cursor:pointer; border:2px solid transparent; object-fit:cover; }
+.pop img:hover { border-color:var(--text-mute); }
+.pop img.on { border-color:var(--accent); }
+
+.saved { font-size:11px; color:var(--accent); opacity:0; transition:opacity var(--t); }
+.saved.on { opacity:1; }
+
+.acts { white-space:nowrap; }
+.acts .btns, .acts .confirm { display:inline-flex; gap:6px; align-items:center; }
+.acts .confirm .q { font-size:11.5px; color:var(--text-dim); }
+
+.form-row td { padding:var(--s3) 0; }
+.ed { display:flex; align-items:center; gap:var(--s2); flex-wrap:wrap; }
+.ed .sp { flex:1; }
+.swatch { width:28px; height:28px; border-radius:8px; border:1px solid var(--border); flex-shrink:0; }
+.palette { display:flex; flex-wrap:wrap; gap:8px; margin-top:var(--s3); }
+.palette i { width:22px; height:22px; border-radius:6px; cursor:pointer; }
+
+.hidden { display:none !important; }
+
+/* три варианта карточки профиля */
+.tag { font-size:10.5px; padding:2px 7px; border-radius:6px; background:var(--accent-soft); color:var(--accent); }
+.idt { display:flex; align-items:center; gap:var(--s3); padding-bottom:var(--s4); position:relative; }
+.idt .inp { flex:1; min-width:0; }
+.av-btn.sm { width:26px; height:26px; }
+.av-btn.lg { width:52px; height:52px; }
+.acts-row { justify-content:flex-end; gap:var(--s2); }
+.vnote { font-size:11px; color:var(--text-mute); margin-top:var(--s3); line-height:1.5; }
+
+.mock-bar { position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; gap:14px;
+            padding:8px 16px; background:#111418; color:#9aa4b2; font:12px/1 var(--font-ui); }
+.mock-bar button, .mock-bar select { padding:5px 10px; border-radius:7px; background:#1b2027; color:#cbd5e1;
+            border:1px solid #2a313a; font:inherit; cursor:pointer; }
+.mock-bar button.on { background:#34d399; color:#06231a; border-color:#34d399; }
+.mock-bar .hint { color:#5b6676; }
+body { padding-top:38px; }
+</style>
+</head>
+
+<body>
+
+<div class="mock-bar">
+  <span>Ширина окна:</span>
+  <button data-w="960" class="on">960 — минимум</button>
+  <button data-w="1280">1280</button>
+  <span>Тема:</span>
+  <select id="mock-theme">
+    <option value="emerald|dark">Emerald тёмная</option>
+    <option value="emerald|light">Emerald светлая</option>
+    <option value="indigo|dark">Indigo тёмная</option>
+    <option value="indigo|light">Indigo светлая</option>
+  </select>
+  <span class="hint">Кликабельно: свитчер Соло/Группа, вопросики, аватар, даты, Изменить, Удалить, + Добавить.</span>
+</div>
+
+<div class="app" id="app">
+
+  <div class="chrome">
+    <div class="tbtn"><span class="tglyph">T</span></div>
+    <span class="sp"></span>
+    <div class="win"><button>—</button><button>▢</button><button class="x">✕</button></div>
+  </div>
+
+  <div class="layer" data-layer="dash">
+    <nav class="rail">
+      <button title="Сводка">▦</button>
+      <button title="Календарь">▤</button>
+      <button aria-current="true" title="Настройки">⚙</button>
+      <button title="Оформление">✎</button>
+    </nav>
+
+    <div class="d-main">
+      <div class="d-head">
+        <h1>Настройки</h1>
+        <span class="sp"></span>
+        <div class="dock">
+          <button class="dock-cat"><span class="sw" style="background:var(--c-study)"></span> Study ▾</button>
+          <span class="dock-time num">00:00:00</span>
+          <button class="dock-btn">START</button>
+        </div>
+        <span class="pad"></span>
+      </div>
+
+      <div class="scroll thin">
+        <div class="view on" data-view="set">
+          <div class="grid set">
+
+            <!-- ── Профиль ───────────────────────────────────────── -->
+            <div class="card span2 pcard">
+              <div class="card-head">
+                <h3>Профиль</h3>
+                <span class="sp"></span>
+                <div class="seg mode-sw">
+                  <button data-mode="solo" aria-pressed="true">Соло</button>
+                  <button data-mode="group">Группа</button>
+                </div>
+              </div>
+
+              <div class="idt">
+                <button class="av-btn lg"><img alt=""><span class="pen"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></button>
+                <input class="inp autosave" value="Maxim" maxlength="32">
+                <div class="pop hidden"></div>
+              </div>
+
+              <div class="row g-row g-new">
+                <span class="lab">Код группы
+                  <button class="help" data-tip="Пароль группы — у всех участников он одинаковый. Приложения находят друг друга в локальной сети сами, но данными обменяются только при совпадении кода.">?</button>
+                </span>
+                <span class="sp" style="flex:1"></span>
+                <input class="inp g-code-input" placeholder="TT-4K9P" maxlength="7" style="width:110px">
+                <button class="btn-s primary g-go">Создать</button>
+              </div>
+
+              <div class="row g-row g-in">
+                <span class="lab">Код группы
+                  <button class="help" data-tip="Пароль группы — у всех участников он одинаковый.&#10;&#10;Значок рядом показывает роль: владелец меняет лимит и период, участник получает их готовыми.">?</button>
+                </span>
+                <span class="sp" style="flex:1"></span>
+                <span class="tag g-role">владелец</span>
+                <span class="num g-code">TT-4K9P</span>
+              </div>
+
+              <div class="row g-row g-in">
+                <span class="lab">Интервал
+                  <button class="help" data-tip="Как часто приложение отправляет свои часы остальным участникам.&#10;&#10;Синхронизировано 2 мин назад.">?</button>
+                </span>
+                <span class="sp" style="flex:1"></span>
+                <select class="inp"><option>1 мин</option><option selected>5 мин</option><option>15 мин</option><option>30 мин</option></select>
+              </div>
+
+              <div class="row g-row g-in acts-row">
+                <button class="icon-btn" title="Синхронизировать сейчас"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12a9 9 0 0 1 15.5-6.2"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg></button>
+                <button class="icon-btn danger g-leave" title="Покинуть группу"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3H5a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h5"/><path d="M16 8l4 4-4 4"/><path d="M20 12H10"/></svg></button>
+              </div>
+
+            </div>
+
+            <!-- ── Учёт времени ─────────────────────────────────────── -->
+            <div class="card span2">
+              <div class="card-head">
+                <h3>Учёт времени</h3>
+                <span class="sp"></span>
+                <span class="hint">Осталось <span class="num">63:12</span></span>
+              </div>
+
+              <div class="row">
+                <span class="lab">Часов в день
+                  <button class="help" data-tip="Личная норма: сколько часов в день ты считаешь полной сменой. По ней заполняется кольцо в Focus. По синхронизации не передаётся и на общий лимит не влияет.">?</button>
+                </span>
+                <span class="saved">сохранено</span>
+                <input class="inp num autosave" value="8" style="width:72px">
+              </div>
+
+              <div class="row">
+                <span class="lab">Лимит в месяц, ч
+                  <button class="help" data-tip="Общий лимит на всех участников за период. Меняет владелец группы, остальные получают его по синхронизации и видят только чтение.">?</button>
+                </span>
+                <span class="saved">сохранено</span>
+                <input class="inp num autosave" value="160" style="width:72px">
+              </div>
+
+              <div class="row">
+                <span class="lab">Период
+                  <button class="help" data-tip="Окно, за которое считаются часы. Когда сегодняшний день выходит за конец, период сам сдвигается на месяц вперёд — переставлять руками не нужно.">?</button>
+                </span>
+                <span class="saved">сохранено</span>
+                <div class="dates">
+                  <label class="date-f"><span class="val">28.08</span><input type="date" value="2026-08-28"></label>
+                  <span class="dash">—</span>
+                  <label class="date-f"><span class="val">27.09</span><input type="date" value="2026-09-27"></label>
+                </div>
+              </div>
+            </div>
+
+            <!-- ── Категории ────────────────────────────────────────── -->
+            <div class="card span2">
+              <div class="card-head">
+                <h3>Категории</h3>
+                <span class="sp"></span>
+                <div class="seg" id="cat-tabs">
+                  <button data-tab="active" aria-pressed="true">Активные</button>
+                  <button data-tab="deleted">Удалённые</button>
+                </div>
+              </div>
+              <div class="tbl-wrap thin">
+                <table class="tbl">
+                  <thead><tr><th>Название</th><th></th></tr></thead>
+                  <tbody id="cat-rows"></tbody>
+                </table>
+              </div>
+              <p class="note hidden" id="cat-empty">Нет удалённых категорий</p>
+              <button class="btn-s add" id="cat-add">+ Добавить</button>
+            </div>
+
+            <!-- ── Правка часов ─────────────────────────────────────── -->
+            <div class="card span2">
+              <div class="card-head">
+                <h3>Правка часов</h3>
+                <span class="sp"></span>
+                <label class="date-f"><span class="val">18.09</span><input type="date" value="2026-09-18"></label>
+              </div>
+              <div class="tbl-wrap thin">
+                <table class="tbl">
+                  <thead><tr><th>Категория</th><th>Время</th><th></th></tr></thead>
+                  <tbody id="h-rows"></tbody>
+                </table>
+              </div>
+              <p class="note hidden" id="h-empty">Нет записей за этот день</p>
+              <button class="btn-s add" id="h-add">+ Добавить</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const root = document.documentElement
+root.dataset.mode = 'dash'
+
+const PALETTE = ['--c-work','--c-study','--c-meet','--c-comm','--c-person','--c-design','--c-review','--c-docs']
+
+let cats = [
+  { n:'Study', c:'--c-study' }, { n:'Work', c:'--c-work' },
+  { n:'Design', c:'--c-design' }, { n:'Meetings', c:'--c-meet' },
+  { n:'Comms', c:'--c-comm' }, { n:'Personal', c:'--c-person' },
+  { n:'Review', c:'--c-review' }, { n:'Docs', c:'--c-docs' }
+]
+let trash = [{ n:'Old project', c:'--c-docs' }]
+let hours = [
+  { n:'Study', c:'--c-study', t:'02:15' },
+  { n:'Design', c:'--c-design', t:'01:40' },
+  { n:'Comms', c:'--c-comm', t:'00:46' }
+]
+
+let catTab = 'active'
+const catRows = document.getElementById('cat-rows')
+const catEmpty = document.getElementById('cat-empty')
+const catAdd = document.getElementById('cat-add')
+const hRows = document.getElementById('h-rows')
+const hEmpty = document.getElementById('h-empty')
+
+const acts = html => `<td class="acts">
+    <span class="btns">${html}</span>
+    <span class="confirm hidden"><span class="q">Удалить?</span>
+      <button class="btn-s danger" data-do="yes">Да</button>
+      <button class="btn-s" data-do="no">Нет</button></span>
+  </td>`
+
+function catForm(name, color) {
+  return `<tr class="form-row">
+    <td colspan="2">
+      <div class="ed">
+        <input class="inp" value="${name}" placeholder="Название категории" style="flex:1;min-width:0">
+        <button class="swatch" data-do="palette" style="background:var(${color})"></button>
+        <button class="btn-s" data-do="cancel">Отмена</button>
+        <button class="btn-s primary" data-do="save">Сохранить</button>
+      </div>
+      <div class="palette hidden">${PALETTE.map(c => `<i style="background:var(${c})"></i>`).join('')}</div>
+    </td></tr>`
+}
+
+function hoursForm(cat, time) {
+  return `<tr class="form-row">
+    <td colspan="3">
+      <div class="ed">
+        <select class="inp">${cats.map(c => `<option${c.n === cat ? ' selected' : ''}>${c.n}</option>`).join('')}</select>
+        <input class="inp num" type="time" value="${time}">
+        <span class="sp"></span>
+        <button class="btn-s" data-do="cancel">Отмена</button>
+        <button class="btn-s primary" data-do="save">Сохранить</button>
+      </div>
+    </td></tr>`
+}
+
+function renderCats() {
+  const list = catTab === 'active' ? cats : trash
+  catRows.innerHTML = list.map(c => catTab === 'active'
+    ? `<tr><td><span class="nm"><i style="background:var(${c.c})"></i>${c.n}</span></td>
+         ${acts('<button class="btn-s" data-do="edit">Изменить</button><button class="btn-s danger" data-do="del">Удалить</button>')}</tr>`
+    : `<tr><td><span class="nm">${c.n}</span></td>
+         <td class="acts"><button class="btn-s" data-do="restore">Восстановить</button></td></tr>`
+  ).join('')
+  catEmpty.classList.toggle('hidden', !(catTab === 'deleted' && trash.length === 0))
+  catAdd.classList.toggle('hidden', catTab === 'deleted')
+}
+
+function renderHours() {
+  hRows.innerHTML = hours.map(h =>
+    `<tr><td><span class="nm"><i style="background:var(${h.c})"></i>${h.n}</span></td>
+       <td class="num">${h.t}</td>
+       ${acts('<button class="btn-s" data-do="edit">Изменить</button><button class="btn-s danger" data-do="del">Удалить</button>')}</tr>`
+  ).join('')
+  hEmpty.classList.toggle('hidden', hours.length > 0)
+}
+
+function wire(tbody, kind) {
+  tbody.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-do]')
+    if (!btn) return
+    const tr = btn.closest('tr')
+    const act = btn.dataset.do
+    if (act === 'del') {
+      tr.querySelector('.btns').classList.add('hidden')
+      tr.querySelector('.confirm').classList.remove('hidden')
+    }
+    if (act === 'no') {
+      tr.querySelector('.confirm').classList.add('hidden')
+      tr.querySelector('.btns').classList.remove('hidden')
+    }
+    if (act === 'yes') {
+      const i = [...tbody.querySelectorAll('tr:not(.form-row)')].indexOf(tr)
+      if (kind === 'cat') { trash.push(cats.splice(i, 1)[0]); renderCats() }
+      else { hours.splice(i, 1); renderHours() }
+    }
+    if (act === 'restore') {
+      const i = [...tbody.querySelectorAll('tr')].indexOf(tr)
+      cats.push(trash.splice(i, 1)[0]); renderCats()
+    }
+    if (act === 'edit') {
+      tbody.querySelectorAll('.form-row').forEach(r => r.remove())
+      const i = [...tbody.querySelectorAll('tr:not(.form-row)')].indexOf(tr)
+      const src = kind === 'cat' ? cats[i] : hours[i]
+      tr.insertAdjacentHTML('afterend', kind === 'cat' ? catForm(src.n, src.c) : hoursForm(src.n, src.t))
+    }
+    if (act === 'cancel' || act === 'save') tr.remove()
+    if (act === 'palette') tr.querySelector('.palette').classList.toggle('hidden')
+  })
+}
+wire(catRows, 'cat')
+wire(hRows, 'hours')
+
+catRows.addEventListener('click', e => {
+  const sw = e.target.closest('.palette i')
+  if (!sw) return
+  const row = sw.closest('.form-row')
+  row.querySelector('.swatch').style.background = sw.style.background
+  row.querySelector('.palette').classList.add('hidden')
+})
+
+catAdd.addEventListener('click', () => {
+  catRows.querySelectorAll('.form-row').forEach(r => r.remove())
+  catRows.insertAdjacentHTML('beforeend', catForm('', '--c-work'))
+  catRows.querySelector('.form-row .inp').focus()
+})
+document.getElementById('h-add').addEventListener('click', () => {
+  hRows.querySelectorAll('.form-row').forEach(r => r.remove())
+  hRows.insertAdjacentHTML('beforeend', hoursForm(cats[0].n, '01:00'))
+})
+
+document.getElementById('cat-tabs').addEventListener('click', e => {
+  const b = e.target.closest('button')
+  if (!b) return
+  catTab = b.dataset.tab
+  document.querySelectorAll('#cat-tabs button').forEach(x => x.setAttribute('aria-pressed', x === b))
+  renderCats()
+})
+
+// ── даты: показываем день и месяц, год в подсказке ──────────────────────
+document.querySelectorAll('.date-f input').forEach(i => {
+  const val = i.previousElementSibling
+  const short = v => v.slice(8, 10) + '.' + v.slice(5, 7)
+  i.title = i.value
+  i.addEventListener('click', () => { try { i.showPicker() } catch (e) {} })
+  i.addEventListener('change', () => {
+    val.textContent = short(i.value)
+    i.title = i.value
+    flash(i.closest('.row'))
+  })
+})
+
+// ── сохранение сразу после ввода ────────────────────────────────────────
+function flash(row) {
+  if (!row) return
+  const s = row.querySelector('.saved')
+  if (!s) return
+  s.classList.add('on')
+  clearTimeout(s._t)
+  s._t = setTimeout(() => s.classList.remove('on'), 1400)
+}
+document.querySelectorAll('.autosave').forEach(i => {
+  i.addEventListener('change', () => flash(i.closest('.row')))
+})
+
+// ── профиль: аватар и соло/группа — по каждой карточке-варианту ─────────
+const ICONS = '../../assets/icons/'
+const AVATARS = ['user.svg','man.png','man_1.png','man_2.png','man_3.png','woman.png','woman_1.png','woman_2.png','woman_3.png']
+
+document.querySelectorAll('.pcard').forEach(card => {
+  let avatar = 'user.svg'
+  let joined = false
+
+  const avBtn = card.querySelector('.av-btn')
+  const avImg = avBtn.querySelector('img')
+  const pop = card.querySelector('.pop')
+
+  function renderAvatar() {
+    avImg.src = ICONS + avatar
+    pop.innerHTML = AVATARS.map(f =>
+      `<img src="${ICONS}${f}" data-f="${f}" class="${f === avatar ? 'on' : ''}" alt="">`).join('')
+  }
+  renderAvatar()
+
+  avBtn.addEventListener('click', e => {
+    e.stopPropagation()
+    document.querySelectorAll('.pop').forEach(p => { if (p !== pop) p.classList.add('hidden') })
+    pop.classList.toggle('hidden')
+  })
+  pop.addEventListener('click', e => {
+    const img = e.target.closest('img')
+    if (!img) return
+    avatar = img.dataset.f
+    renderAvatar()
+    pop.classList.add('hidden')
+  })
+
+  const codeInput = card.querySelector('.g-code-input')
+  const go = card.querySelector('.g-go')
+  const leave = card.querySelector('.g-leave')
+
+  function render(mode) {
+    const group = mode === 'group'
+    card.querySelectorAll('.g-new').forEach(r => r.classList.toggle('hidden', !group || joined))
+    card.querySelectorAll('.g-in').forEach(r => r.classList.toggle('hidden', !group || !joined))
+    card.querySelectorAll('.mode-sw button').forEach(b =>
+      b.setAttribute('aria-pressed', b.dataset.mode === mode))
+  }
+
+  card.querySelector('.mode-sw').addEventListener('click', e => {
+    const b = e.target.closest('button')
+    if (!b) return
+    if (b.dataset.mode === 'solo') { joined = false; codeInput.value = ''; go.textContent = 'Создать' }
+    render(b.dataset.mode)
+  })
+
+  codeInput.addEventListener('input', () => {
+    go.textContent = codeInput.value.trim() ? 'Войти' : 'Создать'
+  })
+  go.addEventListener('click', () => {
+    const typed = codeInput.value.trim().toUpperCase()
+    card.querySelector('.g-code').textContent = typed || 'TT-4K9P'
+    const role = card.querySelector('.g-role')
+    if (role) {
+      const tag = role.classList.contains('tag')
+      role.textContent = typed ? (tag ? 'участник' : 'Участник') : (tag ? 'владелец' : 'Владелец')
+    }
+    joined = true
+    render('group')
+  })
+  leave.addEventListener('click', () => {
+    joined = false
+    codeInput.value = ''
+    go.textContent = 'Создать'
+    render('solo')
+  })
+
+  render('solo')
+})
+
+document.addEventListener('click', () => document.querySelectorAll('.pop').forEach(p => p.classList.add('hidden')))
+
+// ── панель макета ───────────────────────────────────────────────────────
+const app = document.getElementById('app')
+app.style.width = '960px'
+app.style.height = '780px'
+document.querySelectorAll('.mock-bar button[data-w]').forEach(b => {
+  b.addEventListener('click', () => {
+    app.style.width = b.dataset.w + 'px'
+    document.querySelectorAll('.mock-bar button[data-w]').forEach(x => x.classList.toggle('on', x === b))
+  })
+})
+document.getElementById('mock-theme').addEventListener('change', e => {
+  const [accent, theme] = e.target.value.split('|')
+  root.dataset.accent = accent
+  root.dataset.theme = theme
+})
+
+renderCats()
+renderHours()
+</script>
+</body>
+</html>
