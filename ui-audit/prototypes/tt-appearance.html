@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="ru" data-theme="emerald-dark" data-anim="wave" data-speed="med" data-fxp="dust" data-fxl="off">
+<head>
+<meta charset="utf-8">
+<title>Time Tracker — Оформление</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   ТОКЕНЫ — ПЛОСКАЯ МОДЕЛЬ ТЕМ.
+   Раньше палитра собиралась из двух осей: data-accent (emerald | indigo)
+   и data-theme (dark | light). Теперь ось одна: data-theme несёт имя
+   готовой палитры целиком — emerald-light, emerald-dark, indigo-light,
+   indigo-dark. Значения цветов не менялись, переехала только адресация.
+   Зачем: «акцент» никогда не был отдельной сущностью — каждая пара
+   акцент × светлость правилась как цельная палитра (у emerald нейтралы
+   сине-графитовые, у indigo тёплые). Две оси заставляли пользователя
+   собирать тему из половинок и порождали комбинации, которых никто не
+   рисовал. Одна ось = один выбор, и новую тему можно добавить, не трогая
+   разметку.
+   Настройки, которые это хранят: theme_light (любимая светлая),
+   theme_dark (любимая тёмная), theme_mode (какая из двух сейчас активна).
+   Ctrl+L перекидывает theme_mode между light и dark.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --font-ui:  'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-num: 'JetBrains Mono', ui-monospace, monospace;
+
+  --c-study:#a855f7;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
+  --r:12px; --r-lg:16px;
+  --t:180ms cubic-bezier(.4,0,.2,1);
+  --t-slow:420ms cubic-bezier(.16,1,.3,1);
+
+  --wave-ms: 900;   /* мс, за которые фронт волны доходит до дальнего угла */
+}
+[data-speed="fast"] { --wave-ms: 520; }
+[data-speed="med"]  { --wave-ms: 900; }
+[data-speed="slow"] { --wave-ms: 1600; }
+
+/* ── EMERALD · LIGHT ─────────────────────────────────────────────────── */
+[data-theme="emerald-light"] {
+  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e5e8ee;
+  --text:#111827; --text-dim:#5a6478; --text-mute:#9aa3b4;
+  --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#ffffff; --danger:#dc2626;
+}
+/* ── EMERALD · DARK ──────────────────────────────────────────────────── */
+[data-theme="emerald-dark"] {
+  --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
+  --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
+  --accent:#34d399; --accent-soft:#0e2b22; --on-accent:#04231a; --danger:#f87171;
+}
+/* ── INDIGO · LIGHT ──────────────────────────────────────────────────── */
+[data-theme="indigo-light"] {
+  --bg:#f4f4f2; --surface:#ffffff; --surface-2:#ebebe7; --border:#e0e0da;
+  --text:#1c1c1a; --text-dim:#61615c; --text-mute:#97978f;
+  --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#ffffff; --danger:#dc2626;
+}
+/* ── INDIGO · DARK ───────────────────────────────────────────────────── */
+[data-theme="indigo-dark"] {
+  --bg:#0f0f0e; --surface:#171716; --surface-2:#1f1f1d; --border:#2b2b28;
+  --text:#f0efec; --text-dim:#a0a099; --text-mute:#6b6b64;
+  --accent:#818cf8; --accent-soft:#23234a; --on-accent:#10102a; --danger:#f87171;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font-ui); font-size:13.5px; line-height:1.5;
+       background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased;
+       transition:background var(--t), color var(--t); }
+.num { font-family:var(--font-num); font-variant-numeric:tabular-nums; letter-spacing:-.03em; }
+button { font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:6px; }
+
+/* ═══ ОКНО ПРИЛОЖЕНИЯ ═══════════════════════════════════════════════════ */
+.app { position:relative; width:960px; max-width:100%; height:780px; margin:var(--s4) auto;
+       background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg);
+       overflow:hidden; isolation:isolate; display:grid;
+       grid-template-columns:56px 1fr; grid-template-rows:minmax(0,1fr);
+       box-shadow:0 24px 60px -24px rgba(0,0,0,.28); }
+[data-theme$="-dark"] .app { box-shadow:0 24px 60px -24px rgba(0,0,0,.7); }
+
+.chrome { position:absolute; inset:0 0 auto 0; height:64px; z-index:60;
+          display:flex; align-items:center; padding:0 var(--s4) 0 11px; pointer-events:none; }
+.chrome > * { pointer-events:auto; }
+.tbtn { width:34px; height:34px; border-radius:10px; background:var(--accent); color:var(--on-accent);
+        display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; }
+.chrome .sp { flex:1; }
+.win { display:flex; gap:2px; }
+.win button { width:32px; height:28px; color:var(--text-mute); font-size:13px; transition:color var(--t); }
+.win button:hover { color:var(--text); }
+.win button.x:hover { color:var(--danger); }
+
+/* ── Рельс: «О программе» отбит вниз, к настройкам вида он не относится ── */
+.rail { background:var(--surface); border-right:1px solid var(--border);
+        display:flex; flex-direction:column; align-items:center; gap:var(--s2); padding:72px 0 var(--s3); }
+.rail button { width:36px; height:36px; border-radius:10px; color:var(--text-mute); font-size:15px;
+               transition:background var(--t), color var(--t); }
+.rail button:hover { background:var(--surface-2); color:var(--text); }
+.rail button[aria-current="true"] { background:var(--accent-soft); color:var(--accent); }
+.rail .sp { flex:1; }
+
+.d-main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+.d-head { display:flex; align-items:center; gap:var(--s4); height:64px; padding:0 var(--s5); flex-shrink:0; }
+.d-head h1 { font-size:19px; font-weight:600; letter-spacing:-.02em; line-height:1.15; }
+.d-head .sp { flex:1; }
+.d-head .pad { width:104px; }
+
+.dock { display:flex; align-items:center; gap:var(--s3); white-space:nowrap; }
+.dock-cat { display:flex; align-items:center; gap:7px; padding:6px 10px; border-radius:8px;
+            font-size:12.5px; color:var(--text-dim); transition:background var(--t), color var(--t); }
+.dock-cat:hover { background:var(--surface-2); color:var(--text); }
+.dock-cat .sw { width:8px; height:8px; border-radius:50%; }
+.dock-time { font-size:15px; font-weight:500; }
+.dock-btn { padding:6px 10px; border-radius:8px; font-family:var(--font-num); font-size:15px;
+            font-weight:500; letter-spacing:.02em; color:var(--accent); transition:background var(--t); }
+.dock-btn:hover { background:var(--surface-2); }
+
+.scroll { flex:1; overflow-y:auto; padding:0 var(--s5) var(--s5); min-height:0; display:flex; flex-direction:column; }
+/* align-items:start — карточка не тянется под высоту соседки по ряду:
+   у «Языка» одна строка, растянутый он превращался в пустое поле */
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s3);
+        align-content:start; align-items:start; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s4); min-width:0; }
+.card h3 { font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--text-mute);
+           margin-bottom:0; font-weight:600; }
+.span2 { grid-column:span 2; }
+
+/* шапка карточки: 32px, слева заголовок, справа элемент той же высоты и на
+   той же заливке — иначе соседние карточки стартуют на разной высоте */
+.card-head { display:flex; align-items:center; gap:var(--s3); margin-bottom:var(--s3); min-height:32px; }
+.card-head .seg, .card-head .hint, .card-head .btn-s { height:32px; display:flex; align-items:center; }
+.card-head .hint { padding:0 12px; border-radius:9px; background:var(--surface-2);
+                   color:var(--text-dim); font-size:12px; gap:6px; }
+.card-head .sp { flex:1; }
+
+/* разделитель между строками, а не под каждой: под строкой может идти
+   не-строка (превью фона), и тогда линия висела бы в воздухе */
+.row { display:flex; align-items:center; gap:var(--s3); padding:var(--s3) 0; position:relative; }
+.row + .row { border-top:1px solid var(--border); }
+.row .lab { flex:1; font-size:12.5px; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+.row.off { opacity:.45; pointer-events:none; }
+
+.sel { padding:7px 11px; background:var(--bg); border:1px solid var(--border); border-radius:8px;
+       font:inherit; font-size:12.5px; color:var(--text); min-width:150px; transition:border-color var(--t); }
+.sel:hover, .sel:focus { outline:none; border-color:var(--accent); }
+
+.seg { display:flex; gap:2px; padding:2px; background:var(--surface-2); border-radius:9px; }
+.seg button { padding:5px 12px; border-radius:7px; font-size:12px; color:var(--text-dim);
+              transition:background var(--t), color var(--t); }
+.seg button[aria-pressed="true"] { background:var(--surface); color:var(--text); font-weight:600; }
+
+.btn-s { padding:0 12px; border-radius:9px; font-size:11.5px; color:var(--text-dim);
+         background:var(--surface-2); transition:background var(--t), color var(--t); }
+.btn-s:hover { background:var(--border); color:var(--text); }
+
+/* значок справки: пояснение на всю карточку, одно на шапку */
+.help { width:16px; height:16px; border-radius:50%; background:var(--surface-2); color:var(--text-mute);
+        font-size:10px; line-height:1; flex-shrink:0; }
+.help:hover { background:var(--accent); color:var(--on-accent); }
+
+/* Само облачко живёт в <body>, а не внутри карточки: .scroll обрезает всё,
+   что вылезает за его край, и подсказка у верхнего ряда карточек резалась
+   пополам. Fixed-элемент обрезать нечем — координаты считает JS, он же
+   разворачивает облачко вниз, когда сверху не помещается. */
+.tip { position:fixed; z-index:80; width:268px; padding:10px 12px; border-radius:10px;
+       background:var(--surface-2); border:1px solid var(--border); color:var(--text-dim);
+       font-size:11.5px; line-height:1.5; text-align:left; white-space:pre-line;
+       opacity:0; pointer-events:none; transition:opacity var(--t); }
+.tip.on { opacity:1; }
+
+.saved { font-size:11px; color:var(--accent); opacity:0; transition:opacity var(--t); }
+.saved.on { opacity:1; }
+
+/* превью палитры в дропдаун не положишь — точка у строки несёт акцент той
+   темы, что в ней выбрана, и сразу говорит, о чём речь */
+.dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; border:1px solid rgba(128,128,128,.28); }
+
+/* ── Превью фона: оба слоя настоящие, рисуются акцентом активной темы ── */
+.fxprev { position:relative; height:96px; margin-top:var(--s3); border-radius:10px; overflow:hidden;
+          background:var(--bg); border:1px solid var(--border); }
+.fxprev canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+.fxprev .cap { position:absolute; left:10px; bottom:8px; font-size:10.5px; color:var(--text-mute);
+               letter-spacing:.06em; text-transform:uppercase; }
+
+/* Волна: та же механика, что при смене режима — элементы рождаются по
+   фронту, задержка приходит из JS в --wd */
+.wavein [data-wave] { animation:waveIn 360ms cubic-bezier(.16,1,.3,1) both; animation-delay:var(--wd,0ms); }
+@keyframes waveIn { from { opacity:0; transform:translateY(10px) scale(.975) } to { opacity:1; transform:none } }
+.fadein [data-wave] { animation:fadeRise 420ms cubic-bezier(.16,1,.3,1) both; animation-delay:var(--wd,0ms); }
+@keyframes fadeRise { from { opacity:0; transform:translateY(18px) scale(.82) } to { opacity:1; transform:none } }
+@media (prefers-reduced-motion: reduce) { * { transition:none !important; animation:none !important; } }
+
+.thin { scrollbar-width:thin; scrollbar-color:transparent transparent; }
+.thin:hover { scrollbar-color:color-mix(in srgb, var(--text-mute) 60%, transparent) transparent; }
+.thin::-webkit-scrollbar { width:10px; }
+.thin::-webkit-scrollbar-track { background:transparent; }
+.thin::-webkit-scrollbar-thumb { background:transparent; border-radius:99px; border:3px solid transparent; background-clip:padding-box; }
+.thin:hover::-webkit-scrollbar-thumb { background:color-mix(in srgb, var(--text-mute) 60%, transparent); background-clip:padding-box; }
+
+/* ═══ Служебная полоса макета — не часть приложения ═════════════════════ */
+.mock-bar { position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; gap:14px;
+            padding:8px 16px; background:#111418; color:#9aa4b2; font:12px/1 var(--font-ui); }
+.mock-bar button { padding:5px 10px; border-radius:7px; background:#1b2027; color:#cbd5e1;
+            border:1px solid #2a313a; font:inherit; cursor:pointer; }
+.mock-bar button.on { background:#34d399; color:#06231a; border-color:#34d399; }
+.mock-bar .hint { color:#5b6676; }
+body { padding-top:38px; }
+</style>
+</head>
+
+<body>
+
+<div class="mock-bar">
+  <span>Ширина окна:</span>
+  <button data-w="960" class="on">960 — минимум</button>
+  <button data-w="1280">1280</button>
+  <span class="hint">Кликабельно: дропдауны тем, свитчер Светлая/Тёмная (и Ctrl+L), тип и скорость перехода, «Проверить», оба слоя фона, язык.</span>
+</div>
+
+<div class="app" id="app">
+
+  <div class="chrome">
+    <div class="tbtn"><span>T</span></div>
+    <span class="sp"></span>
+    <div class="win"><button>—</button><button>▢</button><button class="x">✕</button></div>
+  </div>
+
+  <nav class="rail">
+    <button title="Сводка">▦</button>
+    <button title="Календарь">▤</button>
+    <button title="Настройки">⚙</button>
+    <button aria-current="true" title="Оформление">✎</button>
+    <span class="sp"></span>
+    <button title="О программе">ⓘ</button>
+  </nav>
+
+  <div class="d-main">
+    <div class="d-head">
+      <h1 data-i18n="title">Оформление</h1>
+      <span class="sp"></span>
+      <div class="dock">
+        <button class="dock-cat"><span class="sw" style="background:var(--c-study)"></span> Study ▾</button>
+        <span class="dock-time num">00:00:00</span>
+        <button class="dock-btn">START</button>
+      </div>
+      <span class="pad"></span>
+    </div>
+
+    <div class="scroll thin">
+      <div class="grid" id="grid">
+
+        <!-- ── Тема ──────────────────────────────────────────────────────
+             Две любимых палитры хранятся одновременно, свитчер в шапке
+             говорит, какая из них сейчас на экране. -->
+        <div class="card span2" data-wave>
+          <div class="card-head">
+            <h3 data-i18n="c_theme">Тема</h3>
+            <button class="help" data-i18n-tip="tip_theme" data-tip="Две темы держатся наготове: одна светлая, одна тёмная. Свитчер в шапке карточки и Ctrl+L перекидывают между ними, не открывая настройки.">?</button>
+            <span class="sp"></span>
+            <div class="seg" id="mode-sw">
+              <button data-mode="light" data-i18n="light">Светлая</button>
+              <button data-mode="dark" aria-pressed="true" data-i18n="dark">Тёмная</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <span class="lab">
+              <span class="dot" id="dot-light"></span>
+              <span data-i18n="light">Светлая</span>
+            </span>
+            <span class="saved" data-i18n="saved">сохранено</span>
+            <select class="sel" id="sel-light">
+              <option value="emerald-light">Emerald</option>
+              <option value="indigo-light">Indigo</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <span class="lab">
+              <span class="dot" id="dot-dark"></span>
+              <span data-i18n="dark">Тёмная</span>
+            </span>
+            <span class="saved" data-i18n="saved">сохранено</span>
+            <select class="sel" id="sel-dark">
+              <option value="emerald-dark" selected>Emerald</option>
+              <option value="indigo-dark">Indigo</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ── Переход между режимами ────────────────────────────────────
+             «Проверить» прогоняет ту же анимацию, которой рождается вид
+             при смене Focus ⇄ Dashboard: выбор виден сразу, без ухода из
+             настроек и обратно. -->
+        <div class="card span2" data-wave>
+          <div class="card-head">
+            <h3 data-i18n="c_anim">Переход между режимами</h3>
+            <button class="help" data-i18n-tip="tip_anim" data-tip="Wave — вид рождается волной от кнопки T, элементы всплывают по фронту. Fade — уходящий режим гаснет целиком, входящий проявляется под ним. Скорость относится только к Wave.">?</button>
+            <span class="sp"></span>
+            <button class="btn-s" id="replay" data-i18n="replay">Проверить</button>
+          </div>
+
+          <div class="row">
+            <span class="lab">
+              <span data-i18n="anim_type">Тип</span>
+            </span>
+            <span class="saved" data-i18n="saved">сохранено</span>
+            <div class="seg" id="anim-sw">
+              <button data-anim="wave" aria-pressed="true">Wave</button>
+              <button data-anim="fade">Fade</button>
+            </div>
+          </div>
+
+          <div class="row" id="speed-row">
+            <span class="lab" data-i18n="anim_speed">Скорость</span>
+            <span class="saved" data-i18n="saved">сохранено</span>
+            <div class="seg" id="speed-sw">
+              <button data-speed="fast" data-i18n="fast">Быстро</button>
+              <button data-speed="med" aria-pressed="true" data-i18n="med">Средне</button>
+              <button data-speed="slow" data-i18n="slow">Медленно</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Фон ───────────────────────────────────────────────────────
+             Два независимых слоя. Particles — точечный слой, в нём же
+             осталась «Сетка»; Blobs — мягкие световые пятна. Превью
+             рисует оба разом тем же акцентом, что и приложение. -->
+        <div class="card span2" data-wave>
+          <div class="card-head">
+            <h3 data-i18n="c_fx">Фон</h3>
+            <button class="help" data-i18n-tip="tip_fx" data-tip="Слои складываются: частицы поверх световых пятен. Цвета обоих берутся из акцента активной темы и двух соседних оттенков — отдельной настройки цвета нет.">?</button>
+            <span class="sp"></span>
+            <span class="hint" data-i18n="fx_hint">Только Focus Mode</span>
+          </div>
+
+          <div class="row">
+            <span class="lab">
+              <span data-i18n="fx_particles">Частицы</span>
+            </span>
+            <span class="saved" data-i18n="saved">сохранено</span>
+            <select class="sel" id="sel-fxp">
+              <option value="off" data-i18n="fx_off">Нет</option>
+              <option value="dust" selected data-i18n="fx_dust">Пыль</option>
+              <option value="emit" data-i18n="fx_emit">Эмиссия</option>
+              <option value="universe" data-i18n="fx_universe">Вселенная</option>
+              <option value="grid" data-i18n="fx_grid">Сетка</option>
+            </select>
+          </div>
+
+          <div class="row">
+            <span class="lab" data-i18n="fx_blobs">Засветы</span>
+            <span class="saved" data-i18n="saved">сохранено</span>
+            <select class="sel" id="sel-fxl">
+              <option value="off" selected data-i18n="fx_off">Нет</option>
+              <option value="bottom" data-i18n="fx_bottom">Снизу</option>
+              <option value="all" data-i18n="fx_all">Везде</option>
+              <option value="aurora" data-i18n="fx_aurora">Сияние</option>
+            </select>
+          </div>
+
+          <div class="fxprev"><canvas id="fxc"></canvas><span class="cap" data-i18n="fx_prev">превью</span></div>
+        </div>
+
+        <!-- ── Язык ──────────────────────────────────────────────────────
+             Переключатель в макете настоящий: подписи вида меняются
+             сразу, видно, как EN ложится в те же колонки. -->
+        <div class="card span2" data-wave>
+          <div class="card-head">
+            <h3 data-i18n="c_lang">Язык</h3>
+            <button class="help" data-i18n-tip="tip_lang" data-tip="Меняются только подписи приложения. Названия категорий, имена участников и код группы остаются как введены.">?</button>
+            <span class="sp"></span>
+          </div>
+
+          <div class="row">
+            <span class="lab">
+              <span data-i18n="lang_iface">Язык интерфейса</span>
+            </span>
+            <span class="saved" data-i18n="saved">сохранено</span>
+            <div class="seg" id="lang-sw">
+              <button data-lang="en">EN</button>
+              <button data-lang="ru" aria-pressed="true">RU</button>
+              <button data-lang="de">DE</button>
+              <button data-lang="es">ES</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script>
+const root = document.documentElement
+
+/* ── настройки, как они лягут в базу ─────────────────────────────────── */
+const S = { theme_light:'emerald-light', theme_dark:'emerald-dark', theme_mode:'dark' }
+
+const ACCENTS = {
+  'emerald-light':'#059669', 'emerald-dark':'#34d399',
+  'indigo-light':'#4f46e5',  'indigo-dark':'#818cf8'
+}
+
+function applyTheme() {
+  root.dataset.theme = S.theme_mode === 'light' ? S.theme_light : S.theme_dark
+  document.getElementById('dot-light').style.background = ACCENTS[S.theme_light]
+  document.getElementById('dot-dark').style.background = ACCENTS[S.theme_dark]
+  document.querySelectorAll('#mode-sw button').forEach(b =>
+    b.setAttribute('aria-pressed', b.dataset.mode === S.theme_mode))
+}
+
+/* значение уходит по change, кнопки «Сохранить» нет — справа мигает метка */
+function flash(row) {
+  const s = row && row.querySelector('.saved')
+  if (!s) return
+  s.classList.add('on')
+  clearTimeout(s._t)
+  s._t = setTimeout(() => s.classList.remove('on'), 1400)
+}
+
+document.getElementById('sel-light').addEventListener('change', e => {
+  S.theme_light = e.target.value; applyTheme(); flash(e.target.closest('.row'))
+})
+document.getElementById('sel-dark').addEventListener('change', e => {
+  S.theme_dark = e.target.value; applyTheme(); flash(e.target.closest('.row'))
+})
+document.getElementById('mode-sw').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  S.theme_mode = b.dataset.mode; applyTheme()
+})
+
+/* Ctrl+L — в Electron свободен, мнемоника light */
+addEventListener('keydown', e => {
+  if (e.ctrlKey && e.code === 'KeyL') {
+    e.preventDefault()
+    S.theme_mode = S.theme_mode === 'light' ? 'dark' : 'light'
+    applyTheme()
+  }
+})
+
+/* ── переход между режимами ──────────────────────────────────────────── */
+const speedRow = document.getElementById('speed-row')
+
+/* при Fade скорость ни на что не влияет — строка гаснет, но остаётся на
+   месте, чтобы карточка не прыгала по высоте */
+function applyAnim() { speedRow.classList.toggle('off', root.dataset.anim === 'fade') }
+
+document.getElementById('anim-sw').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  root.dataset.anim = b.dataset.anim
+  document.querySelectorAll('#anim-sw button').forEach(x => x.setAttribute('aria-pressed', x === b))
+  applyAnim(); flash(b.closest('.row')); replay()
+})
+document.getElementById('speed-sw').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  root.dataset.speed = b.dataset.speed
+  document.querySelectorAll('#speed-sw button').forEach(x => x.setAttribute('aria-pressed', x === b))
+  flash(b.closest('.row')); replay()
+})
+
+/* задержка карточки = её расстояние от кнопки T, делённое на скорость
+   фронта: та же арифметика, что в переходе Focus ⇄ Dashboard */
+const grid = document.getElementById('grid')
+function replay() {
+  const wave = root.dataset.anim === 'wave'
+  const D = Number(getComputedStyle(root).getPropertyValue('--wave-ms')) || 900
+  const o = document.querySelector('.tbtn').getBoundingClientRect()
+  const ox = o.left + o.width / 2, oy = o.top + o.height / 2
+  const far = Math.hypot(innerWidth, innerHeight)
+
+  grid.classList.remove('wavein', 'fadein')
+  void grid.offsetWidth
+  grid.querySelectorAll('[data-wave]').forEach((el, i) => {
+    const r = el.getBoundingClientRect()
+    const d = wave
+      ? Math.hypot(r.left + r.width / 2 - ox, r.top + r.height / 2 - oy) / far * D
+      : 60 + i * 34
+    el.style.setProperty('--wd', Math.round(d) + 'ms')
+  })
+  grid.classList.add(wave ? 'wavein' : 'fadein')
+}
+document.getElementById('replay').addEventListener('click', replay)
+
+/* ── превью фона ─────────────────────────────────────────────────────────
+   Не копия движка из прототипа, а его сокращённая модель: те же пять
+   вариантов частиц и четыре засветов, тот же источник цвета. Нужна,
+   чтобы выбор в дропдауне был осмысленным — «Эмиссия» и «Вселенная»
+   названием друг от друга не отличаются. */
+const cv = document.getElementById('fxc'), cx = cv.getContext('2d')
+const P = Array.from({ length: 70 }, () => ({
+  x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + .4,
+  vx: (Math.random() - .5) * .0055, vy: (Math.random() - .5) * .0055,
+  ph: Math.random() * 6.28
+}))
+
+function fit() {
+  const d = devicePixelRatio || 1, r = cv.getBoundingClientRect()
+  cv.width = r.width * d; cv.height = r.height * d
+  cx.setTransform(d, 0, 0, d, 0, 0)
+}
+addEventListener('resize', fit)
+
+function accent() { return getComputedStyle(root).getPropertyValue('--accent').trim() }
+function mix(hex, a) {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`
+}
+
+function draw(t) {
+  const w = cv.clientWidth, h = cv.clientHeight, c = accent()
+  cx.clearRect(0, 0, w, h)
+
+  const lm = root.dataset.fxl
+  if (lm !== 'off') {
+    const blobs = lm === 'bottom' ? [[.5, 1.15, .9]]
+      : lm === 'all' ? [[.2, .25, .55], [.8, .35, .5], [.5, 1.05, .8]]
+      : [[.3 + Math.sin(t / 2600) * .16, .3, .6], [.72 + Math.cos(t / 3100) * .12, .55, .5]]
+    blobs.forEach(([bx, by, br]) => {
+      const g = cx.createRadialGradient(bx * w, by * h, 0, bx * w, by * h, br * h)
+      g.addColorStop(0, mix(c, lm === 'aurora' ? .3 : .22))
+      g.addColorStop(1, mix(c, 0))
+      cx.fillStyle = g
+      cx.fillRect(0, 0, w, h)
+    })
+  }
+
+  const pm = root.dataset.fxp
+  if (pm === 'grid') {
+    cx.strokeStyle = mix(c, .16); cx.lineWidth = 1
+    const step = 22, sh = (t / 90) % step
+    for (let x = -step + sh; x < w; x += step) { cx.beginPath(); cx.moveTo(x, 0); cx.lineTo(x, h); cx.stroke() }
+    for (let y = -step + sh; y < h; y += step) { cx.beginPath(); cx.moveTo(0, y); cx.lineTo(w, y); cx.stroke() }
+  } else if (pm !== 'off') {
+    P.forEach(p => {
+      let x, y, a
+      if (pm === 'emit') {
+        const rr = (t * .00004 + p.ph / 6.28) % 1
+        x = w / 2 + Math.cos(p.ph) * rr * w * .62
+        y = h / 2 + Math.sin(p.ph) * rr * h * .9
+        a = (1 - rr) * .75
+      } else if (pm === 'universe') {
+        x = p.x * w; y = p.y * h
+        a = (Math.sin(t / 620 + p.ph) * .5 + .5) * .8
+      } else {
+        p.x = (p.x + p.vx / 60 + 1) % 1
+        p.y = (p.y + p.vy / 60 + 1) % 1
+        x = p.x * w; y = p.y * h; a = .45
+      }
+      cx.fillStyle = mix(c, a)
+      cx.beginPath(); cx.arc(x, y, p.r, 0, 6.29); cx.fill()
+    })
+  }
+  requestAnimationFrame(draw)
+}
+
+document.getElementById('sel-fxp').addEventListener('change', e => {
+  root.dataset.fxp = e.target.value; flash(e.target.closest('.row'))
+})
+document.getElementById('sel-fxl').addEventListener('change', e => {
+  root.dataset.fxl = e.target.value; flash(e.target.closest('.row'))
+})
+
+/* ── подсказки ───────────────────────────────────────────────────────── */
+const tip = document.getElementById('tip')
+document.querySelectorAll('.help').forEach(h => {
+  h.addEventListener('mouseenter', () => {
+    tip.textContent = h.dataset.tip
+    tip.classList.add('on')
+    /* границы берём у окна приложения, а не у страницы: в Electron дальше
+       рамки подсказке уходить некуда, и макет должен врать так же */
+    const r = h.getBoundingClientRect(), t = tip.getBoundingClientRect()
+    const a = app.getBoundingClientRect()
+    let y = r.top - t.height - 8
+    if (y < a.top + 8) y = r.bottom + 8   /* сверху не помещается — разворачиваем вниз */
+    tip.style.left = Math.max(a.left + 8, Math.min(r.left - 6, a.right - t.width - 8)) + 'px'
+    tip.style.top = Math.min(y, a.bottom - t.height - 8) + 'px'
+  })
+  h.addEventListener('mouseleave', () => tip.classList.remove('on'))
+})
+
+/* ── язык ────────────────────────────────────────────────────────────── */
+const DICT = {
+  en: {
+    title:'Appearance', c_theme:'Theme', light:'Light', dark:'Dark', saved:'saved',
+    c_anim:'Mode transition', replay:'Preview', anim_type:'Type', anim_speed:'Speed',
+    fast:'Fast', med:'Medium', slow:'Slow',
+    c_fx:'Background', fx_hint:'Focus Mode only', fx_particles:'Particles', fx_blobs:'Blobs',
+    fx_off:'None', fx_dust:'Dust', fx_emit:'Emission', fx_universe:'Universe', fx_grid:'Grid',
+    fx_bottom:'Bottom', fx_all:'Everywhere', fx_aurora:'Aurora', fx_prev:'preview',
+    c_lang:'Language', lang_iface:'Interface language',
+    tip_theme:'Two themes stay ready: one light, one dark. The switcher in the card header and Ctrl+L flip between them without opening settings.',
+    tip_anim:'Wave — the view is born as a front spreading from the T button, elements rise along it. Fade — the outgoing mode dims as a whole, the incoming one appears beneath. Speed applies to Wave only.',
+    tip_fx:'The layers stack: particles above the glows. Both take their colour from the active theme accent and two neighbouring shades — there is no separate colour setting.',
+    tip_lang:'Only the application labels change. Category names, member names and the group code stay as entered.'
+  },
+  de: {
+    title:'Darstellung', c_theme:'Thema', light:'Hell', dark:'Dunkel', saved:'gespeichert',
+    c_anim:'Moduswechsel', replay:'Testen', anim_type:'Typ', anim_speed:'Geschwindigkeit',
+    fast:'Schnell', med:'Mittel', slow:'Langsam',
+    c_fx:'Hintergrund', fx_hint:'Nur Focus Mode', fx_particles:'Partikel', fx_blobs:'Lichtflecken',
+    fx_off:'Aus', fx_dust:'Staub', fx_emit:'Emission', fx_universe:'Universum', fx_grid:'Raster',
+    fx_bottom:'Unten', fx_all:'Überall', fx_aurora:'Nordlicht', fx_prev:'vorschau',
+    c_lang:'Sprache', lang_iface:'Sprache der Oberfläche',
+    tip_theme:'Zwei Themen bleiben bereit: ein helles und ein dunkles. Der Schalter in der Kartenkopfzeile und Ctrl+L wechseln zwischen ihnen, ohne die Einstellungen zu öffnen.',
+    tip_anim:'Wave — die Ansicht entsteht als Welle von der T-Schaltfläche aus, die Elemente steigen entlang der Front auf. Fade — der abgehende Modus verblasst als Ganzes, der ankommende erscheint darunter. Die Geschwindigkeit gilt nur für Wave.',
+    tip_fx:'Die Ebenen überlagern sich: Partikel über den Lichtflecken. Beide nehmen ihre Farbe aus der Akzentfarbe des aktiven Themas und zwei benachbarten Tönen — eine eigene Farbeinstellung gibt es nicht.',
+    tip_lang:'Es ändern sich nur die Beschriftungen der Anwendung. Kategorienamen, Namen der Teilnehmer und der Gruppencode bleiben wie eingegeben.'
+  },
+  es: {
+    title:'Apariencia', c_theme:'Tema', light:'Claro', dark:'Oscuro', saved:'guardado',
+    c_anim:'Transición entre modos', replay:'Probar', anim_type:'Tipo', anim_speed:'Velocidad',
+    fast:'Rápido', med:'Medio', slow:'Lento',
+    c_fx:'Fondo', fx_hint:'Solo Focus Mode', fx_particles:'Partículas', fx_blobs:'Destellos',
+    fx_off:'Ninguno', fx_dust:'Polvo', fx_emit:'Emisión', fx_universe:'Universo', fx_grid:'Cuadrícula',
+    fx_bottom:'Abajo', fx_all:'En todas partes', fx_aurora:'Aurora', fx_prev:'vista previa',
+    c_lang:'Idioma', lang_iface:'Idioma de la interfaz',
+    tip_theme:'Dos temas se mantienen listos: uno claro y uno oscuro. El conmutador de la cabecera de la tarjeta y Ctrl+L alternan entre ellos sin abrir los ajustes.',
+    tip_anim:'Wave — la vista nace como una onda que parte del botón T y los elementos emergen siguiendo el frente. Fade — el modo saliente se apaga por completo y el entrante aparece debajo. La velocidad se aplica solo a Wave.',
+    tip_fx:'Las capas se superponen: las partículas por encima de los destellos. Ambas toman su color del acento del tema activo y de dos tonos vecinos — no hay un ajuste de color aparte.',
+    tip_lang:'Solo cambian las etiquetas de la aplicación. Los nombres de categorías, los nombres de los participantes y el código del grupo se mantienen tal como se introdujeron.'
+  },
+  ru: {}
+}
+document.querySelectorAll('[data-i18n]').forEach(el => DICT.ru[el.dataset.i18n] = el.textContent)
+document.querySelectorAll('[data-i18n-tip]').forEach(el => DICT.ru[el.dataset.i18nTip] = el.dataset.tip)
+
+document.getElementById('lang-sw').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return
+  const d = DICT[b.dataset.lang]
+  document.querySelectorAll('[data-i18n]').forEach(el => { if (d[el.dataset.i18n]) el.textContent = d[el.dataset.i18n] })
+  document.querySelectorAll('[data-i18n-tip]').forEach(el => { if (d[el.dataset.i18nTip]) el.dataset.tip = d[el.dataset.i18nTip] })
+  document.querySelectorAll('#lang-sw button').forEach(x => x.setAttribute('aria-pressed', x === b))
+  flash(b.closest('.row'))
+})
+
+/* ── панель макета ───────────────────────────────────────────────────── */
+const app = document.getElementById('app')
+document.querySelectorAll('.mock-bar button[data-w]').forEach(b => {
+  b.addEventListener('click', () => {
+    app.style.width = b.dataset.w + 'px'
+    document.querySelectorAll('.mock-bar button[data-w]').forEach(x => x.classList.toggle('on', x === b))
+    fit()
+  })
+})
+
+applyTheme(); applyAnim(); fit(); requestAnimationFrame(draw)
+</script>
+</body>
+</html>
