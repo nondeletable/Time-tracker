@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ru" data-theme="emerald-dark">
+<head>
+<meta charset="utf-8">
+<title>Time Tracker — О программе</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════════════════════════════
+   Вид «О программе» — пятый пункт рельса, отбитый вниз.
+   Плоская модель тем, как в tt-appearance: палитру целиком задаёт один
+   data-theme. Настроек здесь нет, поэтому тема переключается служебной
+   полосой макета.
+   Все тексты на странице — ЗАГЛУШКИ. Реальные формулировки, адреса ссылок
+   и состав донатилок ещё не согласованы; шильдик «плейсхолдер» в шапке
+   каждой карточки стоит ровно для того, чтобы рыбу не приняли за готовый
+   текст. Иконки тоже заглушки: бренд-логотипов в assets нет, нарисованы
+   нейтральные глифы того же размера, чтобы ряд занимал столько же места.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  --font-ui:  'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-num: 'JetBrains Mono', ui-monospace, monospace;
+
+  --c-study:#a855f7;
+
+  --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
+  --r:12px; --r-lg:16px;
+  --t:180ms cubic-bezier(.4,0,.2,1);
+}
+
+[data-theme="emerald-light"] {
+  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e5e8ee;
+  --text:#111827; --text-dim:#5a6478; --text-mute:#9aa3b4;
+  --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#ffffff; --danger:#dc2626;
+}
+[data-theme="emerald-dark"] {
+  --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
+  --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
+  --accent:#34d399; --accent-soft:#0e2b22; --on-accent:#04231a; --danger:#f87171;
+}
+[data-theme="indigo-light"] {
+  --bg:#f4f4f2; --surface:#ffffff; --surface-2:#ebebe7; --border:#e0e0da;
+  --text:#1c1c1a; --text-dim:#61615c; --text-mute:#97978f;
+  --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#ffffff; --danger:#dc2626;
+}
+[data-theme="indigo-dark"] {
+  --bg:#0f0f0e; --surface:#171716; --surface-2:#1f1f1d; --border:#2b2b28;
+  --text:#f0efec; --text-dim:#a0a099; --text-mute:#6b6b64;
+  --accent:#818cf8; --accent-soft:#23234a; --on-accent:#10102a; --danger:#f87171;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font-ui); font-size:13.5px; line-height:1.5;
+       background:var(--bg); color:var(--text); -webkit-font-smoothing:antialiased; }
+.num { font-family:var(--font-num); font-variant-numeric:tabular-nums; letter-spacing:-.03em; }
+button, a { font:inherit; color:inherit; background:none; border:none; cursor:pointer; text-decoration:none; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:6px; }
+
+.app { position:relative; width:960px; max-width:100%; height:780px; margin:var(--s4) auto;
+       background:var(--bg); border:1px solid var(--border); border-radius:var(--r-lg);
+       overflow:hidden; isolation:isolate; display:grid;
+       grid-template-columns:56px 1fr; grid-template-rows:minmax(0,1fr);
+       box-shadow:0 24px 60px -24px rgba(0,0,0,.28); }
+[data-theme$="-dark"] .app { box-shadow:0 24px 60px -24px rgba(0,0,0,.7); }
+
+.chrome { position:absolute; inset:0 0 auto 0; height:64px; z-index:60;
+          display:flex; align-items:center; padding:0 var(--s4) 0 11px; pointer-events:none; }
+.chrome > * { pointer-events:auto; }
+.tbtn { width:34px; height:34px; border-radius:10px; background:var(--accent); color:var(--on-accent);
+        display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; }
+.chrome .sp { flex:1; }
+.win { display:flex; gap:2px; }
+.win button { width:32px; height:28px; color:var(--text-mute); font-size:13px; transition:color var(--t); }
+.win button:hover { color:var(--text); }
+.win button.x:hover { color:var(--danger); }
+
+.rail { background:var(--surface); border-right:1px solid var(--border);
+        display:flex; flex-direction:column; align-items:center; gap:var(--s2); padding:72px 0 var(--s3); }
+.rail button { width:36px; height:36px; border-radius:10px; color:var(--text-mute); font-size:15px;
+               transition:background var(--t), color var(--t); }
+.rail button:hover { background:var(--surface-2); color:var(--text); }
+.rail button[aria-current="true"] { background:var(--accent-soft); color:var(--accent); }
+.rail .sp { flex:1; }
+
+.d-main { display:flex; flex-direction:column; min-width:0; min-height:0; }
+.d-head { display:flex; align-items:center; gap:var(--s4); height:64px; padding:0 var(--s5); flex-shrink:0; }
+.d-head h1 { font-size:19px; font-weight:600; letter-spacing:-.02em; line-height:1.15; }
+.d-head .sp { flex:1; }
+.d-head .pad { width:104px; }
+
+.dock { display:flex; align-items:center; gap:var(--s3); white-space:nowrap; }
+.dock-cat { display:flex; align-items:center; gap:7px; padding:6px 10px; border-radius:8px;
+            font-size:12.5px; color:var(--text-dim); transition:background var(--t), color var(--t); }
+.dock-cat:hover { background:var(--surface-2); color:var(--text); }
+.dock-cat .sw { width:8px; height:8px; border-radius:50%; }
+.dock-time { font-size:15px; font-weight:500; }
+.dock-btn { padding:6px 10px; border-radius:8px; font-family:var(--font-num); font-size:15px;
+            font-weight:500; letter-spacing:.02em; color:var(--accent); transition:background var(--t); }
+.dock-btn:hover { background:var(--surface-2); }
+
+.scroll { flex:1; overflow-y:auto; padding:0 var(--s5) var(--s5); min-height:0; display:flex; flex-direction:column; }
+/* сетка тянется на всю высоту вида: карточка здесь одна, и прижатая к
+   верху она оставляла пустую треть под собой */
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s3); flex:1; min-height:0; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:var(--s4); min-width:0; }
+/* без шапки: заголовок карточки повторял бы заголовок вида, который стоит
+   прямо над ней */
+.span4 { grid-column:span 4; display:flex; flex-direction:column; min-height:0; }
+
+/* ── Колонка по центру, как в ComfyLauncher: значок, название, текст ──
+   Ширина колонки ограничена: на всю карточку строка уходит за 120 знаков
+   и текст перестаёт читаться, сколько бы места ни было в окне. */
+/* margin:auto по всем сторонам — колонка встаёт по центру и по горизонтали,
+   и по вертикали, в остатке высоты под шапкой карточки */
+.col { max-width:620px; margin:auto; text-align:center;
+       display:flex; flex-direction:column; align-items:center; }
+.logo { width:96px; height:96px; border-radius:24px; background:var(--surface-2);
+        display:grid; place-items:center; overflow:hidden; }
+.logo img { width:64px; height:64px; object-fit:contain; }
+.col .nm { font-size:22px; font-weight:600; letter-spacing:-.02em; margin-top:var(--s4); }
+.col .ver { font-size:12px; color:var(--text-mute); margin-top:3px; }
+
+/* рыба: цвет приглушён, чтобы на глаз было видно — это ещё не текст */
+.ph { color:var(--text-dim); font-size:12.5px; margin-top:var(--s4); }
+.ph + .ph { margin-top:var(--s2); }
+
+/* упоминание второго участника — одна строка, не блок: отдельная панель
+   под неё раздувала бы вид втрое ради одного предложения */
+.credit { font-size:11.5px; color:var(--text-mute); margin-top:var(--s4); }
+
+/* ── Ряд иконок: контакты, затем донаты через разделитель ────────────── */
+.links { display:flex; align-items:center; justify-content:center; gap:var(--s2);
+         margin-top:var(--s5); flex-wrap:wrap; }
+.links .sep { width:1px; height:20px; background:var(--border); margin:0 var(--s1); }
+.ico { width:32px; height:32px; border-radius:9px; background:var(--surface-2); color:var(--text-dim);
+       display:grid; place-items:center; position:relative;
+       transition:background var(--t), color var(--t), transform var(--t); }
+.ico:hover { background:var(--accent); color:var(--on-accent); transform:translateY(-1px); }
+.ico svg { width:17px; height:17px; }
+/* подпись всплывает снизу: ряд стоит у нижнего края карточки, сверху её
+   перекрыл бы текст */
+.ico::after { content:attr(data-name); position:absolute; top:calc(100% + 6px); left:50%; transform:translateX(-50%);
+        padding:4px 8px; border-radius:7px; background:var(--surface-2); border:1px solid var(--border);
+        color:var(--text-dim); font-size:11px; white-space:nowrap;
+        opacity:0; pointer-events:none; transition:opacity var(--t); z-index:20; }
+.ico:hover::after { opacity:1; }
+
+.thin { scrollbar-width:thin; scrollbar-color:transparent transparent; }
+.thin:hover { scrollbar-color:color-mix(in srgb, var(--text-mute) 60%, transparent) transparent; }
+.thin::-webkit-scrollbar { width:10px; }
+.thin::-webkit-scrollbar-track { background:transparent; }
+.thin::-webkit-scrollbar-thumb { background:transparent; border-radius:99px; border:3px solid transparent; background-clip:padding-box; }
+.thin:hover::-webkit-scrollbar-thumb { background:color-mix(in srgb, var(--text-mute) 60%, transparent); background-clip:padding-box; }
+
+/* ═══ Служебная полоса макета — не часть приложения ═════════════════════ */
+.mock-bar { position:fixed; top:0; left:0; right:0; z-index:99; display:flex; align-items:center; gap:14px;
+            padding:8px 16px; background:#111418; color:#9aa4b2; font:12px/1 var(--font-ui); }
+.mock-bar button, .mock-bar select { padding:5px 10px; border-radius:7px; background:#1b2027; color:#cbd5e1;
+            border:1px solid #2a313a; font:inherit; cursor:pointer; }
+.mock-bar button.on { background:#34d399; color:#06231a; border-color:#34d399; }
+.mock-bar .hint { color:#5b6676; }
+body { padding-top:38px; }
+</style>
+</head>
+
+<body>
+
+<div class="mock-bar">
+  <span>Ширина окна:</span>
+  <button data-w="960" class="on">960 — минимум</button>
+  <button data-w="1280">1280</button>
+  <span>Тема:</span>
+  <select id="mock-theme">
+    <option value="emerald-dark">Emerald тёмная</option>
+    <option value="emerald-light">Emerald светлая</option>
+    <option value="indigo-dark">Indigo тёмная</option>
+    <option value="indigo-light">Indigo светлая</option>
+  </select>
+  <span class="hint">Все тексты и иконки — заглушки. Наведи на иконку: под ней подпись.</span>
+</div>
+
+<div class="app" id="app">
+
+  <div class="chrome">
+    <div class="tbtn"><span>T</span></div>
+    <span class="sp"></span>
+    <div class="win"><button>—</button><button>▢</button><button class="x">✕</button></div>
+  </div>
+
+  <nav class="rail">
+    <button title="Сводка">▦</button>
+    <button title="Календарь">▤</button>
+    <button title="Настройки">⚙</button>
+    <button title="Оформление">✎</button>
+    <span class="sp"></span>
+    <button aria-current="true" title="О программе">ⓘ</button>
+  </nav>
+
+  <div class="d-main">
+    <div class="d-head">
+      <h1>О программе</h1>
+      <span class="sp"></span>
+      <div class="dock">
+        <button class="dock-cat"><span class="sw" style="background:var(--c-study)"></span> Study ▾</button>
+        <span class="dock-time num">00:00:00</span>
+        <button class="dock-btn">START</button>
+      </div>
+      <span class="pad"></span>
+    </div>
+
+    <div class="scroll thin">
+      <div class="grid">
+
+        <!-- ── О программе ───────────────────────────────────────────── -->
+        <div class="card span4">
+          <div class="col">
+            <span class="logo"><img src="../../assets/icons/time-management.png" alt=""></span>
+            <div class="nm">Time Tracker</div>
+            <div class="ver num">1.0.0</div>
+
+            <p class="ph">Здесь будет текст о программе: для чего инструмент, кому он нужен и чем отличается от секундомера в телефоне. Три-четыре предложения, без маркетинга — просто объяснить, что это трекер рабочего времени на двоих в одной локальной сети, где данные лежат локально, а синхронизация идёт напрямую между компьютерами.</p>
+
+            <p class="ph">Второй абзац — от лица автора: чем занимается, какие задачи берёт, открыта ли к сотрудничеству и к чему ведут ссылки ниже. Формулировку даёт сам человек, здесь она стоит заглушкой.</p>
+
+            <p class="credit">UI/UX design made by modum</p>
+
+            <div class="links">
+              <a class="ico" data-name="GitHub" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18-6-6 6-6"/><path d="m15 6 6 6-6 6"/></svg></a>
+              <a class="ico" data-name="Email" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg></a>
+              <a class="ico" data-name="Telegram" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></a>
+              <a class="ico" data-name="Discord" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/></svg></a>
+              <span class="sep"></span>
+              <a class="ico" data-name="Boosty" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.5-1.5 2-3.5 2-5a5 5 0 0 0-9-3 5 5 0 0 0-9 3c0 1.5.5 3.5 2 5l7 7Z"/></svg></a>
+              <a class="ico" data-name="Ko-fi" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v6a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5Z"/></svg></a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const root = document.documentElement
+const app = document.getElementById('app')
+
+document.querySelectorAll('.mock-bar button[data-w]').forEach(b => {
+  b.addEventListener('click', () => {
+    app.style.width = b.dataset.w + 'px'
+    document.querySelectorAll('.mock-bar button[data-w]').forEach(x => x.classList.toggle('on', x === b))
+  })
+})
+document.getElementById('mock-theme').addEventListener('change', e => {
+  root.dataset.theme = e.target.value
+})
+</script>
+</body>
+</html>

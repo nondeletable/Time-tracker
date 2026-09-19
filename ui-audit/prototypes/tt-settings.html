@@ -357,7 +357,9 @@ button { font:inherit; color:inherit; background:none; border:none; cursor:point
 /* разделитель между строками, а не под каждой */
 .row { border-bottom:none; position:relative; }
 .row + .row { border-top:1px solid var(--border); }
-.row .lab { display:flex; align-items:center; gap:6px; }
+/* nowrap: подпись задаёт свою минимальную ширину и не ломается на две
+   строки, когда колонка узкая — «Код группы» на 960px рвалось пополам */
+.row .lab { display:flex; align-items:center; gap:6px; white-space:nowrap; }
 
 .btn-s { padding:5px 10px; border-radius:8px; font-size:11.5px; color:var(--text-dim);
          background:var(--surface-2); transition:background var(--t), color var(--t); }
@@ -373,13 +375,18 @@ button { font:inherit; color:inherit; background:none; border:none; cursor:point
 
 /* значок справки: текст всплывает по наведению */
 .help { width:16px; height:16px; border-radius:50%; background:var(--surface-2); color:var(--text-mute);
-        font-size:10px; line-height:1; position:relative; flex-shrink:0; }
+        font-size:10px; line-height:1; flex-shrink:0; }
 .help:hover { background:var(--accent); color:var(--on-accent); }
-.help::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:-6px; width:268px;
-        padding:10px 12px; border-radius:10px; background:var(--surface-2); border:1px solid var(--border);
-        color:var(--text-dim); font-size:11.5px; line-height:1.5; text-align:left; white-space:pre-line;
-        opacity:0; pointer-events:none; transition:opacity var(--t); z-index:20; }
-.help:hover::after { opacity:1; }
+
+/* Само облачко живёт в <body>, а не внутри карточки: .scroll обрезает всё,
+   что вылезает за его край, и подсказка у верхнего ряда карточек резалась
+   пополам. Fixed-элемент обрезать нечем — координаты считает JS, он же
+   разворачивает облачко вниз, когда сверху не помещается. */
+.tip { position:fixed; z-index:80; width:268px; padding:10px 12px; border-radius:10px;
+       background:var(--surface-2); border:1px solid var(--border); color:var(--text-dim);
+       font-size:11.5px; line-height:1.5; text-align:left; white-space:pre-line;
+       opacity:0; pointer-events:none; transition:opacity var(--t); }
+.tip.on { opacity:1; }
 
 /* поле даты: день и месяц, год живёт в значении */
 .dates { display:flex; align-items:center; gap:8px; }
@@ -876,6 +883,27 @@ document.getElementById('mock-theme').addEventListener('change', e => {
   const [accent, theme] = e.target.value.split('|')
   root.dataset.accent = accent
   root.dataset.theme = theme
+})
+
+// ── подсказки: облачко одно на страницу, позиция считается по месту ─────
+const tip = document.createElement('div')
+tip.className = 'tip'
+document.body.appendChild(tip)
+
+document.querySelectorAll('.help').forEach(h => {
+  h.addEventListener('mouseenter', () => {
+    tip.textContent = h.dataset.tip
+    tip.classList.add('on')
+    /* границы берём у окна приложения, а не у страницы: в Electron дальше
+       рамки подсказке уходить некуда */
+    const r = h.getBoundingClientRect(), t = tip.getBoundingClientRect()
+    const a = app.getBoundingClientRect()
+    let y = r.top - t.height - 8
+    if (y < a.top + 8) y = r.bottom + 8
+    tip.style.left = Math.max(a.left + 8, Math.min(r.left - 6, a.right - t.width - 8)) + 'px'
+    tip.style.top = Math.min(y, a.bottom - t.height - 8) + 'px'
+  })
+  h.addEventListener('mouseleave', () => tip.classList.remove('on'))
 })
 
 renderCats()
