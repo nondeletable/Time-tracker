@@ -23,8 +23,7 @@
     <div class="app" id="app">
 
       <!-- Обвязка окна: лежит поверх слоёв режимов и в переходах не участвует,
-           чтобы управление окном не мигало. T — пока просто марка, второй
-           режим появится вместе с Dashboard. -->
+           чтобы управление окном не мигало. T переключает Focus ↔ Dashboard. -->
       <div class="chrome">
         <div class="tbtn" id="tbtn"><span class="tglyph">T</span></div>
         <span class="sp"></span>
@@ -86,6 +85,43 @@
               </dl>
               <div class="bars" id="bars"></div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Фронт волны перехода: живёт над слоями, рисуется только в переходе -->
+      <div class="ring" id="ring"></div>
+
+      <div class="layer" data-layer="dash" id="layer-dash">
+        <nav class="rail" data-wave>
+          <button data-nav="summary" aria-current="true" data-i18n-title="nav_summary" title="Сводка">▦</button>
+          <button data-nav="calendar" data-i18n-title="nav_calendar" title="Календарь">▤</button>
+          <button data-nav="settings" data-i18n-title="nav_settings" title="Настройки">⚙</button>
+          <button data-nav="appearance" data-i18n-title="nav_appearance" title="Оформление">✎</button>
+          <span class="sp"></span>
+          <button data-nav="about" data-i18n-title="nav_about" title="О программе">ⓘ</button>
+        </nav>
+
+        <div class="d-main">
+          <!-- Одна строка-шапка: заголовок вида слева, таймер-док справа,
+               .pad держит зазор под кнопками окна -->
+          <div class="d-head">
+            <h1 id="dash-title" data-wave data-i18n="title_summary">Сводка периода</h1>
+            <span class="sp"></span>
+            <div class="dock" id="dock" data-wave>
+              <span class="dock-cat" id="dock-cat"></span>
+              <span class="dock-time num" id="dock-time">00:00:00</span>
+              <button class="dock-btn" id="dock-btn" disabled>START</button>
+            </div>
+            <span class="pad"></span>
+          </div>
+
+          <div class="scroll">
+            <div class="view on" data-view="summary"></div>
+            <div class="view" data-view="calendar"></div>
+            <div class="view" data-view="settings"></div>
+            <div class="view" data-view="appearance"></div>
+            <div class="view" data-view="about"></div>
           </div>
         </div>
       </div>
@@ -282,16 +318,6 @@
         <button class="dialog-btn cancel" id="cat-delete-cancel" data-i18n="btn_cancel">Отмена</button>
         <button class="dialog-btn danger" id="cat-delete-confirm" data-i18n="btn_delete">Удалить</button>
       </div>
-    </div>
-  </div>
-
-  <!-- About dialog -->
-  <div id="about-modal" class="dialog-overlay hidden">
-    <div class="dialog">
-      <div class="about-name">Time Tracker</div>
-      <div class="about-version"><span data-i18n="about_version">Версия</span> 1.0.0</div>
-      <div class="about-copy">© 2026 Time Tracker</div>
-      <button class="dialog-btn save" id="about-close" data-i18n="btn_close">Закрыть</button>
     </div>
   </div>
 

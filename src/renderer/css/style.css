@@ -293,12 +293,30 @@ body {
 
 /* Слой режима. Фон непрозрачный: когда рядом встанет Dashboard, под клипом
    перехода не должен просвечивать уходящий режим. */
+/* Фон обязателен: под клипом волны не должен просвечивать уходящий режим */
 .layer {
   position: absolute;
   inset: 0;
+  display: none;
+  background: var(--bg);
+}
+
+[data-mode="focus"] .layer[data-layer="focus"],
+.anim .layer[data-layer="focus"] {
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+}
+
+[data-mode="dash"] .layer[data-layer="dash"],
+.anim .layer[data-layer="dash"] {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* В переходе показаны оба слоя: уходящий снизу, приходящий поверх под клипом */
+.anim .layer.incoming {
+  z-index: 20;
 }
 
 /* Холст эффектов лежит под содержимым Focus */
@@ -709,6 +727,190 @@ body {
   font-family: var(--font-num);
   font-size: 11.5px;
   color: var(--text-mute);
+}
+
+/* ── Переход между режимами ────────────────────────────────────────────────
+   Фронт — круг clip-path от центра кнопки T. Элементы входящего слоя
+   получают задержку, равную расстоянию до T, делённому на скорость фронта,
+   поэтому рождаются ровно там, где волна прошла. --wave-ms — время, за
+   которое фронт доходит до дальнего угла. */
+
+:root {
+  --wave-ms: 900;
+}
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0;
+  box-shadow: 0 0 28px 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.layer.incoming [data-wave] {
+  animation: waveIn 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+@keyframes waveIn {
+  from { opacity: 0; transform: translateY(10px) scale(.975); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Dashboard: рельс и каркас ─────────────────────────────────────────────── */
+
+.rail {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  /* сверху 72px: первая иконка встаёт ниже полосы обвязки с кнопкой T */
+  padding: 72px 0 var(--s3);
+}
+
+.rail button {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--text-mute);
+  font-size: 15px;
+  transition: background var(--t), color var(--t);
+}
+
+.rail button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.rail button[aria-current="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.rail .sp {
+  flex: 1;
+}
+
+.d-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Шапка занимает ту же верхнюю полосу 64px, где стоят T и кнопки окна */
+.d-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  height: 64px;
+  padding: 0 var(--s5);
+  flex-shrink: 0;
+}
+
+.d-head h1 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+
+.d-head .sp {
+  flex: 1;
+}
+
+/* зазор под кнопками окна справа сверху */
+.d-head .pad {
+  width: 104px;
+}
+
+/* Таймер — не обособленный блок, а такие же элементы строки-шапки, как
+   заголовок: никакой рамки вокруг, общий ритм отступов. */
+.dock {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  white-space: nowrap;
+}
+
+.dock > * {
+  flex-shrink: 0;
+}
+
+.dock-cat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.dock-cat .sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dock-time {
+  font-size: 15px;
+  font-weight: 500;
+  transition: color var(--t);
+}
+
+.dock.running .dock-time {
+  color: var(--accent);
+}
+
+/* Кнопка без заливки: габарит как у категории, кегль как у таймера — строка
+   читается как один набор, а состояние несёт цвет надписи. */
+.dock-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--font-num);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  color: var(--accent);
+  transition: background var(--t), color var(--t);
+}
+
+.dock-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.dock-btn:disabled {
+  color: var(--text-mute);
+  cursor: default;
+}
+
+.dock-btn.stop {
+  color: var(--danger);
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--s5) var(--s5);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.view {
+  display: none;
+}
+
+.view.on {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

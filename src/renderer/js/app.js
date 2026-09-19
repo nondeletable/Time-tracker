@@ -95,8 +95,16 @@ const settingsModal        = document.getElementById('settings-modal')
 const settingsClose        = document.getElementById('settings-close')
 const settingsTabs         = document.querySelectorAll('.settings-tab')
 const settingsPanes        = document.querySelectorAll('.settings-pane')
-const aboutModal           = document.getElementById('about-modal')
-const aboutClose           = document.getElementById('about-close')
+const appEl                = document.getElementById('app')
+const tbtn                 = document.getElementById('tbtn')
+const tglyph               = document.querySelector('.tglyph')
+const ringEl               = document.getElementById('ring')
+const dashLayer            = document.getElementById('layer-dash')
+const dashTitle            = document.getElementById('dash-title')
+const dock                 = document.getElementById('dock')
+const dockCat              = document.getElementById('dock-cat')
+const dockTime             = document.getElementById('dock-time')
+const dockBtn              = document.getElementById('dock-btn')
 const userNameDisplay      = document.getElementById('user-name-display')
 const userNameEditBtn      = document.getElementById('user-name-edit-btn')
 const userNamePicker       = document.getElementById('user-name-picker')
@@ -127,6 +135,14 @@ async function init() {
   if (!savedDark)  await window.api.setSetting('theme_dark', themeDark)
   if (!savedLight) await window.api.setSetting('theme_light', themeLight)
   applyTheme()
+
+  // Режим запоминается, активный вид — нет: Dashboard всегда открывается Сводкой
+  const savedUiMode = await window.api.getSetting('ui_mode')
+  document.documentElement.dataset.mode = savedUiMode === 'dash' ? 'dash' : 'focus'
+  if (!savedUiMode) await window.api.setSetting('ui_mode', 'focus')
+  if (savedUiMode === 'dash') spinT(0)
+  setView('summary')
+  paintDock()
 
   // Дневная цель локальная и не синхронизируется: общий лимит — ограничение
   // на двоих, а норма дня у каждого своя.
@@ -221,6 +237,7 @@ function selectCategory(id) {
     : ''
   timerBtn.disabled = false
   dialogCategorySelect.value = id
+  paintDock()
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -382,6 +399,7 @@ function formatTime(ms) {
 function tick() {
   timerDisplay.textContent = formatTime(elapsed + (Date.now() - startTime))
   paintRing()
+  paintDock()
 }
 
 function start() {
@@ -394,6 +412,7 @@ function start() {
   focusLayer.classList.add('running')
   resetBtn.classList.add('hidden')
   paintRing()
+  paintDock()
 }
 
 function stop() {
@@ -407,6 +426,7 @@ function stop() {
   focusLayer.classList.remove('running')
   resetBtn.classList.remove('hidden')
   paintRing()
+  paintDock()
   openSaveDialog()
 }
 
@@ -416,6 +436,7 @@ function resetTimer() {
   timerDisplay.textContent = '00:00:00'
   resetBtn.classList.add('hidden')
   paintRing()
+  paintDock()
 }
 
 timerBtn.addEventListener('click', () => {
@@ -431,6 +452,128 @@ expandBtn.addEventListener('click', () => {
   const open = sheet.classList.toggle('open')
   focusLayer.classList.toggle('sheet-open', open)
   expandBtn.textContent = t(open ? 'focus_collapse' : 'focus_expand')
+})
+
+// ── Режимы и виды ─────────────────────────────────────────────────────────────
+
+const VIEW_TITLES = {
+  summary:    'title_summary',
+  calendar:   'nav_calendar',
+  settings:   'nav_settings',
+  appearance: 'nav_appearance',
+  about:      'nav_about'
+}
+
+let currentView = 'summary'
+let modeBusy = false
+let tGlyphTurns = 0
+
+function setView(view) {
+  currentView = view
+  railButtons.forEach(b => b.setAttribute('aria-current', String(b.dataset.nav === view)))
+  dashViews.forEach(v => v.classList.toggle('on', v.dataset.view === view))
+  dashTitle.dataset.i18n = VIEW_TITLES[view]
+  dashTitle.textContent = t(VIEW_TITLES[view])
+}
+
+const railButtons = [...document.querySelectorAll('[data-nav]')]
+const dashViews   = [...document.querySelectorAll('.view')]
+
+railButtons.forEach(b => b.addEventListener('click', () => setView(b.dataset.nav)))
+
+// Вращается только буква: она доворачивает 180° и остаётся в новом положении —
+// ровная значит Focus, перевёрнутая Dashboard. Квадрат пульсирует, он же origin
+// волны.
+function spinT(duration) {
+  tGlyphTurns++
+  tglyph.style.transitionDuration = Math.min(duration, 700) + 'ms'
+  tglyph.style.transform = `rotate(${tGlyphTurns * 180}deg)`
+  tbtn.animate(
+    [{ transform: 'scale(1)' }, { transform: 'scale(.9)', offset: .28 },
+     { transform: 'scale(1.07)', offset: .58 }, { transform: 'scale(1)' }],
+    { duration: Math.min(duration, 620), easing: 'cubic-bezier(.16,1,.3,1)' }
+  )
+}
+
+async function setMode(next) {
+  const root = document.documentElement
+  if (root.dataset.mode === next || modeBusy) return
+
+  await window.api.setSetting('ui_mode', next)
+
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    root.dataset.mode = next
+    window.FX?.refresh()
+    return
+  }
+
+  modeBusy = true
+  const appBox = appEl.getBoundingClientRect()
+  const tBox   = tbtn.getBoundingClientRect()
+  const ox = tBox.left - appBox.left + tBox.width / 2
+  const oy = tBox.top - appBox.top + tBox.height / 2
+
+  // Радиус до самого дальнего угла: волна обязана накрыть окно целиком
+  const R = Math.max(
+    Math.hypot(ox, oy), Math.hypot(appBox.width - ox, oy),
+    Math.hypot(ox, appBox.height - oy), Math.hypot(appBox.width - ox, appBox.height - oy)
+  )
+  const duration = Number(getComputedStyle(root).getPropertyValue('--wave-ms')) || 900
+  const speed = R / duration
+
+  const to = next === 'dash' ? dashLayer : focusLayer
+  appEl.classList.add('anim')
+  to.classList.add('incoming')
+  root.dataset.mode = next
+
+  to.querySelectorAll('[data-wave]').forEach(el => {
+    const b = el.getBoundingClientRect()
+    const cx = b.left - appBox.left + b.width / 2
+    const cy = b.top - appBox.top + b.height / 2
+    el.style.setProperty('--wd', Math.max(0, Math.hypot(cx - ox, cy - oy) / speed - 70) + 'ms')
+  })
+
+  spinT(duration)
+
+  ringEl.style.cssText = `left:${ox}px; top:${oy}px; width:0; height:0; transform:translate(-50%,-50%); opacity:1`
+  ringEl.animate(
+    [{ width: '0px', height: '0px', opacity: .9 }, { width: R * 2 + 'px', height: R * 2 + 'px', opacity: 0 }],
+    { duration, easing: 'linear', fill: 'forwards' }
+  )
+
+  to.animate(
+    [{ clipPath: `circle(0px at ${ox}px ${oy}px)` }, { clipPath: `circle(${R}px at ${ox}px ${oy}px)` }],
+    { duration, easing: 'linear' }
+  ).finished.finally(() => {
+    appEl.classList.remove('anim')
+    to.classList.remove('incoming')
+    to.querySelectorAll('[data-wave]').forEach(el => el.style.removeProperty('--wd'))
+    ringEl.style.opacity = 0
+    modeBusy = false
+    window.FX?.refresh()
+  })
+}
+
+tbtn.addEventListener('click', () => {
+  setMode(document.documentElement.dataset.mode === 'focus' ? 'dash' : 'focus')
+})
+
+// Док показывает то же состояние, что кольцо в Focus: это один таймер.
+function paintDock() {
+  const cat = categories.find(c => c.id === selectedCategoryId)
+  dockCat.innerHTML = cat
+    ? `<span class="sw" style="background:${cat.color}"></span>${cat.name}`
+    : ''
+  dockTime.textContent = timerDisplay.textContent
+  dock.classList.toggle('running', running)
+  dockBtn.classList.toggle('stop', running)
+  dockBtn.textContent = running ? 'STOP' : 'START'
+  dockBtn.disabled = timerBtn.disabled
+}
+
+dockBtn.addEventListener('click', () => {
+  if (running) stop()
+  else start()
 })
 
 // ── Save dialog ───────────────────────────────────────────────────────────────
@@ -540,14 +683,6 @@ settingsTabs.forEach(tab => {
     if (tab.dataset.tab === 'hours') loadHoursTab()
     if (tab.dataset.tab === 'sync') loadSyncTab()
   })
-})
-
-function openAbout() {
-  aboutModal.classList.remove('hidden')
-}
-
-aboutClose.addEventListener('click', () => {
-  aboutModal.classList.add('hidden')
 })
 
 const AVATAR_FILES = [
