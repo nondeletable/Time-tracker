@@ -12,8 +12,11 @@ let calYear  = 0
 let calMonth = 0
 
 let currentLang = 'ru'
-let currentTheme  = 'dark'
-let currentAccent = 'emerald'
+// Палитра задаётся одним значением целиком; themeMode выбирает, какая из двух
+// сохранённых тем активна сейчас.
+let themeMode  = 'dark'
+let themeDark  = 'emerald-dark'
+let themeLight = 'emerald-light'
 
 // Сегодняшние секунды, уже лежащие в базе. Ход текущего таймера прибавляется
 // поверх — в базу он попадёт только после сохранения сессии.
@@ -24,12 +27,17 @@ let lastStats = []
 // Длина окружности прогресса: r=156 из viewBox кольца
 const RING_LEN = 2 * Math.PI * 156
 
-function applyTheme(theme, accent) {
-  document.documentElement.dataset.theme  = theme
-  document.documentElement.dataset.accent = accent
+function applyTheme() {
+  document.documentElement.dataset.theme = themeMode === 'light' ? themeLight : themeDark
   // Палитра эффектов строится из --accent, поэтому после смены темы холст
   // надо перерисовать.
   window.FX?.refresh()
+}
+
+async function toggleThemeMode() {
+  themeMode = themeMode === 'light' ? 'dark' : 'light'
+  await window.api.setSetting('theme_mode', themeMode)
+  applyTheme()
 }
 
 function applyFx(particles, leaks) {
@@ -109,13 +117,16 @@ async function init() {
   if (!savedLang) await window.api.setSetting('lang', currentLang)
   applyI18n()
 
-  const savedTheme  = await window.api.getSetting('theme')
-  const savedAccent = await window.api.getSetting('accent')
-  currentTheme  = savedTheme  || 'dark'
-  currentAccent = savedAccent || 'emerald'
-  if (!savedTheme)  await window.api.setSetting('theme', currentTheme)
-  if (!savedAccent) await window.api.setSetting('accent', currentAccent)
-  applyTheme(currentTheme, currentAccent)
+  const savedMode  = await window.api.getSetting('theme_mode')
+  const savedDark  = await window.api.getSetting('theme_dark')
+  const savedLight = await window.api.getSetting('theme_light')
+  themeMode  = savedMode  || themeMode
+  themeDark  = savedDark  || themeDark
+  themeLight = savedLight || themeLight
+  if (!savedMode)  await window.api.setSetting('theme_mode', themeMode)
+  if (!savedDark)  await window.api.setSetting('theme_dark', themeDark)
+  if (!savedLight) await window.api.setSetting('theme_light', themeLight)
+  applyTheme()
 
   // Дневная цель локальная и не синхронизируется: общий лимит — ограничение
   // на двоих, а норма дня у каждого своя.
@@ -465,8 +476,6 @@ function openSettings() {
   document.getElementById('pane-user').classList.remove('hidden')
 
   document.getElementById('lang-select').value = currentLang
-  document.getElementById('accent-select').value = currentAccent
-  document.getElementById('theme-select').value  = currentTheme
   document.getElementById('daily-goal-input').value = dailyGoalSeconds / 3600
   document.getElementById('fx-particles-select').value = document.documentElement.dataset.fxp || 'off'
   document.getElementById('fx-leaks-select').value = document.documentElement.dataset.fxl || 'off'
@@ -490,16 +499,12 @@ document.getElementById('lang-select').addEventListener('change', async e => {
   if (!calendarModal.classList.contains('hidden')) await loadCalendarMonth()
 })
 
-document.getElementById('accent-select').addEventListener('change', async e => {
-  currentAccent = e.target.value
-  await window.api.setSetting('accent', currentAccent)
-  applyTheme(currentTheme, currentAccent)
-})
-
-document.getElementById('theme-select').addEventListener('change', async e => {
-  currentTheme = e.target.value
-  await window.api.setSetting('theme', currentTheme)
-  applyTheme(currentTheme, currentAccent)
+// Свитчер светлая/тёмная: тот же, что будет у кнопки в Appearance.
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'l') {
+    e.preventDefault()
+    toggleThemeMode()
+  }
 })
 
 document.getElementById('daily-goal-input').addEventListener('change', async e => {
