@@ -239,17 +239,16 @@ async function showMainScreen() {
 
 function renderCategories() {
   // Часы на бейдже берутся из той же статистики, что рисует панель «Подробно»,
-  // отдельного запроса на это не нужно. Сопоставление по имени, а не по id:
-  // db:get-monthly-stats группирует по категории, но самого id не возвращает,
-  // а трогать main-процесс на этом этапе нельзя.
-  const hours = new Map(lastStats.map(row => [row.name, row.total]))
+  // отдельного запроса на это не нужно. Сопоставление по id: одноимённые
+  // категории больше не склеиваются.
+  const hours = new Map(lastStats.map(row => [row.category_id, row.total]))
   chips.innerHTML = ''
   categories.forEach(cat => {
     const btn = document.createElement('button')
     btn.className = 'chip'
     btn.dataset.id = cat.id
     btn.setAttribute('aria-pressed', String(cat.id === selectedCategoryId))
-    const spent = hours.get(cat.name)
+    const spent = hours.get(cat.id)
     btn.innerHTML = `
       <span class="sw" style="background:${cat.color}"></span>${cat.name}
       ${spent ? `<span class="h">${formatHM(spent)}</span>` : ''}
@@ -323,6 +322,7 @@ async function refreshStats() {
   renderCategories()
   paintRing()
   renderAverage(await periodBreakdown(period))
+  if (currentView === 'summary') await loadSummaryView()
 }
 
 // Период не совпадает с календарным месяцем (28 авг — 27 сен пересекает два),
@@ -346,9 +346,13 @@ async function periodBreakdown(period) {
   )).flat()
 
   const perDay = new Map()
+  // Участники не хардкодятся: кто встретился в данных, тот и попадёт в полосу
+  const perUser = new Map()
   rows.forEach(row => {
     if (row.day < period.period_start || row.day > period.period_end) return
-    perDay.set(row.day, (perDay.get(row.day) || 0) + (row.total_seconds || 0))
+    const seconds = row.total_seconds || 0
+    perDay.set(row.day, (perDay.get(row.day) || 0) + seconds)
+    perUser.set(row.user, (perUser.get(row.user) || 0) + seconds)
   })
 
   const worked = [...perDay.values()].filter(v => v > 0)
@@ -356,6 +360,7 @@ async function periodBreakdown(period) {
 
   return {
     perDay,
+    perUser,
     activeDays: worked.length,
     avg: worked.length ? Math.round(total / worked.length) : 0,
   }
@@ -518,6 +523,8 @@ function setView(view) {
   dashViews.forEach(v => v.classList.toggle('on', v.dataset.view === view))
   dashTitle.dataset.i18n = VIEW_TITLES[view]
   dashTitle.textContent = t(VIEW_TITLES[view])
+  if (view === 'summary') loadSummaryView()
+  if (view === 'calendar') loadCalendarView()
   if (view === 'settings') loadSettingsView()
   if (view === 'appearance') loadAppearanceView()
 }
@@ -1181,6 +1188,163 @@ async function loadSettingsView() {
   await loadHoursTable()
 }
 
+// ── Вид «Сводка» ──────────────────────────────────────────────────────────────
+
+const sumPeriod      = document.getElementById('sum-period')
+const sumTotal       = document.getElementById('sum-total')
+const sumLeft        = document.getElementById('sum-left')
+const sumStack       = document.getElementById('sum-stack')
+const sumLegend      = document.getElementById('sum-legend')
+const sumToday       = document.getElementById('sum-today')
+const sumTodaySub    = document.getElementById('sum-today-sub')
+const sumAvg         = document.getElementById('sum-avg')
+const sumAvgSub      = document.getElementById('sum-avg-sub')
+const sumDonut       = document.getElementById('sum-donut')
+const sumDonutLegend = document.getElementById('sum-donut-legend')
+const sumChart       = document.getElementById('sum-chart')
+const sumChartX      = document.getElementById('sum-chart-x')
+const sumCatRows     = document.getElementById('sum-cat-rows')
+
+const DONUT_LEN = 2 * Math.PI * 54
+
+function shortDate(iso) {
+  const [, m, d] = iso.split('-')
+  return `${Number(d)} ${langDict().months_short[Number(m) - 1]}`
+}
+
+function daysBetween(fromISO, toISO) {
+  const ms = new Date(toISO + 'T00:00:00') - new Date(fromISO + 'T00:00:00')
+  return Math.round(ms / 86400000)
+}
+
+// Цвет участника: свои часы идут акцентом темы, остальные разбирают палитру
+// категорий по порядку — на двоих выглядит как в прототипе, третий не ломает.
+function userColor(index) {
+  return index === 0 ? 'var(--accent)' : CAT_COLORS[(index - 1) % CAT_COLORS.length]
+}
+
+async function loadSummaryView() {
+  if (!currentUser) return
+  const [stats, sharedTotal, period, todaySessions] = await Promise.all([
+    window.api.getMonthlyStats(currentUser),
+    window.api.getSharedTotal(),
+    window.api.getPeriodSettings(),
+    window.api.getSessionsByDate(currentUser, todayISO()),
+  ])
+  const breakdown = await periodBreakdown(period)
+
+  renderSummaryLimit(sharedTotal, period, breakdown)
+  renderSummaryToday(todaySessions)
+  renderSummaryAverage(breakdown, period)
+  renderSummaryDonut(stats)
+  renderSummaryChart(breakdown, period)
+  renderSummaryCategories(stats)
+}
+
+function renderSummaryLimit(total, period, { perUser }) {
+  const limit = period.monthly_limit_seconds
+  sumPeriod.textContent = `${shortDate(period.period_start)} — ${shortDate(period.period_end)}`
+  sumTotal.innerHTML = `${formatHM(total)} <span class="of">/ ${formatHM(limit)}</span>`
+
+  const left = limit - total
+  const daysLeft = Math.max(0, daysBetween(todayISO(), period.period_end))
+  sumLeft.textContent = left >= 0
+    ? `${t('sum_left')} ${formatHM(left)} · ${daysLeft} ${t('stat_days')}`
+    : `${t('stat_over')} ${formatHM(-left)} · ${daysLeft} ${t('stat_days')}`
+
+  // Свой всегда первым, остальные по убыванию часов
+  const users = [...perUser.entries()]
+    .sort((a, b) => (a[0] === currentUser ? -1 : b[0] === currentUser ? 1 : b[1] - a[1]))
+
+  sumStack.innerHTML = users.map(([, seconds], i) =>
+    `<span style="width:${limit > 0 ? (seconds / limit) * 100 : 0}%;background:${userColor(i)}"></span>`
+  ).join('')
+
+  sumLegend.innerHTML = users.map(([name, seconds], i) =>
+    `<b><i style="background:${userColor(i)}"></i>${name} <span class="v">${formatHM(seconds)}</span></b>`
+  ).join('') + (left > 0
+    ? `<b><i style="background:var(--surface-2)"></i>${t('sum_free')} <span class="v">${formatHM(left)}</span></b>`
+    : '')
+}
+
+function renderSummaryToday(sessions) {
+  const seconds = sessions.reduce((sum, s) => sum + s.duration_seconds, 0)
+  sumToday.textContent = formatHM(seconds)
+  const names = [...new Set(sessions.map(s => s.name))]
+  sumTodaySub.textContent = sessions.length
+    ? `${t('sum_sessions').replace('{n}', sessions.length)} · ${names.join(', ')}`
+    : '—'
+}
+
+function renderSummaryAverage({ activeDays, avg }, period) {
+  sumAvg.textContent = activeDays ? formatHM(avg) : '—'
+  const totalDays = daysBetween(period.period_start, period.period_end) + 1
+  sumAvgSub.textContent = t('sum_active_days')
+    .replace('{active}', activeDays)
+    .replace('{total}', totalDays)
+}
+
+function renderSummaryDonut(stats) {
+  const total = stats.reduce((sum, row) => sum + row.total, 0)
+  if (!total) {
+    sumDonut.innerHTML = ''
+    sumDonutLegend.innerHTML = ''
+    return
+  }
+
+  let offset = 0
+  sumDonut.innerHTML = stats.map(row => {
+    const len = DONUT_LEN * (row.total / total)
+    const circle = `<circle cx="62" cy="62" r="54" stroke="${row.color}" stroke-dasharray="${len} ${DONUT_LEN - len}" stroke-dashoffset="${-offset}"></circle>`
+    offset += len
+    return circle
+  }).join('')
+
+  const top = stats.slice(0, 5)
+  const rest = stats.slice(5)
+  sumDonutLegend.innerHTML = top.map(row =>
+    `<div class="dl-row"><i style="background:${row.color}"></i><span class="n">${row.name}</span><span class="v">${Math.round(row.total / total * 100)}%</span></div>`
+  ).join('') + (rest.length
+    ? `<div class="dl-row"><i style="background:var(--surface-2)"></i><span class="n">${t('sum_more')} ${rest.length}</span><span class="v">${Math.round(rest.reduce((s, r) => s + r.total, 0) / total * 100)}%</span></div>`
+    : '')
+}
+
+function renderSummaryChart({ perDay }, period) {
+  const days = []
+  const cursor = new Date(period.period_start + 'T00:00:00')
+  const end = new Date(period.period_end + 'T00:00:00')
+  while (cursor <= end) {
+    const iso = localISODate(cursor)
+    days.push([iso, perDay.get(iso) || 0])
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  const max = Math.max(...days.map(([, seconds]) => seconds), 1)
+  sumChart.innerHTML = days.map(([iso, seconds]) =>
+    `<span class="bar ${seconds ? '' : 'none'}" style="height:${seconds ? Math.max(seconds / max * 100, 6) : 6}%" title="${shortDate(iso)}: ${seconds ? formatHM(seconds) : '—'}"></span>`
+  ).join('')
+
+  // Подписи по краям и трети: день месяца, месяц читается из заголовка карточки
+  const marks = [0, Math.floor(days.length / 3), Math.floor(days.length * 2 / 3), days.length - 1]
+  sumChartX.innerHTML = [...new Set(marks)]
+    .map(i => `<span>${Number(days[i][0].slice(8, 10))}</span>`).join('')
+}
+
+function renderSummaryCategories(stats) {
+  if (!stats.length) {
+    sumCatRows.innerHTML = ''
+    return
+  }
+  const max = stats[0].total
+  sumCatRows.innerHTML = stats.map(row => `
+    <tr>
+      <td><span class="nm"><i style="background:${row.color}"></i>${row.name}</span></td>
+      <td><span class="mini"><span style="width:${row.total / max * 100}%;background:${row.color}"></span></span></td>
+      <td class="num">${row.sessions}</td>
+      <td class="num">${formatHM(row.total)}</td>
+    </tr>`).join('')
+}
+
 // ── Вид «Appearance» ──────────────────────────────────────────────────────────
 
 // Точка у строки несёт акцент выбранной палитры: превью темы в дропдаун не
@@ -1402,12 +1566,10 @@ langSw.addEventListener('click', async e => {
 
 // ── Calendar ──────────────────────────────────────────────────────────────────
 
-const calendarModal = document.getElementById('calendar-modal')
-const calendarClose = document.getElementById('calendar-close')
-const calPrev       = document.getElementById('cal-prev')
-const calNext       = document.getElementById('cal-next')
-const calTitle      = document.getElementById('cal-title')
-const calGrid       = document.getElementById('calendar-grid')
+const calPrev  = document.getElementById('cal-prev')
+const calNext  = document.getElementById('cal-next')
+const calTitle = document.getElementById('cal-title')
+const calGrid  = document.getElementById('calendar-grid')
 
 function renderWeekdays() {
   const spans = document.querySelectorAll('.calendar-weekdays span')
@@ -1415,22 +1577,15 @@ function renderWeekdays() {
   spans.forEach((span, i) => { if (wd[i]) span.textContent = wd[i] })
 }
 
-calendarClose.addEventListener('click', () => {
-  calendarModal.classList.add('hidden')
-})
-
-calendarModal.addEventListener('click', e => {
-  if (e.target === calendarModal) calendarModal.classList.add('hidden')
-})
-
 calPrev.addEventListener('click', () => navigateCalendar(-1))
 calNext.addEventListener('click', () => navigateCalendar(1))
 
-async function openCalendar() {
+// Вид открывается на текущем месяце; пролистанный месяц не запоминается
+async function loadCalendarView() {
   const now = new Date()
   calYear  = now.getFullYear()
   calMonth = now.getMonth() + 1
-  calendarModal.classList.remove('hidden')
+  renderWeekdays()
   await loadCalendarMonth()
 }
 
@@ -1520,9 +1675,8 @@ function formatCalDuration(seconds) {
 
 window.api.onPeerUpdated(async () => {
   await refreshStats()
-  if (!calendarModal.classList.contains('hidden')) {
-    await loadCalendarMonth()
-  }
+  if (currentView === 'calendar') await loadCalendarMonth()
+  if (currentView === 'summary')  await loadSummaryView()
 })
 
 window.api.onSyncLimitUpdated(async () => {

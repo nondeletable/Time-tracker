@@ -1451,6 +1451,195 @@ body {
   cursor: pointer;
 }
 
+/* ── Вид «Сводка» ──────────────────────────────────────────────────────────── */
+
+.span4 {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* карточка-колонка: график растягивается, поэтому нижний отступ совпадает с
+   верхним, а не копится пустотой под шкалой */
+.card.fill {
+  display: flex;
+  flex-direction: column;
+}
+
+.big {
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -.035em;
+  line-height: 1.05;
+}
+
+.big .of {
+  font-size: 15px;
+  color: var(--text-mute);
+  font-weight: 400;
+}
+
+.delta {
+  display: inline-flex;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+/* доли участников: полоса собирается циклом по тем, кто есть в данных */
+.stack {
+  display: flex;
+  height: 10px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--surface-2);
+  margin-top: var(--s4);
+}
+
+.legend {
+  display: flex;
+  gap: var(--s4);
+  margin-top: var(--s3);
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-wrap: wrap;
+}
+
+.legend b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.legend .v {
+  font-family: var(--font-num);
+  color: var(--text);
+}
+
+.legend .sync {
+  color: var(--text-mute);
+}
+
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.donut {
+  width: 124px;
+  height: 124px;
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+
+.donut circle {
+  fill: none;
+  stroke-width: 16;
+}
+
+.dl {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.dl-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.dl-row i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.dl-row .n {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-row .v {
+  font-family: var(--font-num);
+  color: var(--text);
+}
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  flex: 1;
+  min-height: 92px;
+}
+
+.chart .bar {
+  flex: 1;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  opacity: .85;
+  transition: opacity var(--t), transform var(--t);
+}
+
+.chart .bar:hover {
+  opacity: 1;
+  transform: scaleY(1.03);
+  transform-origin: bottom;
+}
+
+.chart .bar.none {
+  background: var(--surface-2);
+}
+
+.chart-x {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 6px;
+  font-family: var(--font-num);
+}
+
+.tbl .mini {
+  width: 78px;
+  height: 4px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.tbl .mini span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* ── Вид «Календарь» ───────────────────────────────────────────────────────── */
+
+.cal-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* ── Вид «Appearance» ──────────────────────────────────────────────────────── */
 
 .card-head .btn-s {

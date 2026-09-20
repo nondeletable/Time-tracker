@@ -250,7 +250,7 @@ function setupIPC() {
     const from = dateToMs(period_start)
     const to   = dateToMsEnd(period_end)
     const stmt = db.prepare(`
-      SELECT c.name, c.color, SUM(s.duration_seconds) as total
+      SELECT s.category_id, c.name, c.color, SUM(s.duration_seconds) as total, COUNT(*) as sessions
       FROM sessions s
       JOIN categories c ON s.category_id = c.id
       WHERE s.user = ?

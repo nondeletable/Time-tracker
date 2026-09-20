@@ -117,8 +117,76 @@
           </div>
 
           <div class="scroll">
-            <div class="view on" data-view="summary"></div>
-            <div class="view" data-view="calendar"></div>
+            <div class="view on" data-view="summary">
+              <div class="grid">
+
+                <div class="card span2" data-wave>
+                  <h3><span data-i18n="card_limit">Общий лимит</span> · <span id="sum-period"></span></h3>
+                  <div class="big num" id="sum-total"></div>
+                  <span class="delta" id="sum-left"></span>
+                  <div class="stack" id="sum-stack"></div>
+                  <div class="legend" id="sum-legend"></div>
+                </div>
+
+                <div class="card" data-wave>
+                  <h3 data-i18n="card_today">Сегодня</h3>
+                  <div class="big num" id="sum-today"></div>
+                  <span class="delta" id="sum-today-sub"></span>
+                </div>
+
+                <div class="card" data-wave>
+                  <h3 data-i18n="card_avg">В среднем за день</h3>
+                  <div class="big num" id="sum-avg"></div>
+                  <span class="delta" id="sum-avg-sub"></span>
+                </div>
+
+                <div class="card span2" data-wave>
+                  <h3 data-i18n="card_split">Распределение по категориям</h3>
+                  <div class="donut-wrap">
+                    <svg class="donut" viewBox="0 0 124 124" id="sum-donut"></svg>
+                    <div class="dl" id="sum-donut-legend"></div>
+                  </div>
+                </div>
+
+                <div class="card span2 fill" data-wave>
+                  <h3 data-i18n="card_by_day">По дням</h3>
+                  <div class="chart" id="sum-chart"></div>
+                  <div class="chart-x" id="sum-chart-x"></div>
+                </div>
+
+                <div class="card span4" data-wave>
+                  <h3 data-i18n="card_categories">Категории</h3>
+                  <div class="tbl-wrap">
+                    <table class="tbl">
+                      <thead><tr>
+                        <th data-i18n="col_name">Название</th>
+                        <th data-i18n="col_share">Доля</th>
+                        <th data-i18n="col_sessions">Сессий</th>
+                        <th data-i18n="col_total">Всего</th>
+                      </tr></thead>
+                      <tbody id="sum-cat-rows"></tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="view" data-view="calendar">
+              <div class="card cal-card" data-wave>
+                <div class="card-head">
+                  <h3 id="cal-title">—</h3>
+                  <span class="sp"></span>
+                  <button class="icon-btn" id="cal-prev">←</button>
+                  <button class="icon-btn" id="cal-next">→</button>
+                </div>
+                <div class="calendar-weekdays">
+                  <span>Пн</span><span>Вт</span><span>Ср</span>
+                  <span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                </div>
+                <div class="calendar-grid" id="calendar-grid"></div>
+              </div>
+            </div>
             <div class="view" data-view="settings">
               <div class="grid set">
 
@@ -418,23 +486,6 @@
         <button class="dialog-btn cancel" id="dialog-cancel" data-i18n="btn_cancel">Отмена</button>
         <button class="dialog-btn save" id="dialog-save" data-i18n="btn_save">Сохранить</button>
       </div>
-    </div>
-  </div>
-
-  <!-- Calendar modal -->
-  <div id="calendar-modal" class="modal-overlay hidden">
-    <div class="calendar-modal">
-      <div class="calendar-header">
-        <button class="cal-nav-btn" id="cal-prev">←</button>
-        <span class="cal-title" id="cal-title">Июнь 2026</span>
-        <button class="cal-nav-btn" id="cal-next">→</button>
-        <button class="cal-close" id="calendar-close">×</button>
-      </div>
-      <div class="calendar-weekdays">
-        <span>Пн</span><span>Вт</span><span>Ср</span>
-        <span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
-      </div>
-      <div class="calendar-grid" id="calendar-grid"></div>
     </div>
   </div>
 
