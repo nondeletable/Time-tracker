@@ -109,6 +109,7 @@ const dashLayer            = document.getElementById('layer-dash')
 const dashTitle            = document.getElementById('dash-title')
 const dock                 = document.getElementById('dock')
 const dockCat              = document.getElementById('dock-cat')
+const dockMenu             = document.getElementById('dock-menu')
 const dockTime             = document.getElementById('dock-time')
 const dockBtn              = document.getElementById('dock-btn')
 const profileName          = document.getElementById('profile-name')
@@ -321,6 +322,9 @@ async function refreshStats() {
   renderStats(stats)
   renderCategories()
   paintRing()
+  // Док рисуется и в init(), до загрузки категорий: без этого вызова дропдаун
+  // категории так и остался бы заблокированным до первого события таймера.
+  paintDock()
   renderAverage(await periodBreakdown(period))
   if (currentView === 'summary') await loadSummaryView()
 }
@@ -657,15 +661,39 @@ tbtn.addEventListener('click', () => {
 // Док показывает то же состояние, что кольцо в Focus: это один таймер.
 function paintDock() {
   const cat = categories.find(c => c.id === selectedCategoryId)
+  // Без выбранной категории кнопка была бы пустой, и открыть список нечем
   dockCat.innerHTML = cat
-    ? `<span class="sw" style="background:${cat.color}"></span>${cat.name}`
-    : ''
+    ? `<span class="sw" style="background:${cat.color}"></span>${cat.name} ▾`
+    : `<span class="sw" style="background:var(--surface-2)"></span>${t('dock_category')} ▾`
+  // На ходу категорию не меняют — то же правило, что у чипсов в Focus
+  dockCat.disabled = running || categories.length === 0
+  if (running) dockMenu.classList.add('hidden')
   dockTime.textContent = timerDisplay.textContent
   dock.classList.toggle('running', running)
   dockBtn.classList.toggle('stop', running)
   dockBtn.textContent = running ? 'STOP' : 'START'
   dockBtn.disabled = timerBtn.disabled
 }
+
+// Выбор категории прямо в Dashboard: без него за ней приходится уходить в Focus
+dockCat.addEventListener('click', e => {
+  e.stopPropagation()
+  if (dockCat.disabled) return
+  dockMenu.innerHTML = categories.map(cat =>
+    `<button data-id="${cat.id}" aria-pressed="${cat.id === selectedCategoryId}">
+       <span class="sw" style="background:${cat.color}"></span>${cat.name}</button>`
+  ).join('')
+  dockMenu.classList.toggle('hidden')
+})
+
+dockMenu.addEventListener('click', e => {
+  const btn = e.target.closest('button[data-id]')
+  if (!btn) return
+  selectCategory(Number(btn.dataset.id))
+  dockMenu.classList.add('hidden')
+})
+
+document.addEventListener('click', () => dockMenu.classList.add('hidden'))
 
 dockBtn.addEventListener('click', () => {
   if (running) stop()

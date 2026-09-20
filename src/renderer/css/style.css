@@ -886,6 +886,65 @@ body {
   border-radius: 50%;
 }
 
+.dock-cat:disabled {
+  cursor: default;
+}
+
+.dock-cat:disabled:hover {
+  background: none;
+  color: var(--text-dim);
+}
+
+/* Выбор категории прямо в Dashboard: иначе за ней приходится уходить в Focus */
+.dock-cat-wrap {
+  position: relative;
+}
+
+.dock-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.dock-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition: background var(--t), color var(--t);
+}
+
+.dock-menu button:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dock-menu button[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.dock-menu .sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .dock-time {
   font-size: 15px;
   font-weight: 500;
