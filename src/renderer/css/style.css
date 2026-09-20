@@ -124,6 +124,16 @@
   box-sizing: border-box;
 }
 
+/* Кнопки из прототипа задают только фон и радиус и рассчитывают на этот
+   сброс: без него к ним прилипают рамка, системный шрифт и цвет браузера. */
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
 body {
   font-family: var(--font-ui);
   background: var(--bg);
@@ -741,6 +751,25 @@ body {
   --wave-ms: 900;
 }
 
+[data-wave-speed="fast"] { --wave-ms: 520; }
+[data-wave-speed="med"]  { --wave-ms: 900; }
+[data-wave-speed="slow"] { --wave-ms: 1600; }
+
+/* Режим Fade: уходящий слой сверху и гаснет, входящий проявляется под ним */
+.anim .layer.leaving {
+  z-index: 25;
+}
+
+.layer.fading [data-wave] {
+  animation: fadeRise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+@keyframes fadeRise {
+  from { opacity: 0; transform: translateY(18px) scale(.82); }
+  to   { opacity: 1; transform: none; }
+}
+
 .ring {
   position: absolute;
   border-radius: 50%;
@@ -925,11 +954,17 @@ body {
   min-height: 0;
 }
 
-/* Настройки и Appearance: карточки не тянутся под высоту соседки по ряду */
+/* Карточки настроек стоят рядами сверху, а не растягиваются на всю высоту */
 .grid.set {
   grid-template-rows: none;
   align-content: start;
   flex: none;
+}
+
+/* В Appearance карточка не тянется и под высоту соседки по ряду: у «Языка»
+   одна строка, растянутый он превращается в пустое поле */
+#appearance-grid {
+  align-items: start;
 }
 
 .card {
@@ -1414,6 +1449,89 @@ body {
   height: 22px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+/* ── Вид «Appearance» ──────────────────────────────────────────────────────── */
+
+.card-head .btn-s {
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.sel {
+  padding: 7px 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  min-width: 150px;
+  transition: border-color var(--t);
+}
+
+.sel:hover,
+.sel:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* При Fade скорость ни на что не влияет: строка гаснет, но остаётся на месте,
+   чтобы карточка не прыгала по высоте */
+.row.off {
+  opacity: .45;
+  pointer-events: none;
+}
+
+/* Превью палитры в дропдаун не положишь — точка у строки несёт акцент той
+   темы, что в ней выбрана */
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+}
+
+/* Превью фона: оба слоя настоящие, рисуются акцентом активной темы */
+.fxprev {
+  position: relative;
+  height: 96px;
+  margin-top: var(--s3);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.fxprev canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fxprev .cap {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  font-size: 10.5px;
+  color: var(--text-mute);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* «Проверить» прогоняет ту же анимацию прямо по карточкам Appearance */
+.wavein [data-wave] {
+  animation: waveIn 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+.fadein [data-wave] {
+  animation: fadeRise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
 }
 
 @media (prefers-reduced-motion: reduce) {

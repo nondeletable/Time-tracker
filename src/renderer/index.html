@@ -264,7 +264,142 @@
 
               </div>
             </div>
-            <div class="view" data-view="appearance"></div>
+            <div class="view" data-view="appearance">
+              <div class="grid set" id="appearance-grid">
+
+                <!-- ── Тема ────────────────────────────────────────────── -->
+                <div class="card span2" data-wave>
+                  <div class="card-head">
+                    <h3 data-i18n="card_theme">Тема</h3>
+                    <button class="help" data-i18n-tip="tip_theme">?</button>
+                    <span class="sp"></span>
+                    <div class="seg" id="theme-mode-sw">
+                      <button data-theme-mode="light" data-i18n="theme_light_label">Светлая</button>
+                      <button data-theme-mode="dark" aria-pressed="true" data-i18n="theme_dark_label">Тёмная</button>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <span class="lab">
+                      <span class="dot" id="dot-light"></span>
+                      <span data-i18n="theme_light_label">Светлая</span>
+                    </span>
+                    <span class="sp"></span>
+                    <span class="saved" data-i18n="saved_mark">сохранено</span>
+                    <select class="sel" id="theme-light-select">
+                      <option value="emerald-light">Emerald</option>
+                      <option value="indigo-light">Indigo</option>
+                    </select>
+                  </div>
+
+                  <div class="row">
+                    <span class="lab">
+                      <span class="dot" id="dot-dark"></span>
+                      <span data-i18n="theme_dark_label">Тёмная</span>
+                    </span>
+                    <span class="sp"></span>
+                    <span class="saved" data-i18n="saved_mark">сохранено</span>
+                    <select class="sel" id="theme-dark-select">
+                      <option value="emerald-dark">Emerald</option>
+                      <option value="indigo-dark">Indigo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- ── Переход между режимами ──────────────────────────── -->
+                <div class="card span2" data-wave>
+                  <div class="card-head">
+                    <h3 data-i18n="card_anim">Переход между режимами</h3>
+                    <button class="help" data-i18n-tip="tip_anim">?</button>
+                    <span class="sp"></span>
+                    <button class="btn-s" id="anim-replay" data-i18n="btn_replay">Проверить</button>
+                  </div>
+
+                  <div class="row">
+                    <span class="lab" data-i18n="row_anim_type">Тип</span>
+                    <span class="sp"></span>
+                    <span class="saved" data-i18n="saved_mark">сохранено</span>
+                    <div class="seg" id="anim-sw">
+                      <button data-anim="wave" aria-pressed="true">Wave</button>
+                      <button data-anim="fade">Fade</button>
+                    </div>
+                  </div>
+
+                  <div class="row" id="anim-speed-row">
+                    <span class="lab" data-i18n="row_anim_speed">Скорость</span>
+                    <span class="sp"></span>
+                    <span class="saved" data-i18n="saved_mark">сохранено</span>
+                    <div class="seg" id="anim-speed-sw">
+                      <button data-speed="fast" data-i18n="speed_fast">Быстро</button>
+                      <button data-speed="med" aria-pressed="true" data-i18n="speed_med">Средне</button>
+                      <button data-speed="slow" data-i18n="speed_slow">Медленно</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ── Фон ─────────────────────────────────────────────── -->
+                <div class="card span2" data-wave>
+                  <div class="card-head">
+                    <h3 data-i18n="card_fx">Фон</h3>
+                    <button class="help" data-i18n-tip="tip_fx">?</button>
+                    <span class="sp"></span>
+                    <span class="hint" data-i18n="fx_focus_only">Только Focus Mode</span>
+                  </div>
+
+                  <div class="row">
+                    <span class="lab" data-i18n="fx_particles">Частицы</span>
+                    <span class="sp"></span>
+                    <span class="saved" data-i18n="saved_mark">сохранено</span>
+                    <select class="sel" id="fx-particles-select">
+                      <option value="off" data-i18n="fx_off">Нет</option>
+                      <option value="dust" data-i18n="fx_dust">Пыль</option>
+                      <option value="emit" data-i18n="fx_emit">Эмиссия</option>
+                      <option value="universe" data-i18n="fx_universe">Вселенная</option>
+                      <option value="grid" data-i18n="fx_grid">Сетка</option>
+                    </select>
+                  </div>
+
+                  <div class="row">
+                    <span class="lab" data-i18n="fx_blobs">Засветы</span>
+                    <span class="sp"></span>
+                    <span class="saved" data-i18n="saved_mark">сохранено</span>
+                    <select class="sel" id="fx-blobs-select">
+                      <option value="off" data-i18n="fx_off">Нет</option>
+                      <option value="bottom" data-i18n="fx_bottom">Снизу</option>
+                      <option value="all" data-i18n="fx_all">Везде</option>
+                      <option value="aurora" data-i18n="fx_aurora">Сияние</option>
+                    </select>
+                  </div>
+
+                  <div class="fxprev">
+                    <canvas id="fx-preview"></canvas>
+                    <span class="cap" data-i18n="fx_preview">превью</span>
+                  </div>
+                </div>
+
+                <!-- ── Язык ────────────────────────────────────────────── -->
+                <div class="card span2" data-wave>
+                  <div class="card-head">
+                    <h3 data-i18n="card_lang">Язык</h3>
+                    <button class="help" data-i18n-tip="tip_lang">?</button>
+                    <span class="sp"></span>
+                  </div>
+
+                  <div class="row">
+                    <span class="lab" data-i18n="row_lang_iface">Язык интерфейса</span>
+                    <span class="sp"></span>
+                    <span class="saved" data-i18n="saved_mark">сохранено</span>
+                    <div class="seg" id="lang-sw">
+                      <button data-lang="en">EN</button>
+                      <button data-lang="ru">RU</button>
+                      <button data-lang="de">DE</button>
+                      <button data-lang="es">ES</button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
             <div class="view" data-view="about"></div>
           </div>
         </div>

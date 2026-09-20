@@ -50,6 +50,13 @@ function t(key) {
   return window.I18N.translate(window.DICT, currentLang, key)
 }
 
+// Названия месяцев и дней недели лежат массивами и через translate() не
+// проходят. Для языков без своего словаря — DE и ES — отдаём английский, тем
+// же правилом, по которому фолбэчит translate().
+function langDict() {
+  return window.DICT[currentLang] || window.DICT.en
+}
+
 function applyI18n() {
   document.documentElement.lang = currentLang
   document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -130,6 +137,20 @@ const hoursRows            = document.getElementById('hours-rows')
 const hoursEmpty           = document.getElementById('hours-empty')
 const hoursAddBtn          = document.getElementById('hours-add-btn')
 const hoursDateInput       = document.getElementById('hours-date-input')
+const appearanceGrid       = document.getElementById('appearance-grid')
+const themeModeSw          = document.getElementById('theme-mode-sw')
+const themeLightSelect     = document.getElementById('theme-light-select')
+const themeDarkSelect      = document.getElementById('theme-dark-select')
+const dotLight             = document.getElementById('dot-light')
+const dotDark              = document.getElementById('dot-dark')
+const animSw               = document.getElementById('anim-sw')
+const animSpeedSw          = document.getElementById('anim-speed-sw')
+const animSpeedRow         = document.getElementById('anim-speed-row')
+const animReplay           = document.getElementById('anim-replay')
+const fxParticlesSelect    = document.getElementById('fx-particles-select')
+const fxBlobsSelect        = document.getElementById('fx-blobs-select')
+const fxPreview            = document.getElementById('fx-preview')
+const langSw               = document.getElementById('lang-sw')
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -165,8 +186,17 @@ async function init() {
   else await window.api.setSetting('daily_goal_seconds', String(dailyGoalSeconds))
 
   const savedFxP = await window.api.getSetting('fx_particles')
-  const savedFxL = await window.api.getSetting('fx_leaks')
-  applyFx(savedFxP || 'off', savedFxL || 'off')
+  const savedBlobs = await window.api.getSetting('fx_blobs')
+  applyFx(savedFxP || 'off', savedBlobs || 'off')
+
+  // Тип и скорость перехода — две настройки, а не одна: иначе Fade затирал бы
+  // выбранную скорость, и при возврате к Wave пользователь получал бы дефолт.
+  const savedAnim  = await window.api.getSetting('ui_anim')
+  const savedSpeed = await window.api.getSetting('ui_wave_speed')
+  document.documentElement.dataset.anim = savedAnim || 'wave'
+  document.documentElement.dataset.waveSpeed = savedSpeed || 'med'
+  if (!savedAnim)  await window.api.setSetting('ui_anim', 'wave')
+  if (!savedSpeed) await window.api.setSetting('ui_wave_speed', 'med')
 
   const userName = await window.api.getSetting('user_name')
   if (userName) {
@@ -357,7 +387,7 @@ function renderLimitBar(totalSeconds, period) {
 
   const fmtDate = iso => {
     const [, m, d] = iso.split('-')
-    const months = window.DICT[currentLang].months_short
+    const months = langDict().months_short
     return `${Number(d)} ${months[Number(m) - 1]}`
   }
   limitBarLabel.textContent = `${fmtDate(period.period_start)} — ${fmtDate(period.period_end)}`
@@ -489,6 +519,7 @@ function setView(view) {
   dashTitle.dataset.i18n = VIEW_TITLES[view]
   dashTitle.textContent = t(VIEW_TITLES[view])
   if (view === 'settings') loadSettingsView()
+  if (view === 'appearance') loadAppearanceView()
 }
 
 // Свитчер светлая/тёмная: тот же, что будет у кнопки в Appearance
@@ -518,6 +549,32 @@ function spinT(duration) {
   )
 }
 
+// Режим Fade: волны нет — уходящий слой гаснет, входящий проявляется снизу
+// вверх с подрастанием.
+function fadeSwap(from, to) {
+  modeBusy = true
+  appEl.classList.add('anim')
+  from.classList.add('leaving')
+  to.classList.add('fading')
+  to.querySelectorAll('[data-wave]').forEach((el, i) => el.style.setProperty('--wd', 90 + i * 26 + 'ms'))
+
+  // fill:'forwards' держит прозрачность и после конца анимации, поэтому её
+  // обязательно снять: иначе уходящий слой навсегда остаётся с opacity 0 и
+  // при следующем переключении экран оказывается пустым.
+  const out = from.animate([{ opacity: 1 }, { opacity: 0 }],
+    { duration: 240, easing: 'ease-in', fill: 'forwards' })
+
+  setTimeout(() => {
+    out.cancel()
+    from.classList.remove('leaving')
+    appEl.classList.remove('anim')
+    to.classList.remove('fading')
+    to.querySelectorAll('[data-wave]').forEach(el => el.style.removeProperty('--wd'))
+    modeBusy = false
+    window.FX?.refresh()
+  }, 900)
+}
+
 async function setMode(next) {
   const root = document.documentElement
   if (root.dataset.mode === next || modeBusy) return
@@ -527,6 +584,15 @@ async function setMode(next) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     root.dataset.mode = next
     window.FX?.refresh()
+    return
+  }
+
+  if (root.dataset.anim === 'fade') {
+    const from = next === 'dash' ? focusLayer : dashLayer
+    const to   = next === 'dash' ? dashLayer  : focusLayer
+    root.dataset.mode = next
+    spinT(560)
+    fadeSwap(from, to)
     return
   }
 
@@ -1115,6 +1181,225 @@ async function loadSettingsView() {
   await loadHoursTable()
 }
 
+// ── Вид «Appearance» ──────────────────────────────────────────────────────────
+
+// Точка у строки несёт акцент выбранной палитры: превью темы в дропдаун не
+// положишь, а «Emerald» и «Indigo» названием ни о чём не говорят.
+const THEME_ACCENTS = {
+  'emerald-light': '#059669', 'emerald-dark': '#34d399',
+  'indigo-light':  '#4f46e5', 'indigo-dark':  '#818cf8'
+}
+
+function pressOne(container, attr, value) {
+  container.querySelectorAll('button').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset[attr] === value)))
+}
+
+function paintThemeCard() {
+  themeLightSelect.value = themeLight
+  themeDarkSelect.value  = themeDark
+  dotLight.style.background = THEME_ACCENTS[themeLight]
+  dotDark.style.background  = THEME_ACCENTS[themeDark]
+  pressOne(themeModeSw, 'themeMode', themeMode)
+}
+
+function loadAppearanceView() {
+  paintThemeCard()
+  pressOne(animSw, 'anim', document.documentElement.dataset.anim)
+  pressOne(animSpeedSw, 'speed', document.documentElement.dataset.waveSpeed)
+  animSpeedRow.classList.toggle('off', document.documentElement.dataset.anim === 'fade')
+  fxParticlesSelect.value = document.documentElement.dataset.fxp || 'off'
+  fxBlobsSelect.value     = document.documentElement.dataset.fxl || 'off'
+  pressOne(langSw, 'lang', currentLang)
+}
+
+themeModeSw.addEventListener('click', async e => {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  themeMode = btn.dataset.themeMode
+  await window.api.setSetting('theme_mode', themeMode)
+  applyTheme()
+  paintThemeCard()
+})
+
+themeLightSelect.addEventListener('change', async e => {
+  themeLight = e.target.value
+  await window.api.setSetting('theme_light', themeLight)
+  applyTheme()
+  paintThemeCard()
+  flashSaved(e.target)
+})
+
+themeDarkSelect.addEventListener('change', async e => {
+  themeDark = e.target.value
+  await window.api.setSetting('theme_dark', themeDark)
+  applyTheme()
+  paintThemeCard()
+  flashSaved(e.target)
+})
+
+// ── Переход между режимами ────────────────────────────────────────────────────
+
+animSw.addEventListener('click', async e => {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  document.documentElement.dataset.anim = btn.dataset.anim
+  await window.api.setSetting('ui_anim', btn.dataset.anim)
+  pressOne(animSw, 'anim', btn.dataset.anim)
+  animSpeedRow.classList.toggle('off', btn.dataset.anim === 'fade')
+  flashSaved(btn)
+  replayTransition()
+})
+
+animSpeedSw.addEventListener('click', async e => {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  document.documentElement.dataset.waveSpeed = btn.dataset.speed
+  await window.api.setSetting('ui_wave_speed', btn.dataset.speed)
+  pressOne(animSpeedSw, 'speed', btn.dataset.speed)
+  flashSaved(btn)
+  replayTransition()
+})
+
+// Прогоняет ту же анимацию, которой рождается вид при смене режима, прямо по
+// карточкам Appearance: выбор виден сразу, без ухода из настроек и обратно.
+function replayTransition() {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  const wave = document.documentElement.dataset.anim !== 'fade'
+  const duration = Number(getComputedStyle(document.documentElement).getPropertyValue('--wave-ms')) || 900
+  const origin = tbtn.getBoundingClientRect()
+  const ox = origin.left + origin.width / 2
+  const oy = origin.top + origin.height / 2
+  const far = Math.hypot(innerWidth, innerHeight)
+
+  appearanceGrid.classList.remove('wavein', 'fadein')
+  void appearanceGrid.offsetWidth
+  appearanceGrid.querySelectorAll('[data-wave]').forEach((el, i) => {
+    const b = el.getBoundingClientRect()
+    const delay = wave
+      ? Math.hypot(b.left + b.width / 2 - ox, b.top + b.height / 2 - oy) / far * duration
+      : 60 + i * 34
+    el.style.setProperty('--wd', Math.round(delay) + 'ms')
+  })
+  appearanceGrid.classList.add(wave ? 'wavein' : 'fadein')
+}
+
+animReplay.addEventListener('click', replayTransition)
+
+// ── Фон ───────────────────────────────────────────────────────────────────────
+
+fxParticlesSelect.addEventListener('change', async e => {
+  await window.api.setSetting('fx_particles', e.target.value)
+  applyFx(e.target.value, document.documentElement.dataset.fxl)
+  flashSaved(e.target)
+})
+
+fxBlobsSelect.addEventListener('change', async e => {
+  await window.api.setSetting('fx_blobs', e.target.value)
+  applyFx(document.documentElement.dataset.fxp, e.target.value)
+  flashSaved(e.target)
+})
+
+// Превью — не второй движок, а сокращённая модель существующего: те же пять
+// вариантов частиц и четыре засветов, цвет из того же акцента. Без неё
+// дропдаун не говорит ничего: «Эмиссия» и «Вселенная» названием не отличаются.
+const fxCtx = fxPreview.getContext('2d')
+const fxDots = Array.from({ length: 70 }, () => ({
+  x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + .4,
+  vx: (Math.random() - .5) * .0055, vy: (Math.random() - .5) * .0055,
+  phase: Math.random() * 6.28
+}))
+
+function fitFxPreview() {
+  const ratio = devicePixelRatio || 1
+  const box = fxPreview.getBoundingClientRect()
+  fxPreview.width  = box.width * ratio
+  fxPreview.height = box.height * ratio
+  fxCtx.setTransform(ratio, 0, 0, ratio, 0, 0)
+}
+
+function accentRGBA(alpha) {
+  const hex = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${alpha})`
+}
+
+function drawFxPreview(time) {
+  requestAnimationFrame(drawFxPreview)
+  if (currentView !== 'appearance' || document.documentElement.dataset.mode !== 'dash') return
+
+  const w = fxPreview.clientWidth
+  const h = fxPreview.clientHeight
+  if (!w || !h) return
+  if (fxPreview.width !== Math.round(w * (devicePixelRatio || 1))) fitFxPreview()
+  fxCtx.clearRect(0, 0, w, h)
+
+  const blobs = document.documentElement.dataset.fxl
+  if (blobs && blobs !== 'off') {
+    const spots = blobs === 'bottom' ? [[.5, 1.15, .9]]
+      : blobs === 'all' ? [[.2, .25, .55], [.8, .35, .5], [.5, 1.05, .8]]
+      : [[.3 + Math.sin(time / 2600) * .16, .3, .6], [.72 + Math.cos(time / 3100) * .12, .55, .5]]
+    spots.forEach(([bx, by, br]) => {
+      const g = fxCtx.createRadialGradient(bx * w, by * h, 0, bx * w, by * h, br * h)
+      g.addColorStop(0, accentRGBA(blobs === 'aurora' ? .3 : .22))
+      g.addColorStop(1, accentRGBA(0))
+      fxCtx.fillStyle = g
+      fxCtx.fillRect(0, 0, w, h)
+    })
+  }
+
+  const particles = document.documentElement.dataset.fxp
+  if (particles === 'grid') {
+    fxCtx.strokeStyle = accentRGBA(.16)
+    fxCtx.lineWidth = 1
+    const step = 22
+    const shift = (time / 90) % step
+    for (let x = -step + shift; x < w; x += step) {
+      fxCtx.beginPath(); fxCtx.moveTo(x, 0); fxCtx.lineTo(x, h); fxCtx.stroke()
+    }
+    for (let y = -step + shift; y < h; y += step) {
+      fxCtx.beginPath(); fxCtx.moveTo(0, y); fxCtx.lineTo(w, y); fxCtx.stroke()
+    }
+  } else if (particles && particles !== 'off') {
+    fxDots.forEach(p => {
+      let x, y, alpha
+      if (particles === 'emit') {
+        const t = (time * .00004 + p.phase / 6.28) % 1
+        x = w / 2 + Math.cos(p.phase) * t * w * .62
+        y = h / 2 + Math.sin(p.phase) * t * h * .9
+        alpha = (1 - t) * .75
+      } else if (particles === 'universe') {
+        x = p.x * w; y = p.y * h
+        alpha = (Math.sin(time / 620 + p.phase) * .5 + .5) * .8
+      } else {
+        p.x = (p.x + p.vx / 60 + 1) % 1
+        p.y = (p.y + p.vy / 60 + 1) % 1
+        x = p.x * w; y = p.y * h; alpha = .45
+      }
+      fxCtx.fillStyle = accentRGBA(alpha)
+      fxCtx.beginPath(); fxCtx.arc(x, y, p.r, 0, 6.29); fxCtx.fill()
+    })
+  }
+}
+
+requestAnimationFrame(drawFxPreview)
+
+// ── Язык ──────────────────────────────────────────────────────────────────────
+
+langSw.addEventListener('click', async e => {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  currentLang = btn.dataset.lang
+  await window.api.setSetting('lang', currentLang)
+  applyI18n()
+  pressOne(langSw, 'lang', currentLang)
+  renderCategories()
+  renderDialogCategories()
+  renderWeekdays()
+  await refreshStats()
+  flashSaved(btn)
+})
+
 // ── Calendar ──────────────────────────────────────────────────────────────────
 
 const calendarModal = document.getElementById('calendar-modal')
@@ -1126,7 +1411,7 @@ const calGrid       = document.getElementById('calendar-grid')
 
 function renderWeekdays() {
   const spans = document.querySelectorAll('.calendar-weekdays span')
-  const wd = window.DICT[currentLang].weekdays
+  const wd = langDict().weekdays
   spans.forEach((span, i) => { if (wd[i]) span.textContent = wd[i] })
 }
 
@@ -1161,7 +1446,7 @@ async function loadCalendarMonth() {
     window.api.getCalendarMonth(calYear, calMonth),
     window.api.getUserAvatars(),
   ])
-  calTitle.textContent = `${window.DICT[currentLang].months[calMonth - 1]} ${calYear}`
+  calTitle.textContent = `${langDict().months[calMonth - 1]} ${calYear}`
   renderWeekdays()
   renderCalendarGrid(calYear, calMonth, rows, avatars)
 }
