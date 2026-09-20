@@ -61,6 +61,9 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
     el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')))
   })
+  document.querySelectorAll('[data-i18n-tip]').forEach(el => {
+    el.dataset.tip = t(el.getAttribute('data-i18n-tip'))
+  })
   document.querySelectorAll('#sync-interval-select option').forEach(opt => {
     const min = Math.round(Number(opt.value) / 60)
     opt.textContent = `${min} ${t('sync_min')}`
@@ -91,10 +94,6 @@ const dialogTime           = document.getElementById('dialog-time')
 const dialogCategorySelect = document.getElementById('dialog-category-select')
 const dialogCancel         = document.getElementById('dialog-cancel')
 const dialogSave           = document.getElementById('dialog-save')
-const settingsModal        = document.getElementById('settings-modal')
-const settingsClose        = document.getElementById('settings-close')
-const settingsTabs         = document.querySelectorAll('.settings-tab')
-const settingsPanes        = document.querySelectorAll('.settings-pane')
 const appEl                = document.getElementById('app')
 const tbtn                 = document.getElementById('tbtn')
 const tglyph               = document.querySelector('.tglyph')
@@ -105,17 +104,32 @@ const dock                 = document.getElementById('dock')
 const dockCat              = document.getElementById('dock-cat')
 const dockTime             = document.getElementById('dock-time')
 const dockBtn              = document.getElementById('dock-btn')
-const userNameDisplay      = document.getElementById('user-name-display')
-const userNameEditBtn      = document.getElementById('user-name-edit-btn')
-const userNamePicker       = document.getElementById('user-name-picker')
-const avatarPreview        = document.getElementById('avatar-preview')
-const avatarEditBtn        = document.getElementById('avatar-edit-btn')
-const avatarGrid           = document.getElementById('avatar-grid')
+const profileName          = document.getElementById('profile-name')
+const avatarBtn            = document.getElementById('avatar-btn')
+const avatarImg            = document.getElementById('avatar-img')
+const avatarPop            = document.getElementById('avatar-pop')
+const groupModeSw          = document.getElementById('group-mode-sw')
+const groupCodeInput       = document.getElementById('group-code-input')
+const groupGoBtn           = document.getElementById('group-go-btn')
+const groupRoleTag         = document.getElementById('group-role-tag')
+const groupCodeValue       = document.getElementById('group-code-value')
+const syncIntervalSelect   = document.getElementById('sync-interval-select')
+const syncIntervalHelp     = document.getElementById('sync-interval-help')
+const syncNowBtn           = document.getElementById('sync-now-btn')
+const groupLeaveBtn        = document.getElementById('group-leave-btn')
+const limitLeftValue       = document.getElementById('limit-left-value')
+const dailyGoalInput       = document.getElementById('daily-goal-input')
 const limitInput           = document.getElementById('limit-input')
 const periodStartInput     = document.getElementById('period-start-input')
 const periodEndInput       = document.getElementById('period-end-input')
-const limitSaveBtn         = document.getElementById('limit-save-btn')
-const limitAdminNote       = document.getElementById('limit-admin-note')
+const catRows              = document.getElementById('cat-rows')
+const catEmpty             = document.getElementById('cat-empty')
+const catAddBtn            = document.getElementById('cat-add-btn')
+const catTabs              = document.getElementById('cat-tabs')
+const hoursRows            = document.getElementById('hours-rows')
+const hoursEmpty           = document.getElementById('hours-empty')
+const hoursAddBtn          = document.getElementById('hours-add-btn')
+const hoursDateInput       = document.getElementById('hours-date-input')
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -474,7 +488,16 @@ function setView(view) {
   dashViews.forEach(v => v.classList.toggle('on', v.dataset.view === view))
   dashTitle.dataset.i18n = VIEW_TITLES[view]
   dashTitle.textContent = t(VIEW_TITLES[view])
+  if (view === 'settings') loadSettingsView()
 }
+
+// Свитчер светлая/тёмная: тот же, что будет у кнопки в Appearance
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'l') {
+    e.preventDefault()
+    toggleThemeMode()
+  }
+})
 
 const railButtons = [...document.querySelectorAll('[data-nav]')]
 const dashViews   = [...document.querySelectorAll('.view')]
@@ -606,433 +629,19 @@ dialogSave.addEventListener('click', async () => {
   await refreshStats()
 })
 
-// ── Settings ──────────────────────────────────────────────────────────────────
+// ── Вид «Настройки» ───────────────────────────────────────────────────────────
 
-// Точки входа в настройки, календарь и «О программе» появятся в рельсе
-// Dashboard на следующем этапе. В шапке Focus их нет по прототипу.
-
-function openSettings() {
-  // reset to user tab
-  settingsTabs.forEach(t => t.classList.remove('active'))
-  settingsPanes.forEach(p => p.classList.add('hidden'))
-  document.querySelector('[data-tab="user"]').classList.add('active')
-  document.getElementById('pane-user').classList.remove('hidden')
-
-  document.getElementById('lang-select').value = currentLang
-  document.getElementById('daily-goal-input').value = dailyGoalSeconds / 3600
-  document.getElementById('fx-particles-select').value = document.documentElement.dataset.fxp || 'off'
-  document.getElementById('fx-leaks-select').value = document.documentElement.dataset.fxl || 'off'
-  settingsModal.classList.remove('hidden')
-  loadUserTab()
-}
-
-function closeSettings() {
-  settingsModal.classList.add('hidden')
-}
-
-settingsClose.addEventListener('click', closeSettings)
-
-document.getElementById('lang-select').addEventListener('change', async e => {
-  currentLang = e.target.value
-  await window.api.setSetting('lang', currentLang)
-  applyI18n()
-  renderCategories()
-  renderDialogCategories()
-  await refreshStats()
-  if (!calendarModal.classList.contains('hidden')) await loadCalendarMonth()
-})
-
-// Свитчер светлая/тёмная: тот же, что будет у кнопки в Appearance.
-document.addEventListener('keydown', e => {
-  if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'l') {
-    e.preventDefault()
-    toggleThemeMode()
-  }
-})
-
-document.getElementById('daily-goal-input').addEventListener('change', async e => {
-  const hours = Number(e.target.value)
-  if (!hours || hours < 1 || hours > 24) {
-    e.target.value = dailyGoalSeconds / 3600
-    return
-  }
-  dailyGoalSeconds = Math.round(hours * 3600)
-  await window.api.setSetting('daily_goal_seconds', String(dailyGoalSeconds))
-  paintRing()
-})
-
-document.getElementById('fx-particles-select').addEventListener('change', async e => {
-  await window.api.setSetting('fx_particles', e.target.value)
-  applyFx(e.target.value, document.documentElement.dataset.fxl)
-})
-
-document.getElementById('fx-leaks-select').addEventListener('change', async e => {
-  await window.api.setSetting('fx_leaks', e.target.value)
-  applyFx(document.documentElement.dataset.fxp, e.target.value)
-})
-
-settingsTabs.forEach(tab => {
-  tab.addEventListener('click', () => {
-    settingsTabs.forEach(t => t.classList.remove('active'))
-    settingsPanes.forEach(p => p.classList.add('hidden'))
-    tab.classList.add('active')
-    document.getElementById(`pane-${tab.dataset.tab}`).classList.remove('hidden')
-    if (tab.dataset.tab === 'limit') loadLimitTab()
-    if (tab.dataset.tab === 'user') loadUserTab()
-    if (tab.dataset.tab === 'categories') loadCategoriesTab()
-    if (tab.dataset.tab === 'hours') loadHoursTab()
-    if (tab.dataset.tab === 'sync') loadSyncTab()
-  })
-})
+const ICONS = '../../assets/icons/'
 
 const AVATAR_FILES = [
   'user.svg', 'man.png', 'man_1.png', 'man_2.png', 'man_3.png',
   'woman.png', 'woman_1.png', 'woman_2.png', 'woman_3.png'
 ]
 
-async function loadUserTab() {
-  userNameDisplay.textContent = currentUser
-  userNamePicker.classList.add('hidden')
-  userNameEditBtn.classList.remove('hidden')
-
-  const avatar = (await window.api.getSetting(`avatar_${currentUser}`)) ?? 'user.svg'
-  avatarPreview.src = `../../assets/icons/${avatar}`
-  avatarGrid.classList.add('hidden')
-  avatarEditBtn.classList.remove('hidden')
-  buildAvatarGrid(avatar)
-}
-
-function buildAvatarGrid(currentAvatar) {
-  avatarGrid.innerHTML = ''
-  AVATAR_FILES.forEach(file => {
-    const img = document.createElement('img')
-    img.src = `../../assets/icons/${file}`
-    img.className = 'avatar-option' + (file === currentAvatar ? ' selected' : '')
-    img.dataset.file = file
-    img.addEventListener('click', async () => {
-      await window.api.setSetting(`avatar_${currentUser}`, file)
-      avatarPreview.src = `../../assets/icons/${file}`
-      avatarGrid.querySelectorAll('.avatar-option').forEach(i =>
-        i.classList.toggle('selected', i.dataset.file === file))
-      avatarGrid.classList.add('hidden')
-      avatarEditBtn.classList.remove('hidden')
-    })
-    avatarGrid.appendChild(img)
-  })
-}
-
-const userNameInput   = document.getElementById('user-name-input')
-const userNameSaveBtn = document.getElementById('user-name-save-btn')
-
-userNameEditBtn.addEventListener('click', () => {
-  userNameInput.value = currentUser
-  userNamePicker.classList.remove('hidden')
-  userNameEditBtn.classList.add('hidden')
-})
-
-userNameSaveBtn.addEventListener('click', async () => {
-  const name = userNameInput.value.trim()
-  if (!name) return
-  await window.api.renameUser(name)
-  currentUser = name
-  userNameDisplay.textContent = name
-  userNamePicker.classList.add('hidden')
-  userNameEditBtn.classList.remove('hidden')
-  await refreshStats()
-})
-
-avatarEditBtn.addEventListener('click', () => {
-  avatarGrid.classList.remove('hidden')
-  avatarEditBtn.classList.add('hidden')
-})
-
-async function loadLimitTab() {
-  const period = await window.api.getPeriodSettings()
-  limitInput.value = Math.round(period.monthly_limit_seconds / 3600)
-  periodStartInput.value = period.period_start
-  periodEndInput.value = period.period_end
-
-  const role     = (await window.api.getSetting('group_role')) || 'solo'
-  const editable = window.ROLES.canEditLimit(role)
-
-  limitInput.disabled = !editable
-  periodStartInput.disabled = !editable
-  periodEndInput.disabled = !editable
-  limitSaveBtn.classList.toggle('hidden', !editable)
-  limitAdminNote.classList.toggle('hidden', editable)
-}
-
-limitSaveBtn.addEventListener('click', async () => {
-  const hours = parseInt(limitInput.value, 10)
-  if (!hours || hours < 1) return
-  const start = periodStartInput.value
-  const end   = periodEndInput.value
-  if (!start || !end || end < start) return
-  await window.api.setSetting('monthly_limit_seconds', String(hours * 3600))
-  await window.api.setSetting('period_start', start)
-  await window.api.setSetting('period_end', end)
-  await refreshStats()
-})
-
-// ── Categories settings tab ───────────────────────────────────────────────────
-
 const CAT_COLORS = [
   '#60a5fa', '#c084fc', '#fb923c', '#f472b6', '#f87171',
   '#34d399', '#EFF74A', '#2AF720', '#3020F5'
 ]
-
-let catEditingId    = null
-let pendingDeleteId = null
-let catEditingColor = CAT_COLORS[0]
-
-const catSettingsList = document.getElementById('cat-settings-list')
-const catAddBtn       = document.getElementById('cat-add-btn')
-const catEditForm     = document.getElementById('cat-edit-form')
-const catNameInput    = document.getElementById('cat-name-input')
-const catColorSwatch  = document.getElementById('cat-color-swatch')
-const catColorPalette = document.getElementById('cat-color-palette')
-const catEditCancel   = document.getElementById('cat-edit-cancel')
-const catEditSave     = document.getElementById('cat-edit-save')
-const catDeletedList  = document.getElementById('cat-deleted-list')
-const catDeletedEmpty = document.getElementById('cat-deleted-empty')
-const catDeleteDialog = document.getElementById('cat-delete-dialog')
-const catDeleteName   = document.getElementById('cat-delete-name')
-const catDeleteCancel = document.getElementById('cat-delete-cancel')
-const catDeleteConfirm = document.getElementById('cat-delete-confirm')
-
-async function loadCategoriesTab() {
-  catEditForm.classList.add('hidden')
-  catColorPalette.classList.add('hidden')
-  document.querySelectorAll('.cat-subtab').forEach(t => t.classList.remove('active'))
-  document.querySelector('[data-subtab="active"]').classList.add('active')
-  await renderActiveCategoriesList()
-  showActiveCatPanel()
-}
-
-function openCatForm(id, name, color) {
-  catEditingId    = id ?? null
-  catEditingColor = color ?? CAT_COLORS[0]
-  catNameInput.value = name ?? ''
-  catColorSwatch.style.background = catEditingColor
-  catColorPalette.classList.add('hidden')
-  buildColorPalette()
-  catEditForm.classList.remove('hidden')
-  catEditForm.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-}
-
-function buildColorPalette() {
-  catColorPalette.innerHTML = ''
-  CAT_COLORS.forEach(c => {
-    const el = document.createElement('div')
-    el.className = 'cat-color-option' + (c === catEditingColor ? ' selected' : '')
-    el.style.background = c
-    el.dataset.color = c
-    el.addEventListener('click', () => {
-      catEditingColor = c
-      catColorSwatch.style.background = c
-      catColorPalette.querySelectorAll('.cat-color-option').forEach(o =>
-        o.classList.toggle('selected', o.dataset.color === c))
-      catColorPalette.classList.add('hidden')
-    })
-    catColorPalette.appendChild(el)
-  })
-}
-
-function showActiveCatPanel() {
-  catSettingsList.classList.remove('hidden')
-  catAddBtn.classList.remove('hidden')
-  catDeletedList.classList.add('hidden')
-  catDeletedEmpty.classList.add('hidden')
-}
-
-function showDeletedCatPanel() {
-  catSettingsList.classList.add('hidden')
-  catAddBtn.classList.add('hidden')
-  catEditForm.classList.add('hidden')
-  catColorPalette.classList.add('hidden')
-}
-
-async function renderActiveCategoriesList() {
-  const cats = await window.api.getCategories()
-  catSettingsList.innerHTML = ''
-  cats.forEach(cat => {
-    const li = document.createElement('li')
-    li.className = 'cat-settings-item'
-    const dot = document.createElement('span')
-    dot.className = 'cat-settings-dot'
-    dot.style.background = cat.color
-    const name = document.createElement('span')
-    name.className = 'cat-settings-name'
-    name.textContent = cat.name
-    const editBtn = document.createElement('button')
-    editBtn.className = 'settings-row-btn'
-    editBtn.textContent = t('btn_edit')
-    editBtn.addEventListener('click', () => openCatForm(cat.id, cat.name, cat.color))
-    const delBtn = document.createElement('button')
-    delBtn.className = 'cat-delete-btn'
-    delBtn.title = t('btn_delete')
-    delBtn.innerHTML = '<img src="../../assets/icons/del.svg" width="14" height="14" alt="">'
-    delBtn.addEventListener('click', () => openDeleteDialog(cat.id, cat.name))
-    li.append(dot, name, editBtn, delBtn)
-    catSettingsList.appendChild(li)
-  })
-}
-
-async function loadDeletedCategoriesTab() {
-  showDeletedCatPanel()
-  const cats = await window.api.getDeletedCategories()
-  catDeletedList.innerHTML = ''
-  if (cats.length === 0) {
-    catDeletedList.classList.add('hidden')
-    catDeletedEmpty.classList.remove('hidden')
-    return
-  }
-  catDeletedList.classList.remove('hidden')
-  catDeletedEmpty.classList.add('hidden')
-  cats.forEach(cat => {
-    const li = document.createElement('li')
-    li.className = 'cat-settings-item cat-settings-item--deleted'
-    const name = document.createElement('span')
-    name.className = 'cat-settings-name'
-    name.textContent = cat.name
-    const restoreBtn = document.createElement('button')
-    restoreBtn.className = 'settings-row-btn'
-    restoreBtn.textContent = t('btn_restore')
-    restoreBtn.addEventListener('click', () => restoreCategoryById(cat.id))
-    li.append(name, restoreBtn)
-    catDeletedList.appendChild(li)
-  })
-}
-
-function openDeleteDialog(id, name) {
-  pendingDeleteId = id
-  catDeleteName.textContent = `«${name}»`
-  catDeleteDialog.classList.remove('hidden')
-}
-
-async function restoreCategoryById(id) {
-  await window.api.restoreCategory(id)
-  await loadDeletedCategoriesTab()
-  categories = await window.api.getCategories()
-  renderCategories()
-  renderDialogCategories()
-  await refreshStats()
-}
-
-catColorSwatch.addEventListener('click', () => {
-  catColorPalette.classList.toggle('hidden')
-})
-
-catAddBtn.addEventListener('click', () => {
-  openCatForm(null, '', CAT_COLORS[0])
-})
-
-catEditCancel.addEventListener('click', () => {
-  catEditForm.classList.add('hidden')
-  catColorPalette.classList.add('hidden')
-})
-
-document.querySelectorAll('.cat-subtab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.cat-subtab').forEach(t => t.classList.remove('active'))
-    tab.classList.add('active')
-    if (tab.dataset.subtab === 'active') {
-      renderActiveCategoriesList().then(() => showActiveCatPanel())
-    } else {
-      loadDeletedCategoriesTab()
-    }
-  })
-})
-
-catDeleteCancel.addEventListener('click', () => {
-  catDeleteDialog.classList.add('hidden')
-  pendingDeleteId = null
-})
-
-catDeleteConfirm.addEventListener('click', async () => {
-  if (pendingDeleteId === null) return
-  await window.api.softDeleteCategory(pendingDeleteId)
-  catDeleteDialog.classList.add('hidden')
-  pendingDeleteId = null
-  await loadCategoriesTab()
-  categories = await window.api.getCategories()
-  renderCategories()
-  renderDialogCategories()
-  await refreshStats()
-})
-
-catEditSave.addEventListener('click', async () => {
-  const name = catNameInput.value.trim()
-  if (!name) return
-  if (catEditingId !== null) {
-    await window.api.updateCategory(catEditingId, name, catEditingColor)
-  } else {
-    await window.api.addCategory(name, catEditingColor)
-  }
-  catEditForm.classList.add('hidden')
-  catColorPalette.classList.add('hidden')
-  await loadCategoriesTab()
-  categories = await window.api.getCategories()
-  renderCategories()
-  renderDialogCategories()
-  await refreshStats()
-})
-
-// ── Hours settings tab ───────────────────────────────────────────────────────
-
-let hoursEditingId = null
-
-const hoursDateInput  = document.getElementById('hours-date-input')
-const hoursList       = document.getElementById('hours-list')
-const hoursEmpty      = document.getElementById('hours-empty')
-const hoursAddBtn     = document.getElementById('hours-add-btn')
-const hoursEditForm   = document.getElementById('hours-edit-form')
-const hoursCatSelect  = document.getElementById('hours-cat-select')
-const hoursTimeInput  = document.getElementById('hours-time-input')
-const hoursEditCancel = document.getElementById('hours-edit-cancel')
-const hoursEditSave   = document.getElementById('hours-edit-save')
-
-const calendarModal = document.getElementById('calendar-modal')
-const calendarClose = document.getElementById('calendar-close')
-const calPrev       = document.getElementById('cal-prev')
-const calNext       = document.getElementById('cal-next')
-const calTitle      = document.getElementById('cal-title')
-const calGrid       = document.getElementById('calendar-grid')
-
-function formatLastSync(ts) {
-  if (!ts) return '—'
-  const d   = new Date(ts)
-  const now = new Date()
-  const hh  = String(d.getHours()).padStart(2, '0')
-  const mm  = String(d.getMinutes()).padStart(2, '0')
-  if (d.toDateString() === now.toDateString()) {
-    return `${t('today_at')} ${hh}:${mm}`
-  }
-  const dd   = String(d.getDate()).padStart(2, '0')
-  const mo   = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}.${mo}.${yyyy} ${hh}:${mm}`
-}
-
-async function loadSyncTab() {
-  const role    = (await window.api.getSetting('group_role')) || 'solo'
-  const code    = (await window.api.getSetting('group_code')) || ''
-  const grouped = window.ROLES.isGrouped(role)
-
-  document.getElementById('sync-solo').classList.toggle('hidden', grouped)
-  document.getElementById('sync-grouped').classList.toggle('hidden', !grouped)
-
-  if (grouped) {
-    document.getElementById('group-role-value').textContent = t(`group_role_${role}`)
-    document.getElementById('group-code-value').textContent = code
-    const seconds = await window.api.getSyncInterval()
-    document.getElementById('sync-interval-select').value = String(seconds || 300)
-    const ts = await window.api.getLastSync()
-    document.getElementById('sync-last-time').textContent = formatLastSync(ts)
-  } else {
-    document.getElementById('group-join-input').value = ''
-  }
-}
 
 function secsToHHMM(seconds) {
   const h = Math.floor(seconds / 3600)
@@ -1045,154 +654,475 @@ function hhmmToSecs(hhmm) {
   return h * 3600 + m * 60
 }
 
-function loadHoursTab() {
-  hoursEditForm.classList.add('hidden')
-  hoursList.classList.add('hidden')
-  hoursList.innerHTML = ''
-  hoursEmpty.classList.add('hidden')
-  hoursAddBtn.classList.add('hidden')
-  hoursCatSelect.innerHTML = ''
-  categories.forEach(cat => {
-    const opt = document.createElement('option')
-    opt.value = cat.id
-    opt.textContent = cat.name
-    hoursCatSelect.appendChild(opt)
-  })
+function formatLastSync(ts) {
+  if (!ts) return '—'
+  const d   = new Date(ts)
+  const now = new Date()
+  const hh  = String(d.getHours()).padStart(2, '0')
+  const mm  = String(d.getMinutes()).padStart(2, '0')
+  if (d.toDateString() === now.toDateString()) return `${t('today_at')} ${hh}:${mm}`
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mo = String(d.getMonth() + 1).padStart(2, '0')
+  return `${dd}.${mo}.${d.getFullYear()} ${hh}:${mm}`
 }
 
-async function loadHoursSessions() {
-  const date = hoursDateInput.value
-  if (!date) return
-  const sessions = await window.api.getSessionsByDate(currentUser, date)
-  hoursList.innerHTML = ''
-  hoursList.classList.remove('hidden')
-  hoursEditForm.classList.add('hidden')
-  if (sessions.length === 0) {
-    hoursEmpty.classList.remove('hidden')
-  } else {
-    hoursEmpty.classList.add('hidden')
-    sessions.forEach(s => renderHoursItem(s))
-  }
-  hoursAddBtn.classList.remove('hidden')
+// Кнопок «Сохранить» в карточках нет: значение уходит в базу по change, а
+// справа от подписи коротко мигает «сохранено».
+function flashSaved(el) {
+  const mark = el?.closest('.row')?.querySelector('.saved')
+  if (!mark) return
+  mark.classList.add('on')
+  clearTimeout(mark._t)
+  mark._t = setTimeout(() => mark.classList.remove('on'), 1400)
 }
 
-function renderHoursItem(session) {
-  const li = document.createElement('li')
-  li.className = 'hours-list-item'
+// ── Подсказки ─────────────────────────────────────────────────────────────────
 
-  const dot = document.createElement('span')
-  dot.className = 'cat-settings-dot'
-  dot.style.background = session.color
+const tipEl = document.createElement('div')
+tipEl.className = 'tip'
+document.body.appendChild(tipEl)
 
-  const name = document.createElement('span')
-  name.className = 'cat-settings-name'
-  name.textContent = session.name
-
-  const time = document.createElement('span')
-  time.className = 'hours-list-time'
-  time.textContent = secsToHHMM(session.duration_seconds)
-
-  const actions = document.createElement('div')
-  actions.className = 'hours-item-actions'
-
-  const btns = document.createElement('div')
-  btns.className = 'hours-btns'
-
-  const editBtn = document.createElement('button')
-  editBtn.className = 'settings-row-btn'
-  editBtn.textContent = t('btn_edit')
-  editBtn.addEventListener('click', () => openHoursForm(session))
-
-  const delBtn = document.createElement('button')
-  delBtn.className = 'settings-row-btn hours-del-btn'
-  delBtn.textContent = t('btn_delete')
-
-  btns.append(editBtn, delBtn)
-
-  const confirm = document.createElement('div')
-  confirm.className = 'hours-confirm-delete hidden'
-
-  const confirmText = document.createElement('span')
-  confirmText.className = 'hours-confirm-text'
-  confirmText.textContent = t('confirm_delete_q')
-
-  const yesBtn = document.createElement('button')
-  yesBtn.className = 'hours-confirm-yes'
-  yesBtn.textContent = t('btn_yes')
-
-  const noBtn = document.createElement('button')
-  noBtn.className = 'cat-edit-cancel'
-  noBtn.textContent = t('btn_no')
-
-  confirm.append(confirmText, yesBtn, noBtn)
-  actions.append(btns, confirm)
-
-  delBtn.addEventListener('click', () => {
-    btns.classList.add('hidden')
-    confirm.classList.remove('hidden')
-  })
-
-  noBtn.addEventListener('click', () => {
-    confirm.classList.add('hidden')
-    btns.classList.remove('hidden')
-  })
-
-  yesBtn.addEventListener('click', async () => {
-    await window.api.deleteSession(session.id)
-    await loadHoursSessions()
-    await refreshStats()
-  })
-
-  li.append(dot, name, time, actions)
-  hoursList.appendChild(li)
-}
-
-function openHoursForm(session) {
-  hoursEditingId = session ? session.id : null
-  if (session) {
-    hoursCatSelect.value = session.category_id
-    hoursTimeInput.value = secsToHHMM(session.duration_seconds)
-  } else {
-    hoursCatSelect.selectedIndex = 0
-    hoursTimeInput.value = ''
-  }
-  hoursEditForm.classList.remove('hidden')
-  hoursEditForm.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-}
-
-hoursDateInput.addEventListener('change', loadHoursSessions)
-
-hoursAddBtn.addEventListener('click', () => openHoursForm(null))
-
-hoursEditCancel.addEventListener('click', () => {
-  hoursEditForm.classList.add('hidden')
+document.addEventListener('mouseover', e => {
+  const help = e.target.closest('.help')
+  if (!help) return
+  tipEl.textContent = help.dataset.tip || ''
+  tipEl.classList.add('on')
+  // Границы берём у окна приложения: дальше рамки подсказке уходить некуда
+  const r = help.getBoundingClientRect()
+  const box = tipEl.getBoundingClientRect()
+  const a = appEl.getBoundingClientRect()
+  let y = r.top - box.height - 8
+  if (y < a.top + 8) y = r.bottom + 8
+  tipEl.style.left = Math.max(a.left + 8, Math.min(r.left - 6, a.right - box.width - 8)) + 'px'
+  tipEl.style.top  = Math.min(y, a.bottom - box.height - 8) + 'px'
 })
 
-hoursEditSave.addEventListener('click', async () => {
-  const time = hoursTimeInput.value
-  if (!time) return
-  const durationSeconds = hhmmToSecs(time)
-  if (durationSeconds <= 0) return
-  const categoryId = Number(hoursCatSelect.value)
+document.addEventListener('mouseout', e => {
+  if (e.target.closest('.help')) tipEl.classList.remove('on')
+})
 
-  if (hoursEditingId !== null) {
-    await window.api.updateSession(hoursEditingId, categoryId, durationSeconds)
-  } else {
-    const startedAt = new Date(hoursDateInput.value + 'T00:00:00').getTime()
-    await window.api.saveSession({
-      user: currentUser,
-      category_id: categoryId,
-      started_at: startedAt,
-      ended_at: startedAt + durationSeconds * 1000,
-      duration_seconds: durationSeconds
-    })
+// ── Поля даты ─────────────────────────────────────────────────────────────────
+
+// Нативное поле в браузерной локали рисует «28 Aug 2026» и требует ~110px, а
+// колонка на минимальной ширине даёт 77 — год обрезался. Показываем день и
+// месяц, год живёт в значении и всплывает подсказкой.
+function paintDateField(input) {
+  const val = input.previousElementSibling
+  if (!val || !input.value) return
+  val.textContent = input.value.slice(8, 10) + '.' + input.value.slice(5, 7)
+  input.title = input.value
+}
+
+document.querySelectorAll('.date-f input').forEach(input => {
+  input.addEventListener('click', () => { try { input.showPicker() } catch (e) {} })
+})
+
+// ── Карточка «Профиль» ────────────────────────────────────────────────────────
+
+let avatarFile  = 'user.svg'
+let groupJoined = false
+
+function renderAvatar() {
+  avatarImg.src = ICONS + avatarFile
+  avatarPop.innerHTML = AVATAR_FILES.map(file =>
+    `<img src="${ICONS}${file}" data-file="${file}" class="${file === avatarFile ? 'on' : ''}" alt="">`
+  ).join('')
+}
+
+function renderGroupRows(mode) {
+  const group = mode === 'group'
+  document.querySelectorAll('.g-new').forEach(r => r.classList.toggle('hidden', !group || groupJoined))
+  document.querySelectorAll('.g-in').forEach(r => r.classList.toggle('hidden', !group || !groupJoined))
+  groupModeSw.querySelectorAll('button').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.groupMode === mode)))
+}
+
+async function loadProfileCard() {
+  profileName.value = currentUser
+  avatarFile = (await window.api.getSetting(`avatar_${currentUser}`)) ?? 'user.svg'
+  renderAvatar()
+
+  const role = (await window.api.getSetting('group_role')) || 'solo'
+  groupJoined = window.ROLES.isGrouped(role)
+  groupCodeValue.textContent = (await window.api.getSetting('group_code')) || ''
+  groupRoleTag.textContent = t(`group_role_${role}`)
+
+  if (groupJoined) {
+    syncIntervalSelect.value = String((await window.api.getSyncInterval()) || 300)
+    // Время последней синхронизации не занимает строку — дописано в подсказку
+    const ts = await window.api.getLastSync()
+    syncIntervalHelp.dataset.tip = `${t('tip_sync_interval')}\n\n${t('sync_last')} ${formatLastSync(ts)}`
   }
-  hoursEditForm.classList.add('hidden')
-  await loadHoursSessions()
+  renderGroupRows(groupJoined ? 'group' : 'solo')
+}
+
+avatarBtn.addEventListener('click', e => {
+  e.stopPropagation()
+  avatarPop.classList.toggle('hidden')
+})
+
+avatarPop.addEventListener('click', async e => {
+  const img = e.target.closest('img')
+  if (!img) return
+  avatarFile = img.dataset.file
+  await window.api.setSetting(`avatar_${currentUser}`, avatarFile)
+  renderAvatar()
+  avatarPop.classList.add('hidden')
+})
+
+document.addEventListener('click', () => avatarPop.classList.add('hidden'))
+
+profileName.addEventListener('change', async () => {
+  const name = profileName.value.trim()
+  if (!name) {
+    profileName.value = currentUser
+    return
+  }
+  await window.api.renameUser(name)
+  currentUser = name
   await refreshStats()
 })
 
+groupModeSw.addEventListener('click', e => {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  if (btn.dataset.groupMode === 'solo' && !groupJoined) groupCodeInput.value = ''
+  renderGroupRows(btn.dataset.groupMode)
+})
+
+// Пустое поле — «Создать» и роль owner, чужой код — «Войти» и роль member
+groupCodeInput.addEventListener('input', () => {
+  groupGoBtn.textContent = t(groupCodeInput.value.trim() ? 'btn_group_join' : 'btn_group_create')
+})
+
+groupGoBtn.addEventListener('click', async () => {
+  const code = groupCodeInput.value.trim().toUpperCase()
+  if (code) {
+    if (code.length < 4) return
+    await window.api.joinGroup(code)
+  } else {
+    await window.api.createGroup()
+  }
+  await loadProfileCard()
+  await loadTimeCard()
+  await refreshStats()
+})
+
+groupLeaveBtn.addEventListener('click', async () => {
+  await window.api.leaveGroup()
+  groupCodeInput.value = ''
+  groupGoBtn.textContent = t('btn_group_create')
+  await loadProfileCard()
+  await loadTimeCard()
+  await refreshStats()
+})
+
+syncNowBtn.addEventListener('click', () => window.api.syncNow())
+
+syncIntervalSelect.addEventListener('change', async e => {
+  await window.api.setSyncInterval(Number(e.target.value))
+})
+
+// ── Карточка «Учёт времени» ───────────────────────────────────────────────────
+
+async function loadTimeCard() {
+  dailyGoalInput.value = dailyGoalSeconds / 3600
+
+  const period = await window.api.getPeriodSettings()
+  limitInput.value = Math.round(period.monthly_limit_seconds / 3600)
+  periodStartInput.value = period.period_start
+  periodEndInput.value   = period.period_end
+  paintDateField(periodStartInput)
+  paintDateField(periodEndInput)
+
+  const total = await window.api.getSharedTotal()
+  limitLeftValue.textContent = secsToHHMM(Math.max(0, period.monthly_limit_seconds - total))
+
+  // Норма дня личная и правится всегда, лимит и период — только владельцем
+  const role = (await window.api.getSetting('group_role')) || 'solo'
+  const editable = window.ROLES.canEditLimit(role)
+  limitInput.disabled = !editable
+  periodStartInput.disabled = !editable
+  periodEndInput.disabled = !editable
+}
+
+dailyGoalInput.addEventListener('change', async e => {
+  const hours = Number(e.target.value)
+  if (!hours || hours < 1 || hours > 24) {
+    e.target.value = dailyGoalSeconds / 3600
+    return
+  }
+  dailyGoalSeconds = Math.round(hours * 3600)
+  await window.api.setSetting('daily_goal_seconds', String(dailyGoalSeconds))
+  paintRing()
+  flashSaved(e.target)
+})
+
+limitInput.addEventListener('change', async e => {
+  const hours = parseInt(e.target.value, 10)
+  if (!hours || hours < 1) return
+  await window.api.setSetting('monthly_limit_seconds', String(hours * 3600))
+  await refreshStats()
+  await loadTimeCard()
+  flashSaved(e.target)
+})
+
+;[periodStartInput, periodEndInput].forEach(input => {
+  input.addEventListener('change', async () => {
+    const start = periodStartInput.value
+    const end   = periodEndInput.value
+    if (!start || !end || end < start) {
+      await loadTimeCard()
+      return
+    }
+    await window.api.setSetting('period_start', start)
+    await window.api.setSetting('period_end', end)
+    paintDateField(input)
+    await refreshStats()
+    await loadTimeCard()
+    flashSaved(input)
+  })
+})
+
+// ── Карточка «Категории» ──────────────────────────────────────────────────────
+
+let catTab = 'active'
+
+// Удаление подтверждается инлайново, в той же ячейке
+function actsCell(buttons) {
+  return `<td class="acts">
+      <span class="btns">${buttons}</span>
+      <span class="confirm hidden"><span class="q">${t('confirm_delete_q')}</span>
+        <button class="btn-s danger" data-do="yes">${t('btn_yes')}</button>
+        <button class="btn-s" data-do="no">${t('btn_no')}</button></span>
+    </td>`
+}
+
+function editDeleteButtons() {
+  return `<button class="btn-s" data-do="edit">${t('btn_edit')}</button>` +
+         `<button class="btn-s danger" data-do="del">${t('btn_delete')}</button>`
+}
+
+function catFormRow(id, name, color) {
+  return `<tr class="form-row" data-form-id="${id ?? ''}">
+      <td colspan="2">
+        <div class="ed">
+          <input class="inp cat-name" value="${name}" placeholder="${t('cat_name_placeholder')}" style="flex:1;min-width:0">
+          <button class="swatch" data-do="palette" data-color="${color}" style="background:${color}"></button>
+          <button class="btn-s" data-do="cancel">${t('btn_cancel')}</button>
+          <button class="btn-s primary" data-do="save">${t('btn_save')}</button>
+        </div>
+        <div class="palette hidden">${CAT_COLORS.map(c => `<i style="background:${c}" data-color="${c}"></i>`).join('')}</div>
+      </td></tr>`
+}
+
+async function renderCatTable() {
+  const list = catTab === 'active'
+    ? await window.api.getCategories()
+    : await window.api.getDeletedCategories()
+
+  catRows.innerHTML = list.map(cat => catTab === 'active'
+    ? `<tr data-id="${cat.id}" data-name="${cat.name}" data-color="${cat.color}">
+         <td><span class="nm"><i style="background:${cat.color}"></i>${cat.name}</span></td>
+         ${actsCell(editDeleteButtons())}</tr>`
+    : `<tr data-id="${cat.id}"><td><span class="nm">${cat.name}</span></td>
+         <td class="acts"><button class="btn-s" data-do="restore">${t('btn_restore')}</button></td></tr>`
+  ).join('')
+
+  catEmpty.classList.toggle('hidden', !(catTab === 'deleted' && list.length === 0))
+  catAddBtn.classList.toggle('hidden', catTab === 'deleted')
+}
+
+async function refreshAfterCategoryChange() {
+  categories = await window.api.getCategories()
+  renderCategories()
+  renderDialogCategories()
+  await renderCatTable()
+  await refreshStats()
+}
+
+catTabs.addEventListener('click', e => {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  catTab = btn.dataset.catTab
+  catTabs.querySelectorAll('button').forEach(b =>
+    b.setAttribute('aria-pressed', String(b === btn)))
+  renderCatTable()
+})
+
+catAddBtn.addEventListener('click', () => {
+  catRows.querySelectorAll('.form-row').forEach(r => r.remove())
+  catRows.insertAdjacentHTML('beforeend', catFormRow(null, '', CAT_COLORS[0]))
+  catRows.querySelector('.form-row .cat-name').focus()
+})
+
+catRows.addEventListener('click', async e => {
+  const swatch = e.target.closest('.palette i')
+  if (swatch) {
+    const form = swatch.closest('.form-row')
+    const target = form.querySelector('.swatch')
+    target.style.background = swatch.dataset.color
+    target.dataset.color = swatch.dataset.color
+    form.querySelector('.palette').classList.add('hidden')
+    return
+  }
+
+  const btn = e.target.closest('button[data-do]')
+  if (!btn) return
+  const row = btn.closest('tr')
+  const id  = Number(row.dataset.id)
+
+  switch (btn.dataset.do) {
+    case 'del':
+      row.querySelector('.btns').classList.add('hidden')
+      row.querySelector('.confirm').classList.remove('hidden')
+      break
+    case 'no':
+      row.querySelector('.confirm').classList.add('hidden')
+      row.querySelector('.btns').classList.remove('hidden')
+      break
+    case 'yes':
+      await window.api.softDeleteCategory(id)
+      await refreshAfterCategoryChange()
+      break
+    case 'restore':
+      await window.api.restoreCategory(id)
+      await refreshAfterCategoryChange()
+      break
+    case 'edit':
+      catRows.querySelectorAll('.form-row').forEach(r => r.remove())
+      row.insertAdjacentHTML('afterend', catFormRow(id, row.dataset.name, row.dataset.color))
+      break
+    case 'palette':
+      row.querySelector('.palette').classList.toggle('hidden')
+      break
+    case 'cancel':
+      row.remove()
+      break
+    case 'save': {
+      const name  = row.querySelector('.cat-name').value.trim()
+      const color = row.querySelector('.swatch').dataset.color
+      if (!name) return
+      const formId = row.dataset.formId
+      if (formId) await window.api.updateCategory(Number(formId), name, color)
+      else await window.api.addCategory(name, color)
+      await refreshAfterCategoryChange()
+      break
+    }
+  }
+})
+
+// ── Карточка «Правка часов» ───────────────────────────────────────────────────
+
+function hoursFormRow(id, categoryId, time) {
+  const options = categories.map(c =>
+    `<option value="${c.id}"${c.id === categoryId ? ' selected' : ''}>${c.name}</option>`).join('')
+  return `<tr class="form-row" data-form-id="${id ?? ''}">
+      <td colspan="3">
+        <div class="ed">
+          <select class="inp hours-cat">${options}</select>
+          <input class="inp num hours-time" type="time" value="${time}">
+          <span class="sp"></span>
+          <button class="btn-s" data-do="cancel">${t('btn_cancel')}</button>
+          <button class="btn-s primary" data-do="save">${t('btn_save')}</button>
+        </div>
+      </td></tr>`
+}
+
+async function loadHoursTable() {
+  if (!hoursDateInput.value) {
+    hoursDateInput.value = todayISO()
+    paintDateField(hoursDateInput)
+  }
+  const sessions = await window.api.getSessionsByDate(currentUser, hoursDateInput.value)
+  hoursRows.innerHTML = sessions.map(s =>
+    `<tr data-id="${s.id}" data-cat="${s.category_id}" data-time="${secsToHHMM(s.duration_seconds)}">
+       <td><span class="nm"><i style="background:${s.color}"></i>${s.name}</span></td>
+       <td class="num">${secsToHHMM(s.duration_seconds)}</td>
+       ${actsCell(editDeleteButtons())}</tr>`
+  ).join('')
+  hoursEmpty.classList.toggle('hidden', sessions.length > 0)
+}
+
+hoursDateInput.addEventListener('change', async () => {
+  paintDateField(hoursDateInput)
+  await loadHoursTable()
+})
+
+hoursAddBtn.addEventListener('click', () => {
+  if (categories.length === 0) return
+  hoursRows.querySelectorAll('.form-row').forEach(r => r.remove())
+  hoursRows.insertAdjacentHTML('beforeend', hoursFormRow(null, categories[0].id, '01:00'))
+})
+
+hoursRows.addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-do]')
+  if (!btn) return
+  const row = btn.closest('tr')
+
+  switch (btn.dataset.do) {
+    case 'del':
+      row.querySelector('.btns').classList.add('hidden')
+      row.querySelector('.confirm').classList.remove('hidden')
+      break
+    case 'no':
+      row.querySelector('.confirm').classList.add('hidden')
+      row.querySelector('.btns').classList.remove('hidden')
+      break
+    case 'yes':
+      await window.api.deleteSession(Number(row.dataset.id))
+      await loadHoursTable()
+      await refreshStats()
+      break
+    case 'edit':
+      hoursRows.querySelectorAll('.form-row').forEach(r => r.remove())
+      row.insertAdjacentHTML('afterend',
+        hoursFormRow(row.dataset.id, Number(row.dataset.cat), row.dataset.time))
+      break
+    case 'cancel':
+      row.remove()
+      break
+    case 'save': {
+      const time = row.querySelector('.hours-time').value
+      if (!time) return
+      const seconds = hhmmToSecs(time)
+      if (seconds <= 0) return
+      const categoryId = Number(row.querySelector('.hours-cat').value)
+      const formId = row.dataset.formId
+      if (formId) {
+        await window.api.updateSession(Number(formId), categoryId, seconds)
+      } else {
+        const startedAt = new Date(hoursDateInput.value + 'T00:00:00').getTime()
+        await window.api.saveSession({
+          user: currentUser,
+          category_id: categoryId,
+          started_at: startedAt,
+          ended_at: startedAt + seconds * 1000,
+          duration_seconds: seconds
+        })
+      }
+      await loadHoursTable()
+      await refreshStats()
+      break
+    }
+  }
+})
+
+async function loadSettingsView() {
+  await loadProfileCard()
+  await loadTimeCard()
+  await renderCatTable()
+  await loadHoursTable()
+}
+
 // ── Calendar ──────────────────────────────────────────────────────────────────
+
+const calendarModal = document.getElementById('calendar-modal')
+const calendarClose = document.getElementById('calendar-close')
+const calPrev       = document.getElementById('cal-prev')
+const calNext       = document.getElementById('cal-next')
+const calTitle      = document.getElementById('cal-title')
+const calGrid       = document.getElementById('calendar-grid')
 
 function renderWeekdays() {
   const spans = document.querySelectorAll('.calendar-weekdays span')
@@ -1310,31 +1240,13 @@ window.api.onPeerUpdated(async () => {
   }
 })
 
-document.getElementById('sync-interval-select').addEventListener('change', async (e) => {
-  await window.api.setSyncInterval(Number(e.target.value))
-})
-
-document.getElementById('group-create-btn').addEventListener('click', async () => {
-  await window.api.createGroup()
-  await loadSyncTab()
-})
-
-document.getElementById('group-join-btn').addEventListener('click', async () => {
-  const code = document.getElementById('group-join-input').value.trim()
-  if (code.length < 4) return
-  await window.api.joinGroup(code)
-  await loadSyncTab()
-})
-
-document.getElementById('group-leave-btn').addEventListener('click', async () => {
-  await window.api.leaveGroup()
-  await loadSyncTab()
-  await refreshStats()
-})
-
 window.api.onSyncLimitUpdated(async () => {
   await refreshStats()
-  if (!settingsModal.classList.contains('hidden')) await loadLimitTab()
+  if (currentView === 'settings') await loadTimeCard()
+})
+
+window.api.onSyncDone(async () => {
+  if (currentView === 'settings') await loadProfileCard()
 })
 
 // ── Titlebar window controls ────────────────────────────────────────────────
@@ -1346,17 +1258,10 @@ const winMaxIcon = document.getElementById('win-max-icon')
 window.api.onWinMaximized(()   => { winMaxIcon.src = '../../assets/icons/win-restore.svg' })
 window.api.onWinUnmaximized(() => { winMaxIcon.src = '../../assets/icons/win-max.svg' })
 
-window.api.onSyncDone(ts => {
-  const el = document.getElementById('sync-last-time')
-  if (el) el.textContent = formatLastSync(ts)
-})
-
 // Период продлился автоматически (сменился день во время работы приложения)
 window.api.onPeriodAdvanced(async () => {
   await refreshStats()
-  if (!settingsModal.classList.contains('hidden')) {
-    await loadLimitTab()
-  }
+  if (currentView === 'settings') await loadTimeCard()
 })
 
 // ── Start ─────────────────────────────────────────────────────────────────────

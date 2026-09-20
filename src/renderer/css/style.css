@@ -89,6 +89,8 @@
   --danger-soft:      color-mix(in srgb, var(--danger) 16%, var(--bg));
   --danger-soft-text: var(--danger);
   --on-danger:        #ffffff;
+  /* поверх затемняющей плёнки — одинаково светлый в любой теме */
+  --on-scrim:         #ffffff;
 }
 
 /* ── emerald · dark ── */
@@ -911,6 +913,507 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+}
+
+/* ── Dashboard: карточки и формы ───────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Настройки и Appearance: карточки не тянутся под высоту соседки по ряду */
+.grid.set {
+  grid-template-rows: none;
+  align-content: start;
+  flex: none;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: var(--s4);
+  min-width: 0;
+}
+
+.card h3 {
+  font-size: 10.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: var(--s3);
+  font-weight: 600;
+}
+
+.span2 {
+  grid-column: span 2;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+  min-height: 32px;
+}
+
+.card-head h3 {
+  margin-bottom: 0;
+}
+
+.card-head .sp {
+  flex: 1;
+}
+
+/* всё, что стоит справа в шапке карточки, — одной высоты и одной фактуры */
+.card-head .seg,
+.card-head .hint,
+.card-head .date-f .val {
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.card-head .hint {
+  padding: 0 12px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 12px;
+  gap: 6px;
+}
+
+.card-head .hint .num {
+  color: var(--text);
+}
+
+.card-head .date-f .val {
+  justify-content: center;
+  padding: 0 10px;
+  background: var(--surface-2);
+  border-color: transparent;
+}
+
+.card-head .date-f:hover .val {
+  border-color: var(--accent);
+}
+
+/* разделитель между строками, а не под каждой */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  position: relative;
+}
+
+.row + .row {
+  border-top: 1px solid var(--border);
+}
+
+/* nowrap: подпись задаёт свою минимальную ширину и не рвётся на две строки,
+   когда колонка узкая — «Код группы» на 960px рвалось пополам */
+.row .lab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.row .sp {
+  flex: 1;
+}
+
+.inp {
+  padding: 7px 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.inp:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.inp:disabled {
+  color: var(--text-mute);
+  cursor: default;
+}
+
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-2);
+  border-radius: 9px;
+}
+
+.seg button {
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: background var(--t), color var(--t);
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.note {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  margin-top: var(--s3);
+}
+
+.tbl-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tbl th {
+  font-size: 10px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  text-align: left;
+  padding-bottom: 6px;
+  font-weight: 600;
+}
+
+.tbl th:last-child,
+.tbl td:last-child {
+  text-align: right;
+}
+
+.tbl td {
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.tbl .nm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tbl .nm i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.btn-s {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  transition: background var(--t), color var(--t);
+}
+
+.btn-s:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.btn-s.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-s.danger:hover {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.btn-s.add {
+  align-self: flex-start;
+  margin-top: var(--s3);
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  display: grid;
+  place-items: center;
+  transition: background var(--t), color var(--t);
+}
+
+.icon-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.icon-btn.danger:hover {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.help {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-mute);
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.help:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Облачко подсказки живёт в body, а не внутри карточки: .scroll обрезает всё,
+   что вылезает за его край, и у верхнего ряда подсказка резалась пополам.
+   Fixed-элемент обрезать нечем — координаты считает JS. */
+.tip {
+  position: fixed;
+  z-index: 80;
+  width: 268px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: pre-line;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t);
+}
+
+.tip.on {
+  opacity: 1;
+}
+
+/* поле даты: день и месяц, год живёт в значении и всплывает подсказкой */
+.dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dates .dash {
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.date-f {
+  position: relative;
+  width: 76px;
+}
+
+.date-f .val {
+  display: block;
+  padding: 7px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-num);
+  font-size: 12.5px;
+  color: var(--text);
+  text-align: center;
+}
+
+.date-f:hover .val {
+  border-color: var(--accent);
+}
+
+.date-f input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* аватар: карандаш по наведению, попап с выбором по клику */
+.idt {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding-bottom: var(--s4);
+  position: relative;
+}
+
+.idt .inp {
+  flex: 1;
+  min-width: 0;
+}
+
+.av-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.av-btn.lg {
+  width: 52px;
+  height: 52px;
+}
+
+.av-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.av-btn .pen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--on-scrim);
+  background: rgba(0, 0, 0, .5);
+  opacity: 0;
+  transition: opacity var(--t);
+}
+
+.av-btn:hover .pen {
+  opacity: 1;
+}
+
+.pop {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 196px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.pop img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  object-fit: cover;
+}
+
+.pop img:hover {
+  border-color: var(--text-mute);
+}
+
+.pop img.on {
+  border-color: var(--accent);
+}
+
+.saved {
+  font-size: 11px;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity var(--t);
+}
+
+.saved.on {
+  opacity: 1;
+}
+
+.tag {
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.acts-row {
+  justify-content: flex-end;
+  gap: var(--s2);
+}
+
+/* удаление подтверждается инлайново, в той же ячейке */
+.acts {
+  white-space: nowrap;
+}
+
+.acts .btns,
+.acts .confirm {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.acts .confirm .q {
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* правка и добавление раскрываются строкой-формой под записью */
+.form-row td {
+  padding: var(--s3) 0;
+}
+
+.ed {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.ed .sp {
+  flex: 1;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--s3);
+}
+
+.palette i {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {
