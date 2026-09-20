@@ -250,7 +250,7 @@ function setupIPC() {
     const from = dateToMs(period_start)
     const to   = dateToMsEnd(period_end)
     const stmt = db.prepare(`
-      SELECT c.name, c.color, SUM(s.duration_seconds) as total
+      SELECT s.category_id, c.name, c.color, SUM(s.duration_seconds) as total, COUNT(*) as sessions
       FROM sessions s
       JOIN categories c ON s.category_id = c.id
       WHERE s.user = ?
@@ -455,9 +455,11 @@ function createWindow() {
     // Высота Focus складывается из шапки, кольца 330px, кнопки, двух-трёх
     // рядов бейджей и подвала периода. Ниже 780 они начинают наезжать друг
     // на друга, поэтому минимум поднят с 600.
-    width: 700,
+    // Ширина продиктована Dashboard: рельс 56 + поля 56 + промежутки 36 +
+    // четыре колонки бенто-сетки по 200 ≈ 950.
+    width: 960,
     height: 780,
-    minWidth: 700,
+    minWidth: 960,
     minHeight: 780,
     frame: false,
     resizable: true,

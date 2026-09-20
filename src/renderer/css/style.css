@@ -89,28 +89,30 @@
   --danger-soft:      color-mix(in srgb, var(--danger) 16%, var(--bg));
   --danger-soft-text: var(--danger);
   --on-danger:        #ffffff;
+  /* поверх затемняющей плёнки — одинаково светлый в любой теме */
+  --on-scrim:         #ffffff;
 }
 
 /* ── emerald · dark ── */
-[data-accent="emerald"][data-theme="dark"] {
+[data-theme="emerald-dark"] {
   --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
   --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
   --accent:#34d399; --accent-soft:#0e2b22; --on-accent:#04231a; --danger:#f87171;
 }
 /* ── emerald · light ── */
-[data-accent="emerald"][data-theme="light"] {
+[data-theme="emerald-light"] {
   --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e5e8ee;
   --text:#111827; --text-dim:#5a6478; --text-mute:#9aa3b4;
   --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#ffffff; --danger:#dc2626;
 }
 /* ── indigo · dark ── */
-[data-accent="indigo"][data-theme="dark"] {
+[data-theme="indigo-dark"] {
   --bg:#0f0f0e; --surface:#171716; --surface-2:#1f1f1d; --border:#2b2b28;
   --text:#f0efec; --text-dim:#a0a099; --text-mute:#6b6b64;
   --accent:#818cf8; --accent-soft:#23234a; --on-accent:#10102a; --danger:#f87171;
 }
 /* ── indigo · light ── */
-[data-accent="indigo"][data-theme="light"] {
+[data-theme="indigo-light"] {
   --bg:#f4f4f2; --surface:#ffffff; --surface-2:#ebebe7; --border:#e0e0da;
   --text:#1c1c1a; --text-dim:#61615c; --text-mute:#97978f;
   --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#ffffff; --danger:#dc2626;
@@ -120,6 +122,16 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* Кнопки из прототипа задают только фон и радиус и рассчитывают на этот
+   сброс: без него к ним прилипают рамка, системный шрифт и цвет браузера. */
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 body {
@@ -169,11 +181,6 @@ body {
   font-weight: 300;
   color: var(--text-mute);
   letter-spacing: 0.02em;
-}
-
-.user-select-buttons {
-  display: flex;
-  gap: 20px;
 }
 
 .user-btn {
@@ -293,12 +300,30 @@ body {
 
 /* Слой режима. Фон непрозрачный: когда рядом встанет Dashboard, под клипом
    перехода не должен просвечивать уходящий режим. */
+/* Фон обязателен: под клипом волны не должен просвечивать уходящий режим */
 .layer {
   position: absolute;
   inset: 0;
+  display: none;
+  background: var(--bg);
+}
+
+[data-mode="focus"] .layer[data-layer="focus"],
+.anim .layer[data-layer="focus"] {
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+}
+
+[data-mode="dash"] .layer[data-layer="dash"],
+.anim .layer[data-layer="dash"] {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* В переходе показаны оба слоя: уходящий снизу, приходящий поверх под клипом */
+.anim .layer.incoming {
+  z-index: 20;
 }
 
 /* Холст эффектов лежит под содержимым Focus */
@@ -711,6 +736,1171 @@ body {
   color: var(--text-mute);
 }
 
+/* ── Переход между режимами ────────────────────────────────────────────────
+   Фронт — круг clip-path от центра кнопки T. Элементы входящего слоя
+   получают задержку, равную расстоянию до T, делённому на скорость фронта,
+   поэтому рождаются ровно там, где волна прошла. --wave-ms — время, за
+   которое фронт доходит до дальнего угла. */
+
+:root {
+  --wave-ms: 900;
+}
+
+[data-wave-speed="fast"] { --wave-ms: 520; }
+[data-wave-speed="med"]  { --wave-ms: 900; }
+[data-wave-speed="slow"] { --wave-ms: 1600; }
+
+/* Режим Fade: уходящий слой сверху и гаснет, входящий проявляется под ним */
+.anim .layer.leaving {
+  z-index: 25;
+}
+
+.layer.fading [data-wave] {
+  animation: fadeRise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+@keyframes fadeRise {
+  from { opacity: 0; transform: translateY(18px) scale(.82); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0;
+  box-shadow: 0 0 28px 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.layer.incoming [data-wave] {
+  animation: waveIn 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+@keyframes waveIn {
+  from { opacity: 0; transform: translateY(10px) scale(.975); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Dashboard: рельс и каркас ─────────────────────────────────────────────── */
+
+.rail {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  /* сверху 72px: первая иконка встаёт ниже полосы обвязки с кнопкой T */
+  padding: 72px 0 var(--s3);
+}
+
+.rail button {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--text-mute);
+  font-size: 15px;
+  transition: background var(--t), color var(--t);
+}
+
+.rail button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.rail button[aria-current="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.rail .sp {
+  flex: 1;
+}
+
+.d-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Шапка занимает ту же верхнюю полосу 64px, где стоят T и кнопки окна */
+.d-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  height: 64px;
+  padding: 0 var(--s5);
+  flex-shrink: 0;
+}
+
+.d-head h1 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+
+.d-head .sp {
+  flex: 1;
+}
+
+/* зазор под кнопками окна справа сверху */
+.d-head .pad {
+  width: 104px;
+}
+
+/* Таймер — не обособленный блок, а такие же элементы строки-шапки, как
+   заголовок: никакой рамки вокруг, общий ритм отступов.
+   no-drag обязателен: док стоит под полосой перетаскивания окна (.chrome,
+   64px, app-region: drag), а Electron отдаёт клики по drag-области самому
+   окну — без этого кнопка START состояние показывает, но не нажимается. */
+.dock {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  white-space: nowrap;
+  -webkit-app-region: no-drag;
+}
+
+.dock > * {
+  flex-shrink: 0;
+}
+
+.dock-cat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.dock-cat .sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dock-cat:disabled {
+  cursor: default;
+}
+
+.dock-cat:disabled:hover {
+  background: none;
+  color: var(--text-dim);
+}
+
+/* Выбор категории прямо в Dashboard: иначе за ней приходится уходить в Focus */
+.dock-cat-wrap {
+  position: relative;
+}
+
+.dock-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.dock-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition: background var(--t), color var(--t);
+}
+
+.dock-menu button:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dock-menu button[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.dock-menu .sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dock-time {
+  font-size: 15px;
+  font-weight: 500;
+  transition: color var(--t);
+}
+
+.dock.running .dock-time {
+  color: var(--accent);
+}
+
+/* Кнопка без заливки: габарит как у категории, кегль как у таймера — строка
+   читается как один набор, а состояние несёт цвет надписи. */
+.dock-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: none;
+  font-family: var(--font-num);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  color: var(--accent);
+  transition: background var(--t), color var(--t);
+}
+
+.dock-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+
+.dock-btn:disabled {
+  color: var(--text-mute);
+  cursor: default;
+}
+
+.dock-btn.stop {
+  color: var(--danger);
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--s5) var(--s5);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.view {
+  display: none;
+}
+
+.view.on {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Dashboard: карточки и формы ───────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Карточки настроек стоят рядами сверху, а не растягиваются на всю высоту */
+.grid.set {
+  grid-template-rows: none;
+  align-content: start;
+  flex: none;
+}
+
+/* В Appearance карточка не тянется и под высоту соседки по ряду: у «Языка»
+   одна строка, растянутый он превращается в пустое поле */
+#appearance-grid {
+  align-items: start;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: var(--s4);
+  min-width: 0;
+}
+
+.card h3 {
+  font-size: 10.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: var(--s3);
+  font-weight: 600;
+}
+
+.span2 {
+  grid-column: span 2;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-bottom: var(--s3);
+  min-height: 32px;
+}
+
+.card-head h3 {
+  margin-bottom: 0;
+}
+
+.card-head .sp {
+  flex: 1;
+}
+
+/* всё, что стоит справа в шапке карточки, — одной высоты и одной фактуры */
+.card-head .seg,
+.card-head .hint,
+.card-head .date-f .val {
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.card-head .hint {
+  padding: 0 12px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 12px;
+  gap: 6px;
+}
+
+.card-head .hint .num {
+  color: var(--text);
+}
+
+.card-head .date-f .val {
+  justify-content: center;
+  padding: 0 10px;
+  background: var(--surface-2);
+  border-color: transparent;
+}
+
+.card-head .date-f:hover .val {
+  border-color: var(--accent);
+}
+
+/* разделитель между строками, а не под каждой */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  position: relative;
+}
+
+.row + .row {
+  border-top: 1px solid var(--border);
+}
+
+/* nowrap: подпись задаёт свою минимальную ширину и не рвётся на две строки,
+   когда колонка узкая — «Код группы» на 960px рвалось пополам */
+.row .lab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.row .sp {
+  flex: 1;
+}
+
+.inp {
+  padding: 7px 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.inp:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.inp:disabled {
+  color: var(--text-mute);
+  cursor: default;
+}
+
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-2);
+  border-radius: 9px;
+}
+
+.seg button {
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: background var(--t), color var(--t);
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.note {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  margin-top: var(--s3);
+}
+
+.tbl-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tbl th {
+  font-size: 10px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  text-align: left;
+  padding-bottom: 6px;
+  font-weight: 600;
+}
+
+.tbl th:last-child,
+.tbl td:last-child {
+  text-align: right;
+}
+
+.tbl td {
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.tbl .nm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tbl .nm i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.btn-s {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  transition: background var(--t), color var(--t);
+}
+
+.btn-s:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.btn-s.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn-s.danger:hover {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.btn-s.add {
+  align-self: flex-start;
+  margin-top: var(--s3);
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  display: grid;
+  place-items: center;
+  transition: background var(--t), color var(--t);
+}
+
+.icon-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.icon-btn.danger:hover {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.help {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-mute);
+  font-size: 10px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.help:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Облачко подсказки живёт в body, а не внутри карточки: .scroll обрезает всё,
+   что вылезает за его край, и у верхнего ряда подсказка резалась пополам.
+   Fixed-элемент обрезать нечем — координаты считает JS. */
+.tip {
+  position: fixed;
+  z-index: 80;
+  width: 268px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11.5px;
+  line-height: 1.5;
+  text-align: left;
+  white-space: pre-line;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t);
+}
+
+.tip.on {
+  opacity: 1;
+}
+
+/* поле даты: день и месяц, год живёт в значении и всплывает подсказкой */
+.dates {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dates .dash {
+  color: var(--text-mute);
+  font-size: 12px;
+}
+
+.date-f {
+  position: relative;
+  width: 76px;
+}
+
+.date-f .val {
+  display: block;
+  padding: 7px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-num);
+  font-size: 12.5px;
+  color: var(--text);
+  text-align: center;
+}
+
+.date-f:hover .val {
+  border-color: var(--accent);
+}
+
+.date-f input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* аватар: карандаш по наведению, попап с выбором по клику */
+.idt {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding-bottom: var(--s4);
+  position: relative;
+}
+
+.idt .inp {
+  flex: 1;
+  min-width: 0;
+}
+
+.av-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.av-btn.lg {
+  width: 52px;
+  height: 52px;
+}
+
+.av-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.av-btn .pen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--on-scrim);
+  background: rgba(0, 0, 0, .5);
+  opacity: 0;
+  transition: opacity var(--t);
+}
+
+.av-btn:hover .pen {
+  opacity: 1;
+}
+
+.pop {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 196px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.pop img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  object-fit: cover;
+}
+
+.pop img:hover {
+  border-color: var(--text-mute);
+}
+
+.pop img.on {
+  border-color: var(--accent);
+}
+
+.saved {
+  font-size: 11px;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity var(--t);
+}
+
+.saved.on {
+  opacity: 1;
+}
+
+.tag {
+  font-size: 10.5px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.acts-row {
+  justify-content: flex-end;
+  gap: var(--s2);
+}
+
+/* удаление подтверждается инлайново, в той же ячейке */
+.acts {
+  white-space: nowrap;
+}
+
+.acts .btns,
+.acts .confirm {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.acts .confirm .q {
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* правка и добавление раскрываются строкой-формой под записью */
+.form-row td {
+  padding: var(--s3) 0;
+}
+
+.ed {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.ed .sp {
+  flex: 1;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--s3);
+}
+
+.palette i {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ── Вид «Сводка» ──────────────────────────────────────────────────────────── */
+
+.span4 {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* карточка-колонка: график растягивается, поэтому нижний отступ совпадает с
+   верхним, а не копится пустотой под шкалой */
+.card.fill {
+  display: flex;
+  flex-direction: column;
+}
+
+.big {
+  font-size: 34px;
+  font-weight: 600;
+  letter-spacing: -.035em;
+  line-height: 1.05;
+}
+
+.big .of {
+  font-size: 15px;
+  color: var(--text-mute);
+  font-weight: 400;
+}
+
+.delta {
+  display: inline-flex;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+/* доли участников: полоса собирается циклом по тем, кто есть в данных */
+.stack {
+  display: flex;
+  height: 10px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--surface-2);
+  margin-top: var(--s4);
+}
+
+.legend {
+  display: flex;
+  gap: var(--s4);
+  margin-top: var(--s3);
+  font-size: 12px;
+  color: var(--text-dim);
+  flex-wrap: wrap;
+}
+
+.legend b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+
+.legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.legend .v {
+  font-family: var(--font-num);
+  color: var(--text);
+}
+
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.donut {
+  width: 124px;
+  height: 124px;
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+
+.donut circle {
+  fill: none;
+  stroke-width: 16;
+}
+
+.dl {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.dl-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.dl-row i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.dl-row .n {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl-row .v {
+  font-family: var(--font-num);
+  color: var(--text);
+}
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  flex: 1;
+  min-height: 92px;
+}
+
+.chart .bar {
+  flex: 1;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  opacity: .85;
+  transition: opacity var(--t), transform var(--t);
+}
+
+.chart .bar:hover {
+  opacity: 1;
+  transform: scaleY(1.03);
+  transform-origin: bottom;
+}
+
+.chart .bar.none {
+  background: var(--surface-2);
+}
+
+.chart-x {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-mute);
+  margin-top: 6px;
+  font-family: var(--font-num);
+}
+
+.tbl .mini {
+  width: 78px;
+  height: 4px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.tbl .mini span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* ── Вид «О программе» ─────────────────────────────────────────────────────── */
+
+/* Колонка ограничена: на всю ширину карточки строка уходит за 120 знаков и
+   перестаёт читаться, сколько бы места ни было в окне. */
+.col {
+  max-width: 620px;
+  margin: auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.logo img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.col .nm {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  margin-top: var(--s4);
+}
+
+.col .ver {
+  font-size: 12px;
+  color: var(--text-mute);
+  margin-top: 3px;
+}
+
+/* рыба: цвет приглушён, чтобы на глаз было видно — это ещё не текст */
+.ph {
+  color: var(--text-dim);
+  font-size: 12.5px;
+  margin-top: var(--s4);
+}
+
+.ph + .ph {
+  margin-top: var(--s2);
+}
+
+/* упоминание второго участника — одна строка, не блок */
+.credit {
+  font-size: 11.5px;
+  color: var(--text-mute);
+  margin-top: var(--s4);
+}
+
+.links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  margin-top: var(--s5);
+  flex-wrap: wrap;
+}
+
+.links .sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 var(--s1);
+}
+
+.ico {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  display: grid;
+  place-items: center;
+  position: relative;
+  transition: background var(--t), color var(--t), transform var(--t);
+}
+
+.ico:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+  transform: translateY(-1px);
+}
+
+.ico svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* подпись всплывает снизу: ряд стоит у нижнего края карточки, сверху её
+   перекрыл бы текст */
+.ico::after {
+  content: attr(data-name);
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 7px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t);
+  z-index: 20;
+}
+
+.ico:hover::after {
+  opacity: 1;
+}
+
+/* ── Вид «Календарь» ───────────────────────────────────────────────────────── */
+
+.cal-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ── Вид «Appearance» ──────────────────────────────────────────────────────── */
+
+.card-head .btn-s {
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.sel {
+  padding: 7px 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  min-width: 150px;
+  transition: border-color var(--t);
+}
+
+.sel:hover,
+.sel:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* При Fade скорость ни на что не влияет: строка гаснет, но остаётся на месте,
+   чтобы карточка не прыгала по высоте */
+.row.off {
+  opacity: .45;
+  pointer-events: none;
+}
+
+/* Превью палитры в дропдаун не положишь — точка у строки несёт акцент той
+   темы, что в ней выбрана */
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+}
+
+/* Превью фона: оба слоя настоящие, рисуются акцентом активной темы */
+.fxprev {
+  position: relative;
+  height: 96px;
+  margin-top: var(--s3);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.fxprev canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fxprev .cap {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  font-size: 10.5px;
+  color: var(--text-mute);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* «Проверить» прогоняет ту же анимацию прямо по карточкам Appearance */
+.wavein [data-wave] {
+  animation: waveIn 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+.fadein [data-wave] {
+  animation: fadeRise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
@@ -816,202 +2006,7 @@ body {
   background: var(--accent-hover);
 }
 
-/* ── Modal overlay (reusable) ──────────────────────────────────────────────── */
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.65);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-}
-
-/* ── Settings modal ────────────────────────────────────────────────────────── */
-
-.settings-modal {
-  background: var(--surface-2);
-  border: 1px solid var(--border-soft);
-  border-radius: 16px;
-  width: 620px;
-  height: 400px;
-  display: flex;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-}
-
-.modal-close {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  background: transparent;
-  border: none;
-  color: var(--text-disabled);
-  font-size: 1.3rem;
-  cursor: pointer;
-  line-height: 1;
-  padding: 2px 6px;
-  border-radius: 4px;
-  z-index: 10;
-  transition: color 0.15s;
-}
-
-.modal-close:hover {
-  color: var(--danger);
-}
-
-.settings-nav {
-  width: 160px;
-  background: var(--bg);
-  border-right: 1px solid var(--border-soft);
-  display: flex;
-  flex-direction: column;
-  padding-top: 16px;
-  flex-shrink: 0;
-}
-
-.settings-tab {
-  padding: 11px 18px;
-  background: transparent;
-  border: none;
-  border-left: 2px solid transparent;
-  color: var(--text-mute);
-  font-size: 0.84rem;
-  text-align: left;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-}
-
-.settings-tab:hover {
-  background: var(--surface);
-}
-
-.settings-tab.active {
-  background: var(--surface);
-  border-left-color: var(--accent);
-  color: var(--text-2);
-}
-
-.settings-body {
-  flex: 1;
-  overflow: hidden;
-}
-
-.settings-pane {
-  height: 100%;
-  padding: 48px 28px 24px;
-  overflow-y: auto;
-}
-
-.settings-stub {
-  color: var(--text-disabled);
-  font-size: 0.88rem;
-}
-
-/* ── Settings rows ─────────────────────────────────────────────────────────── */
-
-.settings-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.settings-row-label {
-  font-size: 0.82rem;
-  color: var(--text-faint);
-  width: 80px;
-  flex-shrink: 0;
-}
-
-.settings-row-value {
-  flex: 1;
-  font-size: 0.88rem;
-  color: var(--text-dim);
-}
-
-.settings-row-btn {
-  padding: 5px 14px;
-  background: var(--control);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-mute);
-  font-size: 0.8rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, color 0.15s;
-}
-
-.settings-row-btn:hover {
-  background: var(--control-hover);
-  color: var(--text-dim);
-}
-
-.user-pick-btn {
-  padding: 6px 20px;
-  background: var(--control);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text-dim);
-  font-size: 0.88rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.user-pick-btn:hover {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.avatar-preview {
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-/* ── Avatar grid ───────────────────────────────────────────────────────────── */
-
-.avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 56px);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.avatar-option {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  cursor: pointer;
-  border: 2px solid transparent;
-  object-fit: cover;
-  transition: border-color 0.15s, transform 0.15s;
-}
-
-.avatar-option:hover {
-  border-color: var(--text-disabled);
-  transform: scale(1.05);
-}
-
-.avatar-option.selected {
-  border-color: var(--accent);
-}
-
-/* ── Settings form fields ──────────────────────────────────────────────────── */
-
-.settings-admin-note {
-  font-size: 0.8rem;
-  color: var(--text-faint);
-  margin-bottom: 20px;
-  padding: 8px 12px;
-  background: var(--surface);
-  border-radius: 6px;
-  border-left: 2px solid var(--text-disabled);
-}
+/* ── Поле имени на экране входа ─────────────────────────────────────────────── */
 
 .settings-input {
   flex: 1;
@@ -1035,34 +2030,7 @@ body {
   cursor: not-allowed;
 }
 
-.settings-save-btn {
-  margin-top: 8px;
-  padding: 9px 28px;
-  background: var(--accent);
-  color: var(--on-accent);
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.2s;
-}
-
-.settings-save-btn:hover {
-  background: var(--accent-hover);
-}
-
-/* ── Sync: group states ─────────────────────────────────────────────────────── */
-#sync-solo {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-#group-create-btn {
-  align-self: flex-start;
-}
+/* ── Код группы ─────────────────────────────────────────────────────────────── */
 
 #group-code-value {
   user-select: text;
@@ -1072,336 +2040,7 @@ body {
   letter-spacing: 2px;
 }
 
-/* ── About dialog ──────────────────────────────────────────────────────────── */
-
-.about-name {
-  font-size: 1.3rem;
-  font-weight: 500;
-  color: var(--text);
-}
-
-.about-version {
-  font-size: 0.85rem;
-  color: var(--text-faint);
-}
-
-.about-copy {
-  font-size: 0.82rem;
-  color: var(--text-faint);
-}
-
-/* ── Category sub-tabs ─────────────────────────────────────────────────────── */
-
-.cat-subtabs {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
-}
-
-.cat-subtab {
-  padding: 5px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--border-strong);
-  background: transparent;
-  color: var(--text-faint);
-  font-size: 0.82rem;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.cat-subtab:hover {
-  background: var(--surface);
-  color: var(--text-dim);
-}
-
-.cat-subtab.active {
-  background: var(--surface);
-  border-color: var(--accent);
-  color: var(--text-2);
-}
-
-/* ── Category delete button ─────────────────────────────────────────────────── */
-
-.cat-delete-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 4px;
-  opacity: 0.45;
-  display: flex;
-  align-items: center;
-  transition: opacity 0.15s;
-}
-
-.cat-delete-btn:hover {
-  opacity: 1;
-}
-
-/* ── Deleted categories ─────────────────────────────────────────────────────── */
-
-.cat-settings-item--deleted .cat-settings-name {
-  color: var(--text-disabled);
-}
-
-.cat-deleted-empty {
-  font-size: 0.82rem;
-  color: var(--text-disabled);
-  margin: 8px 0 0;
-}
-
-.cat-delete-name-display {
-  font-size: 0.95rem;
-  color: var(--text-dim);
-  margin: 8px 0 6px;
-  font-style: italic;
-}
-
-.cat-delete-hint {
-  font-size: 0.82rem;
-  color: var(--text-faint);
-  margin: 0 0 16px;
-}
-
-/* ── Danger dialog button ───────────────────────────────────────────────────── */
-
-.dialog-btn.danger {
-  background: var(--danger-strong);
-  color: var(--danger-soft-text);
-}
-
-.dialog-btn.danger:hover {
-  background: var(--danger-strong);
-}
-
-/* ── Categories settings tab ───────────────────────────────────────────────── */
-
-.cat-settings-list {
-  list-style: none;
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 12px;
-  padding-right: 6px;
-}
-
-.cat-settings-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.cat-settings-item:last-child {
-  border-bottom: none;
-}
-
-.cat-settings-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.cat-settings-name {
-  flex: 1;
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cat-add-btn {
-  padding: 7px 16px;
-  background: var(--control);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: var(--text-mute);
-  font-size: 0.84rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, color 0.15s;
-  margin-bottom: 14px;
-}
-
-.cat-add-btn:hover {
-  background: var(--control-hover);
-  color: var(--text-dim);
-}
-
-.cat-edit-form {
-  background: var(--surface);
-  border: 1px solid var(--border-soft);
-  border-radius: 8px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.cat-edit-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.cat-color-swatch {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  border: 2px solid var(--border);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color 0.15s;
-}
-
-.cat-color-swatch:hover {
-  border-color: var(--text-disabled);
-}
-
-.cat-color-palette {
-  display: grid;
-  grid-template-columns: repeat(9, 28px);
-  gap: 8px;
-}
-
-.cat-color-option {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  transition: border-color 0.15s, transform 0.15s;
-}
-
-.cat-color-option:hover {
-  transform: scale(1.1);
-}
-
-.cat-color-option.selected {
-  border-color: var(--on-danger);
-}
-
-.cat-edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.cat-edit-cancel {
-  padding: 9px 16px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-mute);
-  font-size: 0.84rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.cat-edit-cancel:hover {
-  border-color: var(--text-disabled);
-  color: var(--text-dim);
-}
-
-.cat-edit-actions .settings-save-btn {
-  margin-top: 0;
-  padding: 9px 16px;
-}
-
-/* ── Hours settings tab ────────────────────────────────────────────────────── */
-
-.hours-date-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.hours-list {
-  list-style: none;
-  max-height: 184px;
-  overflow-y: auto;
-  margin-bottom: 12px;
-  padding-right: 6px;
-}
-
-.hours-list-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.hours-list-item:last-child {
-  border-bottom: none;
-}
-
-.hours-list-time {
-  font-size: 0.82rem;
-  color: var(--text-faint);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-  min-width: 38px;
-  text-align: right;
-}
-
-.hours-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.hours-btns {
-  display: flex;
-  gap: 6px;
-}
-
-.hours-del-btn:hover {
-  color: var(--danger) !important;
-  border-color: var(--danger) !important;
-}
-
-.hours-confirm-delete {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.hours-confirm-text {
-  font-size: 0.82rem;
-  color: var(--text-mute);
-  white-space: nowrap;
-}
-
-.hours-confirm-yes {
-  padding: 5px 12px;
-  background: var(--danger-soft);
-  border: 1px solid var(--danger);
-  border-radius: 6px;
-  color: var(--danger);
-  font-size: 0.8rem;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s;
-}
-
-.hours-confirm-yes:hover {
-  background: var(--danger-soft);
-}
-
-.hours-empty {
-  font-size: 0.84rem;
-  color: var(--text-disabled);
-  margin-bottom: 12px;
-}
-
-.hours-time-input {
-  flex: 0 0 88px;
-}
+/* ── Нативный календарь в поле даты ─────────────────────────────────────────── */
 
 input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1) opacity(0.55);
@@ -1429,80 +2068,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   border: 2px solid var(--surface-3);
 }
 
-/* ── Calendar modal ────────────────────────────────────────────────────────── */
-
-.calendar-modal {
-  background: var(--surface-2);
-  border: 1px solid var(--border-soft);
-  border-radius: 16px;
-  width: 740px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-}
-
-.calendar-header {
-  display: flex;
-  align-items: center;
-  padding: 14px 16px;
-  gap: 10px;
-  border-bottom: 1px solid var(--border-soft);
-  flex-shrink: 0;
-}
-
-.cal-title {
-  flex: 1;
-  text-align: center;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-2);
-  letter-spacing: 0.03em;
-}
-
-.cal-nav-btn {
-  width: 30px;
-  height: 30px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-mute);
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.15s, color 0.15s;
-  padding: 0;
-  line-height: 1;
-}
-
-.cal-nav-btn:hover {
-  border-color: var(--text-disabled);
-  color: var(--text-2);
-}
-
-.cal-close {
-  width: 30px;
-  height: 30px;
-  background: transparent;
-  border: none;
-  color: var(--text-disabled);
-  font-size: 1.3rem;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: color 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.cal-close:hover {
-  color: var(--danger);
-}
+/* ── Сетка календаря ────────────────────────────────────────────────────────── */
 
 .calendar-weekdays {
   display: grid;
@@ -1577,14 +2143,5 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-#pane-sync .settings-row-label {
-  width: auto;
-  white-space: nowrap;
-}
-
-#sync-last-time {
-  text-align: right;
 }
 
