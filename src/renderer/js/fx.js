@@ -274,13 +274,36 @@ const FX = (() => {
     raf = requestAnimationFrame(frame);
   }
 
+  // init() зовёт applyFx() раньше, чем showMainScreen(): канва в этот момент
+  // ещё скрыта, и measure() возвращает false. Раньше refresh() на этом молча
+  // выходил, и движок не заводился до первого переключения вида. Теперь ждём,
+  // пока канва получит размер, и запускаемся сами.
+  let waitingForSize = null;
+
+  function retryWhenSized() {
+    if (waitingForSize) return;
+    waitingForSize = new ResizeObserver(() => {
+      if (!cv.getBoundingClientRect().width) return;
+      stopWaiting();
+      refresh();
+    });
+    waitingForSize.observe(cv);
+  }
+
+  function stopWaiting() {
+    if (!waitingForSize) return;
+    waitingForSize.disconnect();
+    waitingForSize = null;
+  }
+
   function refresh() {
     const live = !reduced && root.dataset.mode === 'focus'
       && (root.dataset.fxp !== 'off' || root.dataset.fxl !== 'off');
     if (raf) { cancelAnimationFrame(raf); raf = null; }
     ctx.clearRect(0, 0, W, H);
-    if (!live) return;
-    if (!measure()) return;
+    if (!live) { stopWaiting(); return; }
+    if (!measure()) { retryWhenSized(); return; }
+    stopWaiting();
     build();
     fade = 0;
     prev = performance.now();
