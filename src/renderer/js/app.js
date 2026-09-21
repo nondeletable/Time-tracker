@@ -232,8 +232,19 @@ async function showMainScreen() {
   categories = await window.api.getCategories()
   renderCategories()
   renderDialogCategories()
+  await restoreSelectedCategory()
   await refreshStats()
   mainScreen.classList.remove('hidden')
+}
+
+// Выбранная категория переживает перезапуск. Без этого Start после запуска
+// всегда оставался заблокированным, даже если человек весь день работал в
+// одной категории. Категорию, удалённую за время простоя, молча пропускаем:
+// Start тогда просто не разблокируется, как при первом запуске.
+async function restoreSelectedCategory() {
+  const saved = Number(await window.api.getSetting('selected_category_id'))
+  if (!saved || !categories.some(c => c.id === saved)) return
+  selectCategory(saved)
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
@@ -282,6 +293,7 @@ function selectCategory(id) {
   timerBtn.disabled = false
   dialogCategorySelect.value = id
   paintDock()
+  window.api.setSetting('selected_category_id', String(id))
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
