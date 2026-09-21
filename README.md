@@ -15,7 +15,7 @@
     <a href="https://github.com/nondeletable/Time-tracker/blob/main/README/README-TT-RU.md">Русский </a>
     <br>
     <br>
-    <img src="/README/promo/tt.png" alt="Time Tracker by nondeletable" width="98%"/>
+    <img src="/README/promo/TT.webp" alt="Time Tracker by nondeletable" width="98%"/>
     <br>
     <br>
   </p>
