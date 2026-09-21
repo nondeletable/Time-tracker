@@ -9,6 +9,7 @@ const { pickPresetCategories } = require('./presets')
 const { purgeSelfFromPeerData } = require('./peer')
 const { generateCode, normalizeCode } = require('./group')
 const { clampBoundsToScreen } = require('./window-bounds')
+const { backgroundFromCss, activeTheme } = require('./theme-bg')
 const crypto = require('crypto')
 const { detectLang } = require('../renderer/js/i18n/i18n')
 
@@ -450,7 +451,29 @@ function setupIPC() {
   })
 }
 
+// Окно показывается сразу, а рендерер доезжает до первого кадра за ~230-250 мс
+// (замер в ui-audit/contrast-audit.md). Без backgroundColor всё это время видно
+// системный белый кадр. Фон берём из активной темы: initDB() к этому моменту
+// уже отработал, БД читается так же, как window_bounds строкой ниже.
+function startupBackground() {
+  try {
+    const read = key => {
+      const stmt = db.prepare('SELECT value FROM settings WHERE key = ?')
+      stmt.bind([key])
+      const val = stmt.step() ? stmt.getAsObject().value : null
+      stmt.free()
+      return val
+    }
+    const theme = activeTheme(read('theme_mode'), read('theme_light'), read('theme_dark'))
+    const css = fs.readFileSync(path.join(__dirname, '../renderer/css/style.css'), 'utf8')
+    return backgroundFromCss(css, theme)
+  } catch (_) {
+    return null
+  }
+}
+
 function createWindow() {
+  const bg = startupBackground()
   const opts = {
     // Высота Focus складывается из шапки, кольца 330px, кнопки, двух-трёх
     // рядов бейджей и подвала периода. Ниже 780 они начинают наезжать друг
@@ -463,6 +486,7 @@ function createWindow() {
     minHeight: 780,
     frame: false,
     resizable: true,
+    ...(bg ? { backgroundColor: bg } : {}),
     icon: path.join(__dirname, '../../assets/icons/time-management.png'),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
