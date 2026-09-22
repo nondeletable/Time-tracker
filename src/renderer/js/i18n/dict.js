@@ -114,7 +114,7 @@
     row_lang_iface: 'Язык интерфейса',
     tip_theme: 'Две темы держатся наготове: одна светлая, одна тёмная. Свитчер в шапке карточки и Ctrl+L перекидывают между ними, не открывая настройки.',
     tip_anim: 'Wave — вид рождается волной от кнопки T, элементы всплывают по фронту. Fade — уходящий режим гаснет целиком, входящий проявляется под ним. Скорость относится только к Wave.',
-    tip_fx: 'Слои складываются: частицы поверх световых пятен. Цвета обоих берутся из акцента активной темы и двух соседних оттенков — отдельной настройки цвета нет. Extras — короткая анимация, которая время от времени пробегает по кольцу или по полосе периода, чтобы пустой экран не выглядел мёртвым.',
+    tip_fx: 'Слои складываются: частицы поверх световых пятен. Цвета обоих берутся из акцента активной темы и двух соседних оттенков — отдельной настройки цвета нет. Extras — короткая анимация, которая время от времени пробегает по кольцу или по полосе периода. Играет и при идущем таймере: там, где она ложится на заполненную часть, цвет меняется.',
     tip_lang: 'Меняются только подписи приложения. Названия категорий, имена участников и код группы остаются как введены.',
     // Пользователь
     user_name: 'Имя',
@@ -246,7 +246,7 @@
     row_lang_iface: 'Interface language',
     tip_theme: 'Two themes stay ready: one light, one dark. The switcher in the card header and Ctrl+L flip between them without opening settings.',
     tip_anim: 'Wave — the view is born as a front spreading from the T button, elements rise along it. Fade — the outgoing mode dims as a whole, the incoming one appears beneath. Speed applies to Wave only.',
-    tip_fx: 'The layers stack: particles above the glows. Both take their colour from the active theme accent and two neighbouring shades — there is no separate colour setting. Extras is a short animation that now and then runs across the ring or the period bar, so an empty screen does not look dead.',
+    tip_fx: 'The layers stack: particles above the glows. Both take their colour from the active theme accent and two neighbouring shades — there is no separate colour setting. Extras is a short animation that now and then runs across the ring or the period bar. It plays while the timer runs too: where it lands on the filled part, the colour shifts.',
     tip_lang: 'Only the application labels change. Category names, member names and the group code stay as entered.',
     user_name: 'Name',
     btn_edit: 'Edit',
