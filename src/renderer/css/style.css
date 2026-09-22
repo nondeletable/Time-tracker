@@ -102,7 +102,7 @@
 /* ── emerald · light ── */
 [data-theme="emerald-light"] {
   --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e5e8ee;
-  --text:#111827; --text-dim:#5a6478; --text-mute:#9aa3b4;
+  --text:#111827; --text-dim:#5a6478; --text-mute:#666c77;
   --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#ffffff; --danger:#dc2626;
 }
 /* ── indigo · dark ── */
@@ -114,7 +114,7 @@
 /* ── indigo · light ── */
 [data-theme="indigo-light"] {
   --bg:#f4f4f2; --surface:#ffffff; --surface-2:#ebebe7; --border:#e0e0da;
-  --text:#1c1c1a; --text-dim:#61615c; --text-mute:#97978f;
+  --text:#1c1c1a; --text-dim:#61615c; --text-mute:#676761;
   --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#ffffff; --danger:#dc2626;
 }
 
@@ -2077,13 +2077,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   flex-shrink: 0;
 }
 
+/* шапка таблицы той же роли, что `.tbl th` — не выключенный элемент */
 .calendar-weekdays span {
   text-align: center;
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-disabled);
+  color: var(--text-mute);
 }
 
 .calendar-grid {
