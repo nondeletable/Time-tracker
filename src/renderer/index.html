@@ -72,8 +72,17 @@
           <div class="ring-wrap" id="timer-ring">
             <div class="halo"></div>
             <svg class="dial" viewBox="0 0 330 330" aria-hidden="true">
+              <defs>
+                <clipPath id="idle-wedge"><path id="idle-wedge-p"></path></clipPath>
+              </defs>
               <circle class="track" cx="165" cy="165" r="156"></circle>
               <circle class="prog" cx="165" cy="165" r="156" id="prog"></circle>
+              <g id="idle-ring">
+                <path class="idle idle-a" id="idle-arc"></path>
+                <g clip-path="url(#idle-wedge)">
+                  <path class="idle idle-b" id="idle-arc-over"></path>
+                </g>
+              </g>
             </svg>
             <div class="dial-in">
               <span class="dial-cat" id="dial-cat"></span>
@@ -93,7 +102,13 @@
         <div class="foot">
           <div class="foot-bar">
             <span class="lab" id="limit-bar-label"></span>
-            <div class="track"><span id="limit-bar-fill"></span></div>
+            <div class="track">
+              <span id="limit-bar-fill"></span>
+              <span class="idle-bar" id="idle-bar">
+                <span class="idle-a" id="idle-seg"></span>
+                <span class="idle-b" id="idle-seg-over"></span>
+              </span>
+            </div>
             <span class="foot-num num" id="limit-bar-time"></span>
             <button class="expand" id="expand" data-i18n="focus_expand">Подробно ▾</button>
           </div>
@@ -549,6 +564,7 @@
   <script src="js/i18n/dict.js"></script>
   <script src="js/roles.js"></script>
   <script src="js/fx.js"></script>
+  <script src="js/idle-fx.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

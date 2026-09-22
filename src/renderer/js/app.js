@@ -235,6 +235,9 @@ async function showMainScreen() {
   await restoreSelectedCategory()
   await refreshStats()
   mainScreen.classList.remove('hidden')
+  // После показа экрана, а не раньше: кольцо и полоса до этого скрыты, а
+  // движку нужна уже посчитанная заливка обоих.
+  window.IDLE_FX?.start()
 }
 
 // Выбранная категория переживает перезапуск. Без этого Start после запуска
