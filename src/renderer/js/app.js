@@ -607,6 +607,7 @@ function fadeSwap(from, to) {
 async function setMode(next) {
   const root = document.documentElement
   if (root.dataset.mode === next || modeBusy) return
+  window.IDLE_FX?.fade()
 
   await window.api.setSetting('ui_mode', next)
 

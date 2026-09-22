@@ -21,6 +21,13 @@ const IDLE_FX = (() => {
   const segOverEl = document.getElementById('idle-seg-over');
   const progEl = document.getElementById('prog');
   const limitEl = document.getElementById('limit-bar-fill');
+  const ringGroup = document.getElementById('idle-ring');
+  const barGroup = document.getElementById('idle-bar');
+  const appEl = document.getElementById('app');
+
+  // Волна перехода короче всего на fast — 520 мс (--wave-ms). Гашение в 160
+  // заканчивается в первой её трети, на med и slow тем более.
+  const FADE_MS = 160;
 
   const R = 156, CX = 165, CY = 165;
   // Сектор наложения шире самой окружности: обводка в 10 нарисована по центру
@@ -149,7 +156,7 @@ const IDLE_FX = (() => {
   }
 
   /* ── расписание ───────────────────────────────────────────────────── */
-  let last = -1, timer = null, raf = null, current = null, startedAt = 0;
+  let last = -1, timer = null, raf = null, current = null, startedAt = 0, fadeAt = 0;
 
   function pick() {
     let i;
@@ -161,13 +168,23 @@ const IDLE_FX = (() => {
   function frame(now) {
     const t = now - startedAt;
     if (t >= span(current)) { finish(); return; }
+    if (fadeAt) {
+      const gone = (now - fadeAt) / FADE_MS;
+      if (gone >= 1) { finish(); return; }
+      layer().style.opacity = String(1 - gone);
+    }
     current.el === 'ring' ? ringFrame(current, t) : barFrame(current, t);
     raf = requestAnimationFrame(frame);
   }
 
+  const layer = () => (current.el === 'ring' ? ringGroup : barGroup);
+
   function finish() {
     if (raf) cancelAnimationFrame(raf);
     raf = null;
+    fadeAt = 0;
+    ringGroup.style.opacity = '';
+    barGroup.style.opacity = '';
     clear();
     const played = current;
     current = null;
@@ -179,7 +196,8 @@ const IDLE_FX = (() => {
     const p = pick();
     // Вне Focus кольца и полосы на экране нет: играть вхолостую незачем, но и
     // откладывать до возврата нельзя — тогда эффект дёргался бы на входе.
-    if (root.dataset.mode !== 'focus') {
+    // Поверх идущего перехода тоже не начинаем: волна и так самый тяжёлый кадр.
+    if (root.dataset.mode !== 'focus' || appEl.classList.contains('anim')) {
       timer = setTimeout(run, interval(span(p)));
       return;
     }
@@ -195,6 +213,13 @@ const IDLE_FX = (() => {
     run();
   }
 
+  // Переключение режима: эффект доигрывает как шёл, но уводится в прозрачность.
+  // Замораживать последний кадр нельзя — застывшая и потом пропавшая дуга
+  // читается как баг, а не как эффект.
+  function fade() {
+    if (raf && !fadeAt) fadeAt = performance.now();
+  }
+
   function stop() {
     clearTimeout(timer);
     timer = null;
@@ -204,7 +229,7 @@ const IDLE_FX = (() => {
     clear();
   }
 
-  return { start, stop };
+  return { start, stop, fade };
 })();
 
 // const в глобальном скрипте не попадает в window — экспортируем явно.
