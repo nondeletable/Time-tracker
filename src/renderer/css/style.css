@@ -83,6 +83,9 @@
   --text-faint:       color-mix(in srgb, var(--text-mute) 65%, var(--border));
   --text-disabled:    color-mix(in srgb, var(--text-mute) 40%, var(--border));
   --accent-hover:     color-mix(in srgb, var(--accent) 86%, black);
+  /* idle-анимация там, где легла на заполненный прогресс: акцент поверх
+     акцента даёт акцент, и движение пропадает — на пересечении разводим */
+  --idle-over:        color-mix(in srgb, var(--accent) 50%, var(--text));
   --accent-soft-text: var(--accent);
   --danger-hover:     color-mix(in srgb, var(--danger) 86%, black);
   --danger-strong:    color-mix(in srgb, var(--danger) 70%, black);
@@ -421,6 +424,13 @@ body {
   transition: stroke-dashoffset var(--t-slow);
 }
 
+/* Слои idle-анимации. Рисуются дважды: idle-a целиком, idle-b поверх и
+   обрезанный сектором прогресса — цвет разводится только на пересечении.
+   Геометрию каждый кадр пишет idle-fx.js, здесь только цвет и гашение. */
+.idle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.idle-a { stroke: var(--accent); }
+.idle-b { stroke: var(--idle-over); }
+
 .dial-in {
   position: absolute;
   inset: 0;
@@ -631,12 +641,30 @@ body {
 }
 
 .foot-bar .track {
+  position: relative;
   flex: 1;
   height: 6px;
   background: var(--surface-2);
   border-radius: 99px;
   overflow: hidden;
 }
+
+/* Отрезки idle-анимации живут в том же треке поверх заливки лимита.
+   transition у них снят: ширину пишет каждый кадр движок, и плавность
+   от --t-slow превратила бы анимацию в кашу. */
+/* Селекторы длиннее, чем хочется, намеренно: правило .foot-bar .track span
+   ниже перебивает более короткие — оно заливает любой span в треке акцентом и
+   вешает на ширину переход в 420 мс. Обёртке фон не нужен вовсе, а слоям нужен
+   свой цвет и мгновенная ширина: их позицию пишет каждый кадр движок, и
+   плавность превратила бы движение в вязкое доезжание с прошлого места. */
+.foot-bar .track .idle-bar { position: absolute; inset: 0; background: none; }
+.foot-bar .track .idle-bar span {
+  position: absolute;
+  top: 0;
+  transition: none;
+}
+.foot-bar .track .idle-bar .idle-a { background: var(--accent); }
+.foot-bar .track .idle-bar .idle-b { background: var(--idle-over); }
 
 .foot-bar .track span {
   display: block;
