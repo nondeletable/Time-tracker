@@ -70,10 +70,15 @@ const IDLE_FX = (() => {
     return Math.min(PAUSE_MAX, Math.max(PAUSE_MIN, jittered)) * 1000;
   }
 
-  /* ── геометрия: угол 0 — верхняя точка, плюс по часовой ───────────── */
+  /* ── геометрия: угол 0 — верхняя точка, плюс по часовой ───────────────
+     Считается с поправкой на поворот: весь svg.dial повёрнут в CSS на -90deg,
+     чтобы круг прогресса начинался сверху. Значит внутри viewBox ноль — это
+     три часа, и верхней точкой он становится уже после поворота. Без поправки
+     всё уезжает на 90 градусов против часовой: дуга стартует с девяти часов,
+     а сектор наложения ложится мимо реальной заливки. */
   function point(deg, radius) {
     const a = deg * Math.PI / 180;
-    return [CX + radius * Math.sin(a), CY - radius * Math.cos(a)];
+    return [CX + radius * Math.cos(a), CY + radius * Math.sin(a)];
   }
   function arcPath(from, to) {
     if (to - from < 0.01) return '';
