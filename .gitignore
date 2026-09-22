@@ -12,3 +12,12 @@ desktop.ini
 .vscode/
 .idea/
 PROGRESS_PROTOTIPE.md
+
+# Per-user local files (each user keeps their own)
+CLAUDE.md
+PROGRESS.md
+PROGRESS_ARCHIVE.md
+
+# Local Claude Code / superpowers tooling
+.claude/
+skills-lock.json
