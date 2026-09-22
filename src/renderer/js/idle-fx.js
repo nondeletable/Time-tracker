@@ -195,7 +195,16 @@ const IDLE_FX = (() => {
     run();
   }
 
-  return { start };
+  function stop() {
+    clearTimeout(timer);
+    timer = null;
+    if (raf) cancelAnimationFrame(raf);
+    raf = null;
+    current = null;
+    clear();
+  }
+
+  return { start, stop };
 })();
 
 // const в глобальном скрипте не попадает в window — экспортируем явно.

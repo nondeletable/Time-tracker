@@ -150,6 +150,7 @@ const animSpeedRow         = document.getElementById('anim-speed-row')
 const animReplay           = document.getElementById('anim-replay')
 const fxParticlesSelect    = document.getElementById('fx-particles-select')
 const fxBlobsSelect        = document.getElementById('fx-blobs-select')
+const fxIdleSw             = document.getElementById('fx-idle-sw')
 const fxPreview            = document.getElementById('fx-preview')
 const langSw               = document.getElementById('lang-sw')
 
@@ -189,6 +190,8 @@ async function init() {
   const savedFxP = await window.api.getSetting('fx_particles')
   const savedBlobs = await window.api.getSetting('fx_blobs')
   applyFx(savedFxP || 'off', savedBlobs || 'off')
+  const savedIdle = await window.api.getSetting('fx_idle')
+  document.documentElement.dataset.fxi = savedIdle || 'on'
 
   // Тип и скорость перехода — две настройки, а не одна: иначе Fade затирал бы
   // выбранную скорость, и при возврате к Wave пользователь получал бы дефолт.
@@ -237,7 +240,7 @@ async function showMainScreen() {
   mainScreen.classList.remove('hidden')
   // После показа экрана, а не раньше: кольцо и полоса до этого скрыты, а
   // движку нужна уже посчитанная заливка обоих.
-  window.IDLE_FX?.start()
+  if (document.documentElement.dataset.fxi === 'on') window.IDLE_FX?.start()
 }
 
 // Выбранная категория переживает перезапуск. Без этого Start после запуска
@@ -1417,6 +1420,7 @@ function loadAppearanceView() {
   animSpeedRow.classList.toggle('off', document.documentElement.dataset.anim === 'fade')
   fxParticlesSelect.value = document.documentElement.dataset.fxp || 'off'
   fxBlobsSelect.value     = document.documentElement.dataset.fxl || 'off'
+  pressOne(fxIdleSw, 'fxIdle', document.documentElement.dataset.fxi)
   pressOne(langSw, 'lang', currentLang)
 }
 
@@ -1494,6 +1498,17 @@ function replayTransition() {
 animReplay.addEventListener('click', replayTransition)
 
 // ── Фон ───────────────────────────────────────────────────────────────────────
+
+fxIdleSw.addEventListener('click', async e => {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  const state = btn.dataset.fxIdle
+  document.documentElement.dataset.fxi = state
+  await window.api.setSetting('fx_idle', state)
+  pressOne(fxIdleSw, 'fxIdle', state)
+  state === 'on' ? window.IDLE_FX?.start() : window.IDLE_FX?.stop()
+  flashSaved(fxIdleSw)
+})
 
 fxParticlesSelect.addEventListener('change', async e => {
   await window.api.setSetting('fx_particles', e.target.value)
