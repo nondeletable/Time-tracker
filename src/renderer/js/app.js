@@ -189,7 +189,7 @@ async function init() {
 
   const savedFxP = await window.api.getSetting('fx_particles')
   const savedBlobs = await window.api.getSetting('fx_blobs')
-  applyFx(savedFxP || 'off', savedBlobs || 'off')
+  applyFx(savedFxP || 'universe', savedBlobs || 'all')
   const savedIdle = await window.api.getSetting('fx_idle')
   document.documentElement.dataset.fxi = savedIdle || 'on'
 
