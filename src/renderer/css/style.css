@@ -652,14 +652,19 @@ body {
 /* Отрезки idle-анимации живут в том же треке поверх заливки лимита.
    transition у них снят: ширину пишет каждый кадр движок, и плавность
    от --t-slow превратила бы анимацию в кашу. */
-.idle-bar { position: absolute; inset: 0; }
-.idle-bar span {
+/* Селекторы длиннее, чем хочется, намеренно: правило .foot-bar .track span
+   ниже перебивает более короткие — оно заливает любой span в треке акцентом и
+   вешает на ширину переход в 420 мс. Обёртке фон не нужен вовсе, а слоям нужен
+   свой цвет и мгновенная ширина: их позицию пишет каждый кадр движок, и
+   плавность превратила бы движение в вязкое доезжание с прошлого места. */
+.foot-bar .track .idle-bar { position: absolute; inset: 0; background: none; }
+.foot-bar .track .idle-bar span {
   position: absolute;
   top: 0;
   transition: none;
 }
-.idle-bar .idle-a { background: var(--accent); }
-.idle-bar .idle-b { background: var(--idle-over); }
+.foot-bar .track .idle-bar .idle-a { background: var(--accent); }
+.foot-bar .track .idle-bar .idle-b { background: var(--idle-over); }
 
 .foot-bar .track span {
   display: block;
