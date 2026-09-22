@@ -150,6 +150,30 @@ body {
   display: none !important;
 }
 
+/* ── Иконки ────────────────────────────────────────────────────────────────
+   Набор <symbol> в начале body. Он не должен ни занимать место, ни ловить
+   мышь: display:none убил бы и <use>, поэтому схлопываем размер. Сами иконки
+   рисуются обводкой currentColor, так что цветом управляет `color` кнопки —
+   и в темах, и в hover.                                                     */
+.icons {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.ic {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
 /* Digits that must not jiggle while the timer runs */
 .num {
   font-family: var(--font-num);
@@ -292,10 +316,12 @@ body {
 
 .win-close:hover {
   background: var(--danger);
+  color: var(--on-danger);
 }
 
-.win-close:hover img {
-  filter: brightness(0) invert(1);
+.win-btn .ic {
+  width: 15px;
+  height: 15px;
 }
 
 /* Слой режима. Фон непрозрачный: когда рядом встанет Dashboard, под клипом
@@ -803,7 +829,8 @@ body {
   height: 36px;
   border-radius: 10px;
   color: var(--text-mute);
-  font-size: 15px;
+  display: grid;
+  place-items: center;
   transition: background var(--t), color var(--t);
 }
 
@@ -1255,6 +1282,11 @@ body {
   transition: background var(--t), color var(--t);
 }
 
+.icon-btn .ic {
+  width: 16px;
+  height: 16px;
+}
+
 .icon-btn:hover {
   background: var(--border);
   color: var(--text);
@@ -1265,20 +1297,26 @@ body {
   color: var(--on-danger);
 }
 
+/* Кружок был нарисован фоном кнопки вокруг знака «?». Теперь он внутри самой
+   иконки, поэтому подложку убираем — иначе круг в круге. Состояние наведения
+   переезжает с фона на цвет обводки. */
 .help {
   width: 16px;
   height: 16px;
-  border-radius: 50%;
-  background: var(--surface-2);
+  display: grid;
+  place-items: center;
   color: var(--text-mute);
-  font-size: 10px;
   line-height: 1;
   flex-shrink: 0;
 }
 
+.help .ic {
+  width: 16px;
+  height: 16px;
+}
+
 .help:hover {
-  background: var(--accent);
-  color: var(--on-accent);
+  color: var(--accent);
 }
 
 /* Облачко подсказки живёт в body, а не внутри карточки: .scroll обрезает всё,

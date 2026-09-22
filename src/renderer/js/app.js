@@ -1734,8 +1734,8 @@ document.getElementById('win-max-btn').addEventListener('click', () => window.ap
 document.getElementById('win-close-btn').addEventListener('click', () => window.api.winClose())
 
 const winMaxIcon = document.getElementById('win-max-icon')
-window.api.onWinMaximized(()   => { winMaxIcon.src = '../../assets/icons/win-restore.svg' })
-window.api.onWinUnmaximized(() => { winMaxIcon.src = '../../assets/icons/win-max.svg' })
+window.api.onWinMaximized(()   => winMaxIcon.setAttribute('href', '#i-win-restore'))
+window.api.onWinUnmaximized(() => winMaxIcon.setAttribute('href', '#i-win-max'))
 
 // Период продлился автоматически (сменился день во время работы приложения)
 window.api.onPeriodAdvanced(async () => {

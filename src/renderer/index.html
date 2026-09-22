@@ -8,6 +8,30 @@
 </head>
 <body>
 
+  <!-- Набор иконок (Tabler, 24×24, stroke 2). Исходники лежат по одному файлу
+       в assets/icons, здесь — только их геометрия: один <symbol> на иконку, а
+       не копия разметки в каждой кнопке. help-circle стоит в десяти местах, и
+       править её иначе пришлось бы десять раз. Обводка идёт currentColor,
+       поэтому цвет и hover задаются в CSS и живут по темам. -->
+  <svg class="icons" aria-hidden="true">
+    <symbol id="i-dashboard" viewBox="0 0 24 24"><path d="M5 4h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1"/><path d="M5 16h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1"/><path d="M15 12h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1"/><path d="M15 4h4a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1v-2a1 1 0 0 1 1 -1"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/><path d="M7 14h.013"/><path d="M10.01 14h.005"/><path d="M13.01 14h.005"/><path d="M16.015 14h.005"/><path d="M13.015 17h.005"/><path d="M7.01 17h.005"/><path d="M10.01 17h.005"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></symbol>
+    <symbol id="i-appearance" viewBox="0 0 24 24"><path d="M12 21a9 9 0 0 1 0 -18c4.97 0 9 3.582 9 8c0 1.06 -.474 2.078 -1.318 2.828c-.844 .75 -1.989 1.172 -3.182 1.172h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25"/><path d="M7.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M11.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 9h.01"/><path d="M11 12h1v4h1"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 16v.01"/><path d="M12 13a2 2 0 0 0 .914 -3.782a1.98 1.98 0 0 0 -2.414 .483"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/></symbol>
+    <symbol id="i-win-min" viewBox="0 0 24 24"><path d="M5 12l14 0"/></symbol>
+    <symbol id="i-win-max" viewBox="0 0 24 24"><path d="M4 8v-2a2 2 0 0 1 2 -2h2"/><path d="M4 16v2a2 2 0 0 0 2 2h2"/><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M16 20h2a2 2 0 0 0 2 -2v-2"/></symbol>
+    <!-- Восстановления в наборе Саши нет: собрано из тех же углов, что maximize,
+         развёрнутых внутрь, чтобы пара читалась как одна иконка в двух состояниях. -->
+    <symbol id="i-win-restore" viewBox="0 0 24 24"><path d="M10 4v2a2 2 0 0 1 -2 2h-2"/><path d="M10 20v-2a2 2 0 0 0 -2 -2h-2"/><path d="M14 4v2a2 2 0 0 0 2 2h2"/><path d="M14 20v-2a2 2 0 0 1 2 -2h2"/></symbol>
+    <symbol id="i-win-close" viewBox="0 0 24 24"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></symbol>
+  </svg>
+
   <!-- Экран выбора пользователя -->
   <div id="user-select-screen" class="screen hidden">
     <div class="user-select-box">
@@ -29,13 +53,13 @@
         <span class="sp"></span>
         <div class="win">
           <button class="win-btn" id="win-min-btn" data-i18n-title="win_minimize" title="Свернуть">
-            <img src="../../assets/icons/win-min.svg" width="12" height="12" alt="">
+            <svg class="ic"><use href="#i-win-min"/></svg>
           </button>
           <button class="win-btn" id="win-max-btn" data-i18n-title="win_maximize" title="Развернуть">
-            <img id="win-max-icon" src="../../assets/icons/win-max.svg" width="12" height="12" alt="">
+            <svg class="ic"><use id="win-max-icon" href="#i-win-max"/></svg>
           </button>
           <button class="win-btn win-close" id="win-close-btn" data-i18n-title="win_close" title="Закрыть">
-            <img src="../../assets/icons/win-close.svg" width="12" height="12" alt="">
+            <svg class="ic"><use href="#i-win-close"/></svg>
           </button>
         </div>
       </div>
@@ -94,12 +118,12 @@
 
       <div class="layer" data-layer="dash" id="layer-dash">
         <nav class="rail" data-wave>
-          <button data-nav="summary" aria-current="true" data-i18n-title="nav_summary" title="Сводка">▦</button>
-          <button data-nav="calendar" data-i18n-title="nav_calendar" title="Календарь">▤</button>
-          <button data-nav="settings" data-i18n-title="nav_settings" title="Настройки">⚙</button>
-          <button data-nav="appearance" data-i18n-title="nav_appearance" title="Оформление">✎</button>
+          <button data-nav="summary" aria-current="true" data-i18n-title="nav_summary" title="Сводка"><svg class="ic"><use href="#i-dashboard"/></svg></button>
+          <button data-nav="calendar" data-i18n-title="nav_calendar" title="Календарь"><svg class="ic"><use href="#i-calendar"/></svg></button>
+          <button data-nav="settings" data-i18n-title="nav_settings" title="Настройки"><svg class="ic"><use href="#i-settings"/></svg></button>
+          <button data-nav="appearance" data-i18n-title="nav_appearance" title="Оформление"><svg class="ic"><use href="#i-appearance"/></svg></button>
           <span class="sp"></span>
-          <button data-nav="about" data-i18n-title="nav_about" title="О программе">ⓘ</button>
+          <button data-nav="about" data-i18n-title="nav_about" title="О программе"><svg class="ic"><use href="#i-info"/></svg></button>
         </nav>
 
         <div class="d-main">
@@ -180,8 +204,8 @@
                 <div class="card-head">
                   <h3 id="cal-title">—</h3>
                   <span class="sp"></span>
-                  <button class="icon-btn" id="cal-prev">←</button>
-                  <button class="icon-btn" id="cal-next">→</button>
+                  <button class="icon-btn" id="cal-prev"><svg class="ic"><use href="#i-arrow-left"/></svg></button>
+                  <button class="icon-btn" id="cal-next"><svg class="ic"><use href="#i-arrow-right"/></svg></button>
                 </div>
                 <div class="calendar-weekdays">
                   <span>Пн</span><span>Вт</span><span>Ср</span>
@@ -217,7 +241,7 @@
 
                   <div class="row g-row g-new hidden">
                     <span class="lab"><span data-i18n="row_group_code">Код группы</span>
-                      <button class="help" data-i18n-tip="tip_group_code">?</button>
+                      <button class="help" data-i18n-tip="tip_group_code"><svg class="ic"><use href="#i-help"/></svg></button>
                     </span>
                     <span class="sp"></span>
                     <input class="inp" id="group-code-input" maxlength="7" placeholder="TT-4K9P">
@@ -226,7 +250,7 @@
 
                   <div class="row g-row g-in hidden">
                     <span class="lab"><span data-i18n="row_group_code">Код группы</span>
-                      <button class="help" data-i18n-tip="tip_group_code_role">?</button>
+                      <button class="help" data-i18n-tip="tip_group_code_role"><svg class="ic"><use href="#i-help"/></svg></button>
                     </span>
                     <span class="sp"></span>
                     <span class="tag" id="group-role-tag"></span>
@@ -235,7 +259,7 @@
 
                   <div class="row g-row g-in hidden">
                     <span class="lab"><span data-i18n="row_sync_interval">Интервал</span>
-                      <button class="help" id="sync-interval-help" data-i18n-tip="tip_sync_interval">?</button>
+                      <button class="help" id="sync-interval-help" data-i18n-tip="tip_sync_interval"><svg class="ic"><use href="#i-help"/></svg></button>
                     </span>
                     <span class="sp"></span>
                     <select class="inp" id="sync-interval-select">
@@ -248,10 +272,10 @@
 
                   <div class="row g-row g-in acts-row hidden">
                     <button class="icon-btn" id="sync-now-btn" data-i18n-title="btn_sync_now" title="Синхронизировать сейчас">
-                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-15.5 6.2"/><path d="M3 12a9 9 0 0 1 15.5-6.2"/><path d="M18 2v5h-5"/><path d="M6 22v-5h5"/></svg>
+                      <svg class="ic"><use href="#i-refresh"/></svg>
                     </button>
                     <button class="icon-btn danger" id="group-leave-btn" data-i18n-title="btn_group_leave" title="Покинуть группу">
-                      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3H5a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h5"/><path d="M16 8l4 4-4 4"/><path d="M20 12H10"/></svg>
+                      <svg class="ic"><use href="#i-logout"/></svg>
                     </button>
                   </div>
                 </div>
@@ -266,7 +290,7 @@
 
                   <div class="row">
                     <span class="lab"><span data-i18n="row_daily_goal">Часов в день</span>
-                      <button class="help" data-i18n-tip="tip_daily_goal">?</button>
+                      <button class="help" data-i18n-tip="tip_daily_goal"><svg class="ic"><use href="#i-help"/></svg></button>
                     </span>
                     <span class="sp"></span>
                     <span class="saved" data-i18n="saved_mark">сохранено</span>
@@ -275,7 +299,7 @@
 
                   <div class="row">
                     <span class="lab"><span data-i18n="row_limit">Лимит в месяц, ч</span>
-                      <button class="help" data-i18n-tip="tip_limit">?</button>
+                      <button class="help" data-i18n-tip="tip_limit"><svg class="ic"><use href="#i-help"/></svg></button>
                     </span>
                     <span class="sp"></span>
                     <span class="saved" data-i18n="saved_mark">сохранено</span>
@@ -284,7 +308,7 @@
 
                   <div class="row">
                     <span class="lab"><span data-i18n="row_period">Период</span>
-                      <button class="help" data-i18n-tip="tip_period">?</button>
+                      <button class="help" data-i18n-tip="tip_period"><svg class="ic"><use href="#i-help"/></svg></button>
                     </span>
                     <span class="sp"></span>
                     <span class="saved" data-i18n="saved_mark">сохранено</span>
@@ -342,7 +366,7 @@
                 <div class="card span2" data-wave>
                   <div class="card-head">
                     <h3 data-i18n="card_theme">Тема</h3>
-                    <button class="help" data-i18n-tip="tip_theme">?</button>
+                    <button class="help" data-i18n-tip="tip_theme"><svg class="ic"><use href="#i-help"/></svg></button>
                     <span class="sp"></span>
                     <div class="seg" id="theme-mode-sw">
                       <button data-theme-mode="light" data-i18n="theme_light_label">Светлая</button>
@@ -381,7 +405,7 @@
                 <div class="card span2" data-wave>
                   <div class="card-head">
                     <h3 data-i18n="card_anim">Переход между режимами</h3>
-                    <button class="help" data-i18n-tip="tip_anim">?</button>
+                    <button class="help" data-i18n-tip="tip_anim"><svg class="ic"><use href="#i-help"/></svg></button>
                     <span class="sp"></span>
                     <button class="btn-s" id="anim-replay" data-i18n="btn_replay">Проверить</button>
                   </div>
@@ -412,7 +436,7 @@
                 <div class="card span2" data-wave>
                   <div class="card-head">
                     <h3 data-i18n="card_fx">Фон</h3>
-                    <button class="help" data-i18n-tip="tip_fx">?</button>
+                    <button class="help" data-i18n-tip="tip_fx"><svg class="ic"><use href="#i-help"/></svg></button>
                     <span class="sp"></span>
                     <span class="hint" data-i18n="fx_focus_only">Только Focus Mode</span>
                   </div>
@@ -452,7 +476,7 @@
                 <div class="card span2" data-wave>
                   <div class="card-head">
                     <h3 data-i18n="card_lang">Язык</h3>
-                    <button class="help" data-i18n-tip="tip_lang">?</button>
+                    <button class="help" data-i18n-tip="tip_lang"><svg class="ic"><use href="#i-help"/></svg></button>
                     <span class="sp"></span>
                   </div>
 
