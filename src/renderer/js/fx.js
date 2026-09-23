@@ -17,7 +17,6 @@ window.FX = (() => {
   let W = 0, H = 0, cx = 0, cy = 0, rRing = 150, rMax = 1;
   let raf = null, prev = 0, fade = 0;
   let dust = [], uni = [], emit = [], leaks = [], dots = [], blobs = [];
-  const sprites = new Map();
 
   const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -42,22 +41,6 @@ window.FX = (() => {
   const hue = i => (HSL[0] + [0, -26, 26][i] + 360) % 360;
   const col = (i, a, dl = 0) =>
     `hsla(${hue(i)},${Math.round(HSL[1] * 100)}%,${Math.round((HSL[2] + dl) * 100)}%,${a})`;
-
-  /* мягкий кружок рисуется спрайтом — быстрее, чем градиент на каждый кадр */
-  function sprite(i) {
-    const key = 'c' + i;
-    if (sprites.has(key)) return sprites.get(key);
-    const s = document.createElement('canvas');
-    s.width = s.height = 64;
-    const sc = s.getContext('2d');
-    const g = sc.createRadialGradient(32, 32, 0, 32, 32, 32);
-    g.addColorStop(0, col(i, 1, .05));
-    g.addColorStop(.45, col(i, .4, .05));
-    g.addColorStop(1, col(i, 0, .05));
-    sc.fillStyle = g; sc.fillRect(0, 0, 64, 64);
-    sprites.set(key, s);
-    return s;
-  }
 
   function measure() {
     const b = cv.getBoundingClientRect();
@@ -91,7 +74,6 @@ window.FX = (() => {
   /* ── построение пресетов ─────────────────────────────────────────── */
   function build() {
     HSL = accentHSL();
-    sprites.clear();
     dust = []; uni = []; emit = []; dots = []; blobs = [];
     const p = root.dataset.fxp;
 
