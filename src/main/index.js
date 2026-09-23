@@ -523,7 +523,9 @@ function createWindow() {
       const rec = { width: b.width, height: b.height, x: b.x, y: b.y, maximized: win.isMaximized() }
       db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('window_bounds', ?)", [JSON.stringify(rec)])
       saveDB()
-    } catch (_) {}
+    } catch (err) {
+      console.warn('[window] bounds not saved:', err.message)
+    }
   })
 
   Menu.setApplicationMenu(null)
