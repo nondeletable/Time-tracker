@@ -827,7 +827,7 @@ function paintDateField(input) {
 }
 
 document.querySelectorAll('.date-f input').forEach(input => {
-  input.addEventListener('click', () => { try { input.showPicker() } catch (e) {} })
+  input.addEventListener('click', () => { try { input.showPicker() } catch { /* unsupported, or blocked outside a user gesture */ } })
 })
 
 // ── Карточка «Профиль» ────────────────────────────────────────────────────────
