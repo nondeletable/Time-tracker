@@ -76,7 +76,7 @@ function startWSServer() {
       ws._verified = false
       ws.on('message', data => {
         let msg
-        try { msg = JSON.parse(data) } catch (_) { return }
+        try { msg = JSON.parse(data) } catch { return }
         if (msg.type === 'hello') {
           if (!validateHandshake(myCode(), msg)) { ws.close(); return }
           ws._verified = true
@@ -150,7 +150,7 @@ function connectToPeer(ip, port) {
 
   ws.on('message', data => {
     let msg
-    try { msg = JSON.parse(data) } catch (_) { return }
+    try { msg = JSON.parse(data) } catch { return }
     if (msg.type === 'hello') {
       if (!validateHandshake(myCode(), msg)) { ws.close(); return }
       ws._verified = true

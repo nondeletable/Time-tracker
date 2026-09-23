@@ -470,7 +470,7 @@ function startupBackground() {
     const theme = activeTheme(read('theme_mode'), read('theme_light'), read('theme_dark'))
     const css = fs.readFileSync(path.join(__dirname, '../renderer/css/style.css'), 'utf8')
     return backgroundFromCss(css, theme)
-  } catch (_) {
+  } catch {
     return null
   }
 }
@@ -538,7 +538,7 @@ function readBoundsSetting() {
   const val = stmt.step() ? stmt.getAsObject().value : null
   stmt.free()
   if (!val) return null
-  try { return JSON.parse(val) } catch (_) { return null }
+  try { return JSON.parse(val) } catch { return null }
 }
 
 app.whenReady().then(async () => {
