@@ -1,5 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
+// Handing a listener straight to ipcRenderer.on would call it with the
+// IpcRendererEvent as its first argument, which carries sender and senderFrame
+// into page scope. None of these five channels sends a payload, so the wrapper
+// forwards nothing at all; the two that do send one already unpack it below.
 contextBridge.exposeInMainWorld('api', {
   getDefaultName:   ()             => ipcRenderer.invoke('app:get-default-name'),
   renameUser:       (newName)      => ipcRenderer.invoke('db:rename-user', newName),
@@ -18,23 +22,23 @@ contextBridge.exposeInMainWorld('api', {
   getUserAvatars:     ()                         => ipcRenderer.invoke('db:get-user-avatars'),
   getCalendarMonth:   (year, month)              => ipcRenderer.invoke('db:get-calendar-month', { year, month }),
   syncNow:            ()                         => ipcRenderer.invoke('sync:now'),
-  onPeerUpdated:      (cb)                       => ipcRenderer.on('sync:peer-updated', cb),
+  onPeerUpdated:      (cb)                       => ipcRenderer.on('sync:peer-updated', () => cb()),
   onSyncStatus:       (cb)                       => ipcRenderer.on('sync:status-changed', (_, connected) => cb(connected)),
   getSyncInterval:    ()                         => ipcRenderer.invoke('sync:get-interval'),
   setSyncInterval:    (seconds)                  => ipcRenderer.invoke('sync:set-interval', seconds),
   getLastSync:        ()                         => ipcRenderer.invoke('sync:get-last-sync'),
   onSyncDone:         (cb)                       => ipcRenderer.on('sync:synced', (_, ts) => cb(ts)),
-  onPeriodAdvanced:   (cb)                       => ipcRenderer.on('period:advanced', cb),
+  onPeriodAdvanced:   (cb)                       => ipcRenderer.on('period:advanced', () => cb()),
   getDeletedCategories: ()     => ipcRenderer.invoke('db:get-deleted-categories'),
   softDeleteCategory:   (id)   => ipcRenderer.invoke('db:soft-delete-category', id),
   restoreCategory:      (id)   => ipcRenderer.invoke('db:restore-category', id),
   createGroup:        ()      => ipcRenderer.invoke('group:create'),
   joinGroup:          (code)  => ipcRenderer.invoke('group:join', code),
   leaveGroup:         ()      => ipcRenderer.invoke('group:leave'),
-  onSyncLimitUpdated: (cb)    => ipcRenderer.on('sync:limit-updated', cb),
+  onSyncLimitUpdated: (cb)    => ipcRenderer.on('sync:limit-updated', () => cb()),
   winMinimize:       ()   => ipcRenderer.invoke('win:minimize'),
   winMaximizeToggle: ()   => ipcRenderer.invoke('win:maximize-toggle'),
   winClose:          ()   => ipcRenderer.invoke('win:close'),
-  onWinMaximized:    (cb) => ipcRenderer.on('win:maximized', cb),
-  onWinUnmaximized:  (cb) => ipcRenderer.on('win:unmaximized', cb),
+  onWinMaximized:    (cb) => ipcRenderer.on('win:maximized', () => cb()),
+  onWinUnmaximized:  (cb) => ipcRenderer.on('win:unmaximized', () => cb()),
 })
