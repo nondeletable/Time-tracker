@@ -9,7 +9,7 @@
 // При prefers-reduced-motion движок не запускается вовсе — CSS гасит переходы,
 // но requestAnimationFrame ему не подчиняется.
 
-const FX = (() => {
+window.FX = (() => {
   const root = document.documentElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cv = document.getElementById('fx');
@@ -313,7 +313,3 @@ const FX = (() => {
   addEventListener('resize', () => { if (raf) { measure(); build(); } });
   return { refresh };
 })();
-
-// const в глобальном скрипте не попадает в window — экспортируем явно,
-// чтобы app.js мог звать движок через необязательную цепочку.
-window.FX = FX;
