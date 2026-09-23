@@ -304,13 +304,6 @@ function selectCategory(id) {
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 
-function formatDuration(seconds) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  return `${h}${t('unit_h')} ${m}${t('unit_m')} ${s}${t('unit_s')}`
-}
-
 // Без секунд: на бейджах, в кольце и в подвале они только шумят.
 // Нулевая часть тоже опускается — «160ч», а не «160ч 0м».
 function formatHM(seconds) {
