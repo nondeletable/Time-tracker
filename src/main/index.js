@@ -127,7 +127,10 @@ async function initDB() {
 
   try {
     db.exec('ALTER TABLE categories ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
-  } catch (_) {}
+  } catch (err) {
+    // Already migrated: this runs on every start and only the duplicate column is expected.
+    if (!/duplicate column name/i.test(String(err))) throw err
+  }
 
   // Одноразовая чистка peer_data: убираем накопленные самодубли (данные локального
   // пользователя под старыми/новыми именами), попавшие туда легаси-синком.
