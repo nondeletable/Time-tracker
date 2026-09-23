@@ -479,7 +479,7 @@ function start() {
   paintDock()
 }
 
-function stop() {
+function stopTimer() {
   running = false
   elapsed += Date.now() - startTime
   clearInterval(interval)
@@ -504,7 +504,7 @@ function resetTimer() {
 }
 
 timerBtn.addEventListener('click', () => {
-  if (running) stop()
+  if (running) stopTimer()
   else start()
 })
 
@@ -708,7 +708,7 @@ dockMenu.addEventListener('click', e => {
 document.addEventListener('click', () => dockMenu.classList.add('hidden'))
 
 dockBtn.addEventListener('click', () => {
-  if (running) stop()
+  if (running) stopTimer()
   else start()
 })
 
