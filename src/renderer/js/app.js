@@ -27,6 +27,13 @@ let lastStats = []
 // Длина окружности прогресса: r=156 из viewBox кольца
 const RING_LEN = 2 * Math.PI * 156
 
+// Category names and colours come out of the database, and a group member's name
+// arrives from the peer over the network. All of it is rendered through innerHTML,
+// so every such value is escaped before it lands in a tag or an attribute. The
+// page CSP already stops an injected handler from running; this keeps injected
+// markup from rearranging the layout in the first place.
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+
 function applyTheme() {
   document.documentElement.dataset.theme = themeMode === 'light' ? themeLight : themeDark
   // Палитра эффектов строится из --accent, поэтому после смены темы холст
@@ -268,7 +275,7 @@ function renderCategories() {
     btn.setAttribute('aria-pressed', String(cat.id === selectedCategoryId))
     const spent = hours.get(cat.id)
     btn.innerHTML = `
-      <span class="sw" style="background:${cat.color}"></span>${cat.name}
+      <span class="sw" style="background:${esc(cat.color)}"></span>${esc(cat.name)}
       ${spent ? `<span class="h">${formatHM(spent)}</span>` : ''}
     `
     btn.addEventListener('click', () => selectCategory(cat.id))
@@ -294,7 +301,7 @@ function selectCategory(id) {
   })
   const cat = categories.find(c => c.id === id)
   dialCat.innerHTML = cat
-    ? `<span class="sw" style="background:${cat.color}"></span>${cat.name}`
+    ? `<span class="sw" style="background:${esc(cat.color)}"></span>${esc(cat.name)}`
     : ''
   timerBtn.disabled = false
   dialogCategorySelect.value = id
@@ -431,8 +438,8 @@ function renderStats(stats) {
     const item = document.createElement('div')
     item.className = 'bars-row'
     item.innerHTML = `
-      <span class="n">${row.name}</span>
-      <span class="t"><span style="width:${pct}%;background:${row.color}"></span></span>
+      <span class="n">${esc(row.name)}</span>
+      <span class="t"><span style="width:${pct}%;background:${esc(row.color)}"></span></span>
       <span class="v">${formatHM(row.total)}</span>
     `
     bars.appendChild(item)
@@ -675,7 +682,7 @@ function paintDock() {
   const cat = categories.find(c => c.id === selectedCategoryId)
   // Без выбранной категории кнопка была бы пустой, и открыть список нечем
   dockCat.innerHTML = cat
-    ? `<span class="sw" style="background:${cat.color}"></span>${cat.name} ▾`
+    ? `<span class="sw" style="background:${esc(cat.color)}"></span>${esc(cat.name)} ▾`
     : `<span class="sw" style="background:var(--surface-2)"></span>${t('dock_category')} ▾`
   // На ходу категорию не меняют — то же правило, что у чипсов в Focus
   dockCat.disabled = running || categories.length === 0
@@ -693,7 +700,7 @@ dockCat.addEventListener('click', e => {
   if (dockCat.disabled) return
   dockMenu.innerHTML = categories.map(cat =>
     `<button data-id="${cat.id}" aria-pressed="${cat.id === selectedCategoryId}">
-       <span class="sw" style="background:${cat.color}"></span>${cat.name}</button>`
+       <span class="sw" style="background:${esc(cat.color)}"></span>${esc(cat.name)}</button>`
   ).join('')
   dockMenu.classList.toggle('hidden')
 })
@@ -1035,10 +1042,10 @@ async function renderCatTable() {
     : await window.api.getDeletedCategories()
 
   catRows.innerHTML = list.map(cat => catTab === 'active'
-    ? `<tr data-id="${cat.id}" data-name="${cat.name}" data-color="${cat.color}">
-         <td><span class="nm"><i style="background:${cat.color}"></i>${cat.name}</span></td>
+    ? `<tr data-id="${cat.id}" data-name="${esc(cat.name)}" data-color="${esc(cat.color)}">
+         <td><span class="nm"><i style="background:${esc(cat.color)}"></i>${esc(cat.name)}</span></td>
          ${actsCell(editDeleteButtons())}</tr>`
-    : `<tr data-id="${cat.id}"><td><span class="nm">${cat.name}</span></td>
+    : `<tr data-id="${cat.id}"><td><span class="nm">${esc(cat.name)}</span></td>
          <td class="acts"><button class="btn-s" data-do="restore">${t('btn_restore')}</button></td></tr>`
   ).join('')
 
@@ -1150,7 +1157,7 @@ async function loadHoursTable() {
   const sessions = await window.api.getSessionsByDate(currentUser, hoursDateInput.value)
   hoursRows.innerHTML = sessions.map(s =>
     `<tr data-id="${s.id}" data-cat="${s.category_id}" data-time="${secsToHHMM(s.duration_seconds)}">
-       <td><span class="nm"><i style="background:${s.color}"></i>${s.name}</span></td>
+       <td><span class="nm"><i style="background:${esc(s.color)}"></i>${esc(s.name)}</span></td>
        <td class="num">${secsToHHMM(s.duration_seconds)}</td>
        ${actsCell(editDeleteButtons())}</tr>`
   ).join('')
@@ -1301,7 +1308,7 @@ function renderSummaryLimit(total, period, { perUser }) {
   ).join('')
 
   sumLegend.innerHTML = users.map(([name, seconds], i) =>
-    `<b><i style="background:${userColor(i)}"></i>${name} <span class="v">${formatHM(seconds)}</span></b>`
+    `<b><i style="background:${userColor(i)}"></i>${esc(name)} <span class="v">${formatHM(seconds)}</span></b>`
   ).join('') + (left > 0
     ? `<b><i style="background:var(--surface-2)"></i>${t('sum_free')} <span class="v">${formatHM(left)}</span></b>`
     : '')
@@ -1335,7 +1342,7 @@ function renderSummaryDonut(stats) {
   let offset = 0
   sumDonut.innerHTML = stats.map(row => {
     const len = DONUT_LEN * (row.total / total)
-    const circle = `<circle cx="62" cy="62" r="54" stroke="${row.color}" stroke-dasharray="${len} ${DONUT_LEN - len}" stroke-dashoffset="${-offset}"></circle>`
+    const circle = `<circle cx="62" cy="62" r="54" stroke="${esc(row.color)}" stroke-dasharray="${len} ${DONUT_LEN - len}" stroke-dashoffset="${-offset}"></circle>`
     offset += len
     return circle
   }).join('')
@@ -1343,7 +1350,7 @@ function renderSummaryDonut(stats) {
   const top = stats.slice(0, 5)
   const rest = stats.slice(5)
   sumDonutLegend.innerHTML = top.map(row =>
-    `<div class="dl-row"><i style="background:${row.color}"></i><span class="n">${row.name}</span><span class="v">${Math.round(row.total / total * 100)}%</span></div>`
+    `<div class="dl-row"><i style="background:${esc(row.color)}"></i><span class="n">${esc(row.name)}</span><span class="v">${Math.round(row.total / total * 100)}%</span></div>`
   ).join('') + (rest.length
     ? `<div class="dl-row"><i style="background:var(--surface-2)"></i><span class="n">${t('sum_more')} ${rest.length}</span><span class="v">${Math.round(rest.reduce((s, r) => s + r.total, 0) / total * 100)}%</span></div>`
     : '')
@@ -1378,8 +1385,8 @@ function renderSummaryCategories(stats) {
   const max = stats[0].total
   sumCatRows.innerHTML = stats.map(row => `
     <tr>
-      <td><span class="nm"><i style="background:${row.color}"></i>${row.name}</span></td>
-      <td><span class="mini"><span style="width:${row.total / max * 100}%;background:${row.color}"></span></span></td>
+      <td><span class="nm"><i style="background:${esc(row.color)}"></i>${esc(row.name)}</span></td>
+      <td><span class="mini"><span style="width:${row.total / max * 100}%;background:${esc(row.color)}"></span></span></td>
       <td class="num">${row.sessions}</td>
       <td class="num">${formatHM(row.total)}</td>
     </tr>`).join('')
