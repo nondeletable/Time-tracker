@@ -3,6 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- The page is loaded over file://, where the Content-Security-Policy HTTP
+       header cannot be delivered, so the policy lives in the markup. Everything
+       the app needs is local, and the renderer never opens a socket of its own:
+       the sync layer runs in the main process. 'unsafe-inline' is granted to
+       styles only - the bars and swatches are drawn with a generated style
+       attribute - and deliberately withheld from scripts, which is what stops
+       markup injected through innerHTML from executing. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'" />
   <title>Time Tracker</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
