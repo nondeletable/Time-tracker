@@ -9,7 +9,7 @@
   const api = factory()
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.THEME_BG = api
-})(typeof self !== 'undefined' ? self : this, function () {
+})(globalThis, function () {
   const BG = /--bg\s*:\s*(#[0-9a-fA-F]{3,8})/
 
   // Возвращает значение --bg для темы, либо фон :root, если такой темы в

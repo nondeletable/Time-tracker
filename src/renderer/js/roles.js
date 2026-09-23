@@ -4,7 +4,7 @@
   const api = factory()
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.ROLES = api
-})(typeof self !== 'undefined' ? self : this, function () {
+})(globalThis, function () {
   // Лимит/период редактируют solo и owner; member получает их от owner (read-only).
   function canEditLimit(role) {
     return role !== 'member'

@@ -3,7 +3,7 @@
   const api = factory()
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.WINDOW_BOUNDS = api
-})(typeof self !== 'undefined' ? self : this, function () {
+})(globalThis, function () {
   // Возвращает bounds, если верхний центр окна (x + width/2, y) попадает в
   // рабочую область какого-либо дисплея (титлбар доступен для перетаскивания);
   // иначе null — вызывающий откатывается к дефолту.

@@ -3,7 +3,7 @@
   const dict = factory()
   if (typeof module !== 'undefined' && module.exports) module.exports = dict
   else root.DICT = dict
-})(typeof self !== 'undefined' ? self : this, function () {
+})(globalThis, function () {
   const ru = {
     // Меню/шапка
     onboarding_prompt: 'Как тебя зовут?',
