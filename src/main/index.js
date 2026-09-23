@@ -494,7 +494,11 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // On by default since Electron 20, stated here so that turning it off is a
+      // deliberate edit: CVE-2023-23623 needed sandbox and contextIsolation to be
+      // off together for the page CSP to stop being applied.
+      sandbox: true
     }
   }
 
