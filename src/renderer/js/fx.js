@@ -9,7 +9,7 @@
 // При prefers-reduced-motion движок не запускается вовсе — CSS гасит переходы,
 // но requestAnimationFrame ему не подчиняется.
 
-window.FX = (() => {
+export const FX = (() => {
   const root = document.documentElement;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const cv = document.getElementById('fx');
