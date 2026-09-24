@@ -17,8 +17,25 @@ let db = null
 let dbPath = null
 let mainWin = null
 
+// sql.js holds the database in memory and persists only by writing the whole file
+// out, so every one of the nineteen call sites below replaces all of it. Writing
+// straight over the target truncates it first, and a crash in that window leaves
+// neither the new file nor the old one - it leaves a broken one, losing the whole
+// history rather than the last change. Writing a sibling and renaming it makes the
+// swap atomic instead: the target is untouched until the rename, and a rename
+// within one volume either happened or it did not.
+//
+// There is deliberately no fsync here. It would add durability against a power cut
+// on top of the atomicity above, but it is measured at 33 ms median and 66 ms worst
+// on the volume this database lives on, against 0.5 ms without it - and saveDB sits
+// on the interaction path, so that cost is paid on every click that changes a
+// setting. Atomicity is what protects the file from the failure that actually
+// happens here: the process dying mid-write.
 function saveDB() {
-  if (db && dbPath) fs.writeFileSync(dbPath, Buffer.from(db.export()))
+  if (!db || !dbPath) return
+  const tmp = dbPath + '.tmp'
+  fs.writeFileSync(tmp, Buffer.from(db.export()))
+  fs.renameSync(tmp, dbPath)
 }
 
 function defaultPeriod() {
