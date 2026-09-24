@@ -11,6 +11,7 @@ import { getLang, setLang, t, langDict, applyI18n } from './lang.js'
 import { loadCalendarView, loadCalendarMonth, renderWeekdays } from './calendar.js'
 import { periodBreakdown } from './breakdown.js'
 import { CAT_COLORS } from './palette.js'
+import { getUser, setUser } from './user.js'
 import {
   userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
   limitBarLabel, limitBarTime, limitBarFill, expandBtn, sheet, statLeftLabel,
@@ -28,7 +29,6 @@ import {
   fxPreview, langSw,
 } from './dom.js'
 
-let currentUser = null
 let categories = []
 let selectedCategoryId = null
 
@@ -123,7 +123,7 @@ async function init() {
 
   const userName = await window.api.getSetting('user_name')
   if (userName) {
-    currentUser = userName
+    setUser(userName)
     await showMainScreen()
   } else {
     await showUserSelect()
@@ -140,7 +140,7 @@ async function showUserSelect() {
   const confirm = async () => {
     const name = input.value.trim()
     if (!name) return
-    currentUser = name
+    setUser(name)
     await window.api.setSetting('user_name', name)
     userSelectScreen.classList.add('hidden')
     await showMainScreen()
@@ -228,10 +228,10 @@ function selectCategory(id) {
 
 async function refreshStats() {
   const [stats, sharedTotal, period, todaySessions] = await Promise.all([
-    window.api.getMonthlyStats(currentUser),
+    window.api.getMonthlyStats(getUser()),
     window.api.getSharedTotal(),
     window.api.getPeriodSettings(),
-    window.api.getSessionsByDate(currentUser, todayISO()),
+    window.api.getSessionsByDate(getUser(), todayISO()),
   ])
   lastStats = stats
   todaySeconds = todaySessions.reduce((sum, s) => sum + s.duration_seconds, 0)
@@ -591,7 +591,7 @@ dialogSave.addEventListener('click', async () => {
   const startedAt = sessionStartedAt ?? (endedAt - elapsed)
 
   await window.api.saveSession({
-    user: currentUser,
+    user: getUser(),
     category_id: categoryId,
     started_at: startedAt,
     ended_at: endedAt,
@@ -698,8 +698,8 @@ function renderGroupRows(mode) {
 }
 
 async function loadProfileCard() {
-  profileName.value = currentUser
-  avatarFile = (await window.api.getSetting(`avatar_${currentUser}`)) ?? 'user.svg'
+  profileName.value = getUser()
+  avatarFile = (await window.api.getSetting(`avatar_${getUser()}`)) ?? 'user.svg'
   renderAvatar()
 
   const role = (await window.api.getSetting('group_role')) || 'solo'
@@ -725,7 +725,7 @@ avatarPop.addEventListener('click', async e => {
   const img = e.target.closest('img')
   if (!img) return
   avatarFile = img.dataset.file
-  await window.api.setSetting(`avatar_${currentUser}`, avatarFile)
+  await window.api.setSetting(`avatar_${getUser()}`, avatarFile)
   renderAvatar()
   avatarPop.classList.add('hidden')
 })
@@ -735,11 +735,11 @@ document.addEventListener('click', () => avatarPop.classList.add('hidden'))
 profileName.addEventListener('change', async () => {
   const name = profileName.value.trim()
   if (!name) {
-    profileName.value = currentUser
+    profileName.value = getUser()
     return
   }
   await window.api.renameUser(name)
-  currentUser = name
+  setUser(name)
   await refreshStats()
 })
 
@@ -994,7 +994,7 @@ async function loadHoursTable() {
     hoursDateInput.value = todayISO()
     paintDateField(hoursDateInput)
   }
-  const sessions = await window.api.getSessionsByDate(currentUser, hoursDateInput.value)
+  const sessions = await window.api.getSessionsByDate(getUser(), hoursDateInput.value)
   hoursRows.innerHTML = sessions.map(s =>
     `<tr data-id="${s.id}" data-cat="${s.category_id}" data-time="${secsToHHMM(s.duration_seconds)}">
        <td><span class="nm"><i style="background:${esc(s.color)}"></i>${esc(s.name)}</span></td>
@@ -1054,7 +1054,7 @@ hoursRows.addEventListener('click', async e => {
       } else {
         const startedAt = new Date(hoursDateInput.value + 'T00:00:00').getTime()
         await window.api.saveSession({
-          user: currentUser,
+          user: getUser(),
           category_id: categoryId,
           started_at: startedAt,
           ended_at: startedAt + seconds * 1000,
@@ -1107,12 +1107,12 @@ function userColor(index) {
 }
 
 async function loadSummaryView() {
-  if (!currentUser) return
+  if (!getUser()) return
   const [stats, sharedTotal, period, todaySessions] = await Promise.all([
-    window.api.getMonthlyStats(currentUser),
+    window.api.getMonthlyStats(getUser()),
     window.api.getSharedTotal(),
     window.api.getPeriodSettings(),
-    window.api.getSessionsByDate(currentUser, todayISO()),
+    window.api.getSessionsByDate(getUser(), todayISO()),
   ])
   const breakdown = await periodBreakdown(period)
 
@@ -1137,7 +1137,7 @@ function renderSummaryLimit(total, period, { perUser }) {
 
   // Свой всегда первым, остальные по убыванию часов
   const users = [...perUser.entries()]
-    .sort((a, b) => (a[0] === currentUser ? -1 : b[0] === currentUser ? 1 : b[1] - a[1]))
+    .sort((a, b) => (a[0] === getUser() ? -1 : b[0] === getUser() ? 1 : b[1] - a[1]))
 
   sumStack.innerHTML = users.map(([, seconds], i) =>
     `<span style="width:${limit > 0 ? (seconds / limit) * 100 : 0}%;background:${userColor(i)}"></span>`
