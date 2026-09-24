@@ -1,6 +1,6 @@
 {
   "name": "time-tracker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Desktop time tracker for two users on a shared LAN",
   "author": "nondeletable <nondeletable@gmail.com>",
   "license": "MIT",
