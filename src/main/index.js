@@ -21,20 +21,20 @@ let mainWin = null
 // out, so every one of the nineteen call sites below replaces all of it. Writing
 // straight over the target truncates it first, and a crash in that window leaves
 // neither the new file nor the old one - it leaves a broken one, losing the whole
-// history rather than the last change. Writing a sibling, flushing it to disk and
-// renaming makes the swap atomic: a rename within one volume either happened or it
-// did not. The database is 32 KB and an export takes 0.23 ms, so this costs nothing
-// worth measuring.
+// history rather than the last change. Writing a sibling and renaming it makes the
+// swap atomic instead: the target is untouched until the rename, and a rename
+// within one volume either happened or it did not.
+//
+// There is deliberately no fsync here. It would add durability against a power cut
+// on top of the atomicity above, but it is measured at 33 ms median and 66 ms worst
+// on the volume this database lives on, against 0.5 ms without it - and saveDB sits
+// on the interaction path, so that cost is paid on every click that changes a
+// setting. Atomicity is what protects the file from the failure that actually
+// happens here: the process dying mid-write.
 function saveDB() {
   if (!db || !dbPath) return
   const tmp = dbPath + '.tmp'
-  const fd = fs.openSync(tmp, 'w')
-  try {
-    fs.writeFileSync(fd, Buffer.from(db.export()))
-    fs.fsyncSync(fd)
-  } finally {
-    fs.closeSync(fd)
-  }
+  fs.writeFileSync(tmp, Buffer.from(db.export()))
   fs.renameSync(tmp, dbPath)
 }
 
