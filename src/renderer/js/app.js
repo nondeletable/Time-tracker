@@ -4,6 +4,9 @@
 // exactly as before.
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
+import {
+  esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, daysBetween,
+} from './format.js'
 
 let currentUser = null
 let categories = []
@@ -34,12 +37,6 @@ let lastStats = []
 // Длина окружности прогресса: r=156 из viewBox кольца
 const RING_LEN = 2 * Math.PI * 156
 
-// Category names and colours come out of the database, and a group member's name
-// arrives from the peer over the network. All of it is rendered through innerHTML,
-// so every such value is escaped before it lands in a tag or an attribute. The
-// page CSP already stops an injected handler from running; this keeps injected
-// markup from rearranging the layout in the first place.
-const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
 
 function applyTheme() {
   document.documentElement.dataset.theme = themeMode === 'light' ? themeLight : themeDark
@@ -328,11 +325,6 @@ function formatHM(seconds) {
   return `${h}${t('unit_h')} ${m}${t('unit_m')}`
 }
 
-function todayISO() {
-  const d = new Date()
-  const p = n => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
-}
 
 async function refreshStats() {
   const [stats, sharedTotal, period, todaySessions] = await Promise.all([
@@ -466,13 +458,6 @@ function paintRing() {
 
 // ── Timer ─────────────────────────────────────────────────────────────────────
 
-function formatTime(ms) {
-  const totalSeconds = Math.floor(ms / 1000)
-  const h = Math.floor(totalSeconds / 3600)
-  const m = Math.floor((totalSeconds % 3600) / 60)
-  const s = totalSeconds % 60
-  return [h, m, s].map(n => String(n).padStart(2, '0')).join(':')
-}
 
 function tick() {
   timerDisplay.textContent = formatTime(elapsed + (Date.now() - startTime))
@@ -770,16 +755,7 @@ const CAT_COLORS = [
   '#34d399', '#EFF74A', '#2AF720', '#3020F5'
 ]
 
-function secsToHHMM(seconds) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-}
 
-function hhmmToSecs(hhmm) {
-  const [h, m] = hhmm.split(':').map(Number)
-  return h * 3600 + m * 60
-}
 
 function formatLastSync(ts) {
   if (!ts) return '—'
@@ -1266,10 +1242,6 @@ function shortDate(iso) {
   return `${Number(d)} ${langDict().months_short[Number(m) - 1]}`
 }
 
-function daysBetween(fromISO, toISO) {
-  const ms = new Date(toISO + 'T00:00:00') - new Date(fromISO + 'T00:00:00')
-  return Math.round(ms / 86400000)
-}
 
 // Цвет участника: свои часы идут акцентом темы, остальные разбирают палитру
 // категорий по порядку — на двоих выглядит как в прототипе, третий не ломает.
