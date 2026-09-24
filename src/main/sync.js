@@ -51,9 +51,9 @@ function startSync(db, saveDB, win) {
 
 function stopSync() {
   started = false
-  if (_wss)            { try { _wss.close() } catch (_) {} _wss = null }
-  if (_udp)            { try { _udp.close() } catch (_) {} _udp = null }
-  if (peerSocket)      { try { peerSocket.close() } catch (_) {} peerSocket = null }
+  if (_wss)            { try { _wss.close() } catch (err) { console.log('[sync] WS server close failed:', err.message) } _wss = null }
+  if (_udp)            { try { _udp.close() } catch (err) { console.log('[sync] UDP socket close failed:', err.message) } _udp = null }
+  if (peerSocket)      { try { peerSocket.close() } catch (err) { console.log('[sync] peer socket close failed:', err.message) } peerSocket = null }
   if (syncTimer)       { clearInterval(syncTimer); syncTimer = null }
   if (reconnectTimer)  { clearTimeout(reconnectTimer); reconnectTimer = null }
   if (_broadcastTimer) { clearInterval(_broadcastTimer); _broadcastTimer = null }
@@ -76,7 +76,7 @@ function startWSServer() {
       ws._verified = false
       ws.on('message', data => {
         let msg
-        try { msg = JSON.parse(data) } catch (_) { return }
+        try { msg = JSON.parse(data) } catch { return }
         if (msg.type === 'hello') {
           if (!validateHandshake(myCode(), msg)) { ws.close(); return }
           ws._verified = true
@@ -116,11 +116,11 @@ function startUDP() {
     _broadcastTimer = setInterval(sendBroadcast, BROADCAST_INTERVAL_MS)
 
     _udp.on('message', (buf, rinfo) => {
-      try {
-        const data = JSON.parse(buf.toString())
-        if (data.instanceId === INSTANCE_ID) return
-        connectToPeer(rinfo.address, data.port || WS_PORT)
-      } catch (_) {}
+      let data
+      try { data = JSON.parse(buf.toString()) } catch { return }
+      if (data.instanceId === INSTANCE_ID) return
+      try { connectToPeer(rinfo.address, data.port || WS_PORT) }
+      catch (err) { console.log('[sync] peer connect failed:', err.message) }
     })
     _udp.on('error', err => console.log('[sync] UDP error:', err.message))
   })
@@ -150,7 +150,7 @@ function connectToPeer(ip, port) {
 
   ws.on('message', data => {
     let msg
-    try { msg = JSON.parse(data) } catch (_) { return }
+    try { msg = JSON.parse(data) } catch { return }
     if (msg.type === 'hello') {
       if (!validateHandshake(myCode(), msg)) { ws.close(); return }
       ws._verified = true

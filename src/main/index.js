@@ -127,7 +127,10 @@ async function initDB() {
 
   try {
     db.exec('ALTER TABLE categories ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0')
-  } catch (_) {}
+  } catch (err) {
+    // Already migrated: this runs on every start and only the duplicate column is expected.
+    if (!/duplicate column name/i.test(String(err))) throw err
+  }
 
   // Одноразовая чистка peer_data: убираем накопленные самодубли (данные локального
   // пользователя под старыми/новыми именами), попавшие туда легаси-синком.
@@ -467,7 +470,7 @@ function startupBackground() {
     const theme = activeTheme(read('theme_mode'), read('theme_light'), read('theme_dark'))
     const css = fs.readFileSync(path.join(__dirname, '../renderer/css/style.css'), 'utf8')
     return backgroundFromCss(css, theme)
-  } catch (_) {
+  } catch {
     return null
   }
 }
@@ -520,7 +523,9 @@ function createWindow() {
       const rec = { width: b.width, height: b.height, x: b.x, y: b.y, maximized: win.isMaximized() }
       db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('window_bounds', ?)", [JSON.stringify(rec)])
       saveDB()
-    } catch (_) {}
+    } catch (err) {
+      console.warn('[window] bounds not saved:', err.message)
+    }
   })
 
   Menu.setApplicationMenu(null)
@@ -533,7 +538,7 @@ function readBoundsSetting() {
   const val = stmt.step() ? stmt.getAsObject().value : null
   stmt.free()
   if (!val) return null
-  try { return JSON.parse(val) } catch (_) { return null }
+  try { return JSON.parse(val) } catch { return null }
 }
 
 app.whenReady().then(async () => {

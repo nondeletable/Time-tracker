@@ -13,16 +13,23 @@
   "scripts": {
     "dev": "electron .",
     "build": "electron-builder",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint .",
+    "lint:css": "stylelint \"src/**/*.css\""
   },
   "dependencies": {
     "sql.js": "^1.12.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "electron": "^31.7.7",
     "electron-builder": "^24.13.3",
-    "playwright-core": "^1.61.0"
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "playwright-core": "^1.61.0",
+    "stylelint": "^17.15.0",
+    "stylelint-config-standard": "^40.0.0"
   },
   "build": {
     "appId": "com.timetracker.app",

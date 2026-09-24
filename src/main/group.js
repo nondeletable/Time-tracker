@@ -3,7 +3,7 @@
   const api = factory()
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.GROUP = api
-})(typeof self !== 'undefined' ? self : this, function () {
+})(globalThis, function () {
   const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
   const CODE_LEN = 6
 

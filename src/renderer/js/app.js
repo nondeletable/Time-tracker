@@ -304,13 +304,6 @@ function selectCategory(id) {
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
 
-function formatDuration(seconds) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  return `${h}${t('unit_h')} ${m}${t('unit_m')} ${s}${t('unit_s')}`
-}
-
 // Без секунд: на бейджах, в кольце и в подвале они только шумят.
 // Нулевая часть тоже опускается — «160ч», а не «160ч 0м».
 function formatHM(seconds) {
@@ -486,7 +479,7 @@ function start() {
   paintDock()
 }
 
-function stop() {
+function stopTimer() {
   running = false
   elapsed += Date.now() - startTime
   clearInterval(interval)
@@ -511,7 +504,7 @@ function resetTimer() {
 }
 
 timerBtn.addEventListener('click', () => {
-  if (running) stop()
+  if (running) stopTimer()
   else start()
 })
 
@@ -715,7 +708,7 @@ dockMenu.addEventListener('click', e => {
 document.addEventListener('click', () => dockMenu.classList.add('hidden'))
 
 dockBtn.addEventListener('click', () => {
-  if (running) stop()
+  if (running) stopTimer()
   else start()
 })
 
@@ -834,7 +827,7 @@ function paintDateField(input) {
 }
 
 document.querySelectorAll('.date-f input').forEach(input => {
-  input.addEventListener('click', () => { try { input.showPicker() } catch (e) {} })
+  input.addEventListener('click', () => { try { input.showPicker() } catch { /* unsupported, or blocked outside a user gesture */ } })
 })
 
 // ── Карточка «Профиль» ────────────────────────────────────────────────────────

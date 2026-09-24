@@ -3,7 +3,7 @@
   const api = factory()
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.I18N = api
-})(typeof self !== 'undefined' ? self : this, function () {
+})(globalThis, function () {
   function detectLang(locale) {
     return String(locale || '').toLowerCase().startsWith('ru') ? 'ru' : 'en'
   }
