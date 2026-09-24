@@ -94,7 +94,7 @@ function startWSServer() {
           notifyStatus(false)
         }
       })
-      ws.on('error', () => {})
+      ws.on('error', err => console.log('[sync] client socket error:', err.message))
     })
     _wss.on('error', err => console.log('[sync] WS server error:', err.message))
   } catch (err) {
@@ -110,7 +110,9 @@ function startUDP() {
     _udp.setBroadcast(true)
     const sendBroadcast = () => {
       const msg = Buffer.from(JSON.stringify({ instanceId: INSTANCE_ID, port: WS_PORT }))
-      _udp.send(msg, 0, msg.length, UDP_PORT, '255.255.255.255', () => {})
+      _udp.send(msg, 0, msg.length, UDP_PORT, '255.255.255.255', err => {
+        if (err) console.log('[sync] broadcast failed:', err.message)
+      })
     }
     sendBroadcast()
     _broadcastTimer = setInterval(sendBroadcast, BROADCAST_INTERVAL_MS)
@@ -168,7 +170,7 @@ function connectToPeer(ip, port) {
     if (started) reconnectTimer = setTimeout(() => connectToPeer(peerIP, peerPort), RECONNECT_DELAY_MS)
   })
 
-  ws.on('error', () => {})
+  ws.on('error', err => console.log('[sync] peer socket error:', err.message))
 }
 
 // ── Payload ────────────────────────────────────────────────────────────────
