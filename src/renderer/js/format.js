@@ -29,10 +29,16 @@ export function hhmmToSecs(hhmm) {
   return h * 3600 + m * 60
 }
 
-export function todayISO() {
-  const d = new Date()
+// Local calendar date, not UTC: toISOString() would hand back yesterday for
+// anyone east of Greenwich in the evening. The calendar and the Summary chart
+// both need it for an arbitrary day, todayISO needs it for now - one formula.
+export function localISODate(d) {
   const p = n => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+export function todayISO() {
+  return localISODate(new Date())
 }
 
 export function daysBetween(fromISO, toISO) {

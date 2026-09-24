@@ -5,7 +5,7 @@
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
 import {
-  esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, daysBetween,
+  esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, localISODate, daysBetween,
 } from './format.js'
 import { getLang, setLang, t, langDict, applyI18n } from './lang.js'
 import {
@@ -1603,13 +1603,6 @@ function renderCalendarGrid(year, month, rows, avatars) {
 
     calGrid.appendChild(cell)
   }
-}
-
-function localISODate(d) {
-  const y  = d.getFullYear()
-  const mo = String(d.getMonth() + 1).padStart(2, '0')
-  const da = String(d.getDate()).padStart(2, '0')
-  return `${y}-${mo}-${da}`
 }
 
 function formatCalDuration(seconds) {
