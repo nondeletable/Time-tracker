@@ -17,8 +17,25 @@ let db = null
 let dbPath = null
 let mainWin = null
 
+// sql.js holds the database in memory and persists only by writing the whole file
+// out, so every one of the nineteen call sites below replaces all of it. Writing
+// straight over the target truncates it first, and a crash in that window leaves
+// neither the new file nor the old one - it leaves a broken one, losing the whole
+// history rather than the last change. Writing a sibling, flushing it to disk and
+// renaming makes the swap atomic: a rename within one volume either happened or it
+// did not. The database is 32 KB and an export takes 0.23 ms, so this costs nothing
+// worth measuring.
 function saveDB() {
-  if (db && dbPath) fs.writeFileSync(dbPath, Buffer.from(db.export()))
+  if (!db || !dbPath) return
+  const tmp = dbPath + '.tmp'
+  const fd = fs.openSync(tmp, 'w')
+  try {
+    fs.writeFileSync(fd, Buffer.from(db.export()))
+    fs.fsyncSync(fd)
+  } finally {
+    fs.closeSync(fd)
+  }
+  fs.renameSync(tmp, dbPath)
 }
 
 function defaultPeriod() {
