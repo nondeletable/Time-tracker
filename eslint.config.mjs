@@ -1,11 +1,10 @@
 import js from '@eslint/js'
 import globals from 'globals'
 
-// Renderer scripts are classic <script src> files, not modules: the five UMD
-// helpers publish one name each on window, and app.js consumes them.
+// The renderer is an ES module: index.html loads app.js with type="module" and it
+// imports FX and IDLE_FX. The three UMD helpers stay classic scripts - node --test
+// requires them as CommonJS - and each publishes one name on window.
 const rendererGlobals = {
-  FX: 'readonly',
-  IDLE_FX: 'readonly',
   I18N: 'readonly',
   ROLES: 'readonly',
   DICT: 'readonly'
@@ -28,7 +27,7 @@ export default [
     files: ['src/renderer/**/*.js'],
     languageOptions: {
       ecmaVersion: 2023,
-      sourceType: 'script',
+      sourceType: 'module',
       globals: { ...globals.browser, ...rendererGlobals }
     }
   },
@@ -36,6 +35,7 @@ export default [
     // The UMD helpers load both in the browser and in node --test.
     files: ['src/renderer/js/roles.js', 'src/renderer/js/i18n/i18n.js', 'src/renderer/js/i18n/dict.js'],
     languageOptions: {
+      sourceType: 'commonjs',
       globals: { ...globals.browser, ...globals.commonjs }
     }
   },
