@@ -536,12 +536,15 @@ function fadeSwap(from, to) {
   }, 900)
 }
 
-async function setMode(next) {
+function setMode(next) {
   const root = document.documentElement
   if (root.dataset.mode === next || modeBusy) return
   IDLE_FX.fade()
 
-  await window.api.setSetting('ui_mode', next)
+  // Which mode the app is in is persisted, but the transition does not wait for
+  // it. A disk write has no business delaying an animation, and the worst a
+  // failure here costs is that the next launch opens in the other mode.
+  window.api.setSetting('ui_mode', next).catch(err => console.warn('[ui] mode not saved:', err))
 
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     root.dataset.mode = next
