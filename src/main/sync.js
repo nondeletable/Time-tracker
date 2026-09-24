@@ -2,13 +2,15 @@ const WebSocket = require('ws')
 const dgram     = require('dgram')
 const { validateHandshake, isSelf, shouldApplyLimit } = require('./group')
 const { storePeerAggregates } = require('./peer')
+const { reconnectDelay } = require('./backoff')
 
 const WS_PORT  = 43210
 const UDP_PORT = 43211
 let syncIntervalMs = 5 * 60 * 1000
 let lastSyncAt     = null
 const BROADCAST_INTERVAL_MS = 30 * 1000
-const RECONNECT_DELAY_MS    = 30 * 1000
+// Reconnect backs off instead of hammering a peer that is simply switched off.
+// The ladder, the cap and the jitter window live in backoff.js, where they are tested.
 const INSTANCE_ID = Math.random().toString(36).slice(2)
 
 let _db     = null
@@ -24,6 +26,11 @@ let peerIP         = null
 let peerPort       = WS_PORT
 let syncTimer      = null
 let reconnectTimer = null
+let reconnectAttempt = 0
+// Discovery broadcasts arrive every 30 seconds and call connectToPeer too, so the
+// backoff has to be a gate both paths pass through - a timer alone would be
+// decorative, with the broadcast retrying underneath it on a flat interval.
+let nextAttemptAt = 0
 let serverClients  = new Set()
 
 // ── Локальные настройки ────────────────────────────────────────────────────
@@ -56,6 +63,8 @@ function stopSync() {
   if (peerSocket)      { try { peerSocket.close() } catch (err) { console.log('[sync] peer socket close failed:', err.message) } peerSocket = null }
   if (syncTimer)       { clearInterval(syncTimer); syncTimer = null }
   if (reconnectTimer)  { clearTimeout(reconnectTimer); reconnectTimer = null }
+  reconnectAttempt = 0
+  nextAttemptAt = 0
   if (_broadcastTimer) { clearInterval(_broadcastTimer); _broadcastTimer = null }
   serverClients.clear()
   notifyStatus(false)
@@ -132,6 +141,7 @@ function startUDP() {
 
 function connectToPeer(ip, port) {
   if (!started) return
+  if (Date.now() < nextAttemptAt) return
   if (peerSocket && (
     peerSocket.readyState === WebSocket.OPEN ||
     peerSocket.readyState === WebSocket.CONNECTING
@@ -156,6 +166,8 @@ function connectToPeer(ip, port) {
     if (msg.type === 'hello') {
       if (!validateHandshake(myCode(), msg)) { ws.close(); return }
       ws._verified = true
+      reconnectAttempt = 0
+      nextAttemptAt = 0
       notifyStatus(true)
       sendSyncPayload(ws)
       return
@@ -167,7 +179,15 @@ function connectToPeer(ip, port) {
     peerSocket = null
     notifyStatus(false)
     if (syncTimer) { clearInterval(syncTimer); syncTimer = null }
-    if (started) reconnectTimer = setTimeout(() => connectToPeer(peerIP, peerPort), RECONNECT_DELAY_MS)
+    if (started) {
+      const delay = reconnectDelay(reconnectAttempt)
+      reconnectAttempt++
+      nextAttemptAt = Date.now() + delay
+      reconnectTimer = setTimeout(() => {
+        nextAttemptAt = 0
+        connectToPeer(peerIP, peerPort)
+      }, delay)
+    }
   })
 
   ws.on('error', err => console.log('[sync] peer socket error:', err.message))
