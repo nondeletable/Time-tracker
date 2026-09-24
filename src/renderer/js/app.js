@@ -5,7 +5,7 @@
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
 import {
-  esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, localISODate, daysBetween,
+  esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, localISODate, daysBetween, formatHM,
 } from './format.js'
 import { getLang, setLang, t, langDict, applyI18n } from './lang.js'
 import { loadCalendarView, loadCalendarMonth, renderWeekdays } from './calendar.js'
@@ -223,14 +223,6 @@ function selectCategory(id) {
 
 // Без секунд: на бейджах, в кольце и в подвале они только шумят.
 // Нулевая часть тоже опускается — «160ч», а не «160ч 0м».
-function formatHM(seconds) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  if (!h) return `${m}${t('unit_m')}`
-  if (!m) return `${h}${t('unit_h')}`
-  return `${h}${t('unit_h')} ${m}${t('unit_m')}`
-}
-
 
 async function refreshStats() {
   const [stats, sharedTotal, period, todaySessions] = await Promise.all([

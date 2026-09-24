@@ -1,7 +1,13 @@
-// Pure helpers: no DOM, no module state, nothing to mock. They were the only
-// part of app.js that could be reasoned about on its own, so they move first.
-// formatHM and shortDate deliberately stay behind - both call into the active
-// language, and dragging them here would drag that state with them.
+// Helpers with no DOM and no state of their own. They were the only part of
+// app.js that could be reasoned about on its own, so they moved first.
+//
+// formatHM stayed behind in 3b because it calls into the active language and
+// that language was a local in app.js. Once the language became a module of its
+// own the reason was gone, so it joined the rest and this file now imports
+// lang.js. shortDate is still out: it belongs to the Summary view and is used
+// nowhere else.
+
+import { t } from './lang.js'
 
 // Category names and colours come out of the database, and a group member's name
 // arrives from the peer over the network. All of it is rendered through innerHTML,
@@ -44,4 +50,14 @@ export function todayISO() {
 export function daysBetween(fromISO, toISO) {
   const ms = new Date(toISO + 'T00:00:00') - new Date(fromISO + 'T00:00:00')
   return Math.round(ms / 86400000)
+}
+
+// Hours and minutes for a human: "5h 41m", and just one unit when the other is
+// zero. The unit labels come from the dictionary, so this one is language-aware.
+export function formatHM(seconds) {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  if (!h) return `${m}${t('unit_m')}`
+  if (!m) return `${h}${t('unit_h')}`
+  return `${h}${t('unit_h')} ${m}${t('unit_m')}`
 }
