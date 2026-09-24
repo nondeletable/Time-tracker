@@ -7,6 +7,22 @@ import { IDLE_FX } from './idle-fx.js'
 import {
   esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, daysBetween,
 } from './format.js'
+import {
+  userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
+  limitBarLabel, limitBarTime, limitBarFill, expandBtn, sheet, statLeftLabel,
+  statLeft, statAvg, bars, timerDisplay, timerBtn, resetBtn, saveDialog,
+  dialogTime, dialogCategorySelect, dialogCancel, dialogSave, appEl, tbtn,
+  tglyph, ringEl, dashLayer, dashTitle, dock, dockCat, dockMenu, dockTime,
+  dockBtn, profileName, avatarBtn, avatarImg, avatarPop, groupModeSw,
+  groupCodeInput, groupGoBtn, groupRoleTag, groupCodeValue,
+  syncIntervalSelect, syncIntervalHelp, syncNowBtn, groupLeaveBtn,
+  limitLeftValue, dailyGoalInput, limitInput, periodStartInput,
+  periodEndInput, catRows, catEmpty, catAddBtn, catTabs, hoursRows,
+  hoursEmpty, hoursAddBtn, hoursDateInput, appearanceGrid, themeModeSw,
+  themeLightSelect, themeDarkSelect, dotLight, dotDark, animSw, animSpeedSw,
+  animSpeedRow, animReplay, fxParticlesSelect, fxBlobsSelect, fxIdleSw,
+  fxPreview, langSw,
+} from './dom.js'
 
 let currentUser = null
 let categories = []
@@ -88,82 +104,6 @@ function applyI18n() {
   })
 }
 
-const userSelectScreen     = document.getElementById('user-select-screen')
-const mainScreen           = document.getElementById('main-screen')
-const focusLayer           = document.getElementById('layer-focus')
-const chips                = document.getElementById('chips')
-const dialCat              = document.getElementById('dial-cat')
-const dialSub              = document.getElementById('dial-sub')
-const prog                 = document.getElementById('prog')
-const limitBarLabel        = document.getElementById('limit-bar-label')
-const limitBarTime         = document.getElementById('limit-bar-time')
-const limitBarFill         = document.getElementById('limit-bar-fill')
-const expandBtn            = document.getElementById('expand')
-const sheet                = document.getElementById('sheet')
-const statLeftLabel        = document.getElementById('stat-left-label')
-const statLeft             = document.getElementById('stat-left')
-const statAvg              = document.getElementById('stat-avg')
-const bars                 = document.getElementById('bars')
-const timerDisplay         = document.getElementById('timer-display')
-const timerBtn             = document.getElementById('timer-btn')
-const resetBtn             = document.getElementById('reset-btn')
-const saveDialog           = document.getElementById('save-dialog')
-const dialogTime           = document.getElementById('dialog-time')
-const dialogCategorySelect = document.getElementById('dialog-category-select')
-const dialogCancel         = document.getElementById('dialog-cancel')
-const dialogSave           = document.getElementById('dialog-save')
-const appEl                = document.getElementById('app')
-const tbtn                 = document.getElementById('tbtn')
-const tglyph               = document.querySelector('.tglyph')
-const ringEl               = document.getElementById('ring')
-const dashLayer            = document.getElementById('layer-dash')
-const dashTitle            = document.getElementById('dash-title')
-const dock                 = document.getElementById('dock')
-const dockCat              = document.getElementById('dock-cat')
-const dockMenu             = document.getElementById('dock-menu')
-const dockTime             = document.getElementById('dock-time')
-const dockBtn              = document.getElementById('dock-btn')
-const profileName          = document.getElementById('profile-name')
-const avatarBtn            = document.getElementById('avatar-btn')
-const avatarImg            = document.getElementById('avatar-img')
-const avatarPop            = document.getElementById('avatar-pop')
-const groupModeSw          = document.getElementById('group-mode-sw')
-const groupCodeInput       = document.getElementById('group-code-input')
-const groupGoBtn           = document.getElementById('group-go-btn')
-const groupRoleTag         = document.getElementById('group-role-tag')
-const groupCodeValue       = document.getElementById('group-code-value')
-const syncIntervalSelect   = document.getElementById('sync-interval-select')
-const syncIntervalHelp     = document.getElementById('sync-interval-help')
-const syncNowBtn           = document.getElementById('sync-now-btn')
-const groupLeaveBtn        = document.getElementById('group-leave-btn')
-const limitLeftValue       = document.getElementById('limit-left-value')
-const dailyGoalInput       = document.getElementById('daily-goal-input')
-const limitInput           = document.getElementById('limit-input')
-const periodStartInput     = document.getElementById('period-start-input')
-const periodEndInput       = document.getElementById('period-end-input')
-const catRows              = document.getElementById('cat-rows')
-const catEmpty             = document.getElementById('cat-empty')
-const catAddBtn            = document.getElementById('cat-add-btn')
-const catTabs              = document.getElementById('cat-tabs')
-const hoursRows            = document.getElementById('hours-rows')
-const hoursEmpty           = document.getElementById('hours-empty')
-const hoursAddBtn          = document.getElementById('hours-add-btn')
-const hoursDateInput       = document.getElementById('hours-date-input')
-const appearanceGrid       = document.getElementById('appearance-grid')
-const themeModeSw          = document.getElementById('theme-mode-sw')
-const themeLightSelect     = document.getElementById('theme-light-select')
-const themeDarkSelect      = document.getElementById('theme-dark-select')
-const dotLight             = document.getElementById('dot-light')
-const dotDark              = document.getElementById('dot-dark')
-const animSw               = document.getElementById('anim-sw')
-const animSpeedSw          = document.getElementById('anim-speed-sw')
-const animSpeedRow         = document.getElementById('anim-speed-row')
-const animReplay           = document.getElementById('anim-replay')
-const fxParticlesSelect    = document.getElementById('fx-particles-select')
-const fxBlobsSelect        = document.getElementById('fx-blobs-select')
-const fxIdleSw             = document.getElementById('fx-idle-sw')
-const fxPreview            = document.getElementById('fx-preview')
-const langSw               = document.getElementById('lang-sw')
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
