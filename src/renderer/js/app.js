@@ -10,6 +10,7 @@ import {
 import { getLang, setLang, t, langDict, applyI18n } from './lang.js'
 import { loadCalendarView, loadCalendarMonth, renderWeekdays } from './calendar.js'
 import { periodBreakdown } from './breakdown.js'
+import { CAT_COLORS } from './palette.js'
 import {
   userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
   limitBarLabel, limitBarTime, limitBarFill, expandBtn, sheet, statLeftLabel,
@@ -609,11 +610,6 @@ const ICONS = '../../assets/icons/'
 const AVATAR_FILES = [
   'user.svg', 'man.png', 'man_1.png', 'man_2.png', 'man_3.png',
   'woman.png', 'woman_1.png', 'woman_2.png', 'woman_3.png'
-]
-
-const CAT_COLORS = [
-  '#60a5fa', '#c084fc', '#fb923c', '#f472b6', '#f87171',
-  '#34d399', '#EFF74A', '#2AF720', '#3020F5'
 ]
 
 
