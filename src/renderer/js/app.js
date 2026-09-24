@@ -7,6 +7,7 @@ import { IDLE_FX } from './idle-fx.js'
 import {
   esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, daysBetween,
 } from './format.js'
+import { getLang, setLang, t, langDict, applyI18n } from './lang.js'
 import {
   userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
   limitBarLabel, limitBarTime, limitBarFill, expandBtn, sheet, statLeftLabel,
@@ -37,7 +38,6 @@ let sessionStartedAt = null
 let calYear  = 0
 let calMonth = 0
 
-let currentLang = 'ru'
 // Палитра задаётся одним значением целиком; themeMode выбирает, какая из двух
 // сохранённых тем активна сейчас.
 let themeMode  = 'dark'
@@ -73,44 +73,12 @@ function applyFx(particles, leaks) {
   FX.refresh()
 }
 
-function t(key) {
-  return window.I18N.translate(window.DICT, currentLang, key)
-}
-
-// Названия месяцев и дней недели лежат массивами и через translate() не
-// проходят. Для языков без своего словаря — DE и ES — отдаём английский, тем
-// же правилом, по которому фолбэчит translate().
-function langDict() {
-  return window.DICT[currentLang] || window.DICT.en
-}
-
-function applyI18n() {
-  document.documentElement.lang = currentLang
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = t(el.getAttribute('data-i18n'))
-  })
-  document.querySelectorAll('[data-i18n-title]').forEach(el => {
-    el.setAttribute('title', t(el.getAttribute('data-i18n-title')))
-  })
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-    el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')))
-  })
-  document.querySelectorAll('[data-i18n-tip]').forEach(el => {
-    el.dataset.tip = t(el.getAttribute('data-i18n-tip'))
-  })
-  document.querySelectorAll('#sync-interval-select option').forEach(opt => {
-    const min = Math.round(Number(opt.value) / 60)
-    opt.textContent = `${min} ${t('sync_min')}`
-  })
-}
-
-
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 async function init() {
   const savedLang = await window.api.getSetting('lang')
-  currentLang = savedLang || window.I18N.detectLang(navigator.language)
-  if (!savedLang) await window.api.setSetting('lang', currentLang)
+  setLang(savedLang || window.I18N.detectLang(navigator.language))
+  if (!savedLang) await window.api.setSetting('lang', getLang())
   applyI18n()
 
   const savedMode  = await window.api.getSetting('theme_mode')
@@ -1344,7 +1312,7 @@ function loadAppearanceView() {
   fxParticlesSelect.value = document.documentElement.dataset.fxp || 'off'
   fxBlobsSelect.value     = document.documentElement.dataset.fxl || 'off'
   pressOne(fxIdleSw, 'fxIdle', document.documentElement.dataset.fxi)
-  pressOne(langSw, 'lang', currentLang)
+  pressOne(langSw, 'lang', getLang())
 }
 
 themeModeSw.addEventListener('click', async e => {
@@ -1534,10 +1502,10 @@ requestAnimationFrame(drawFxPreview)
 langSw.addEventListener('click', async e => {
   const btn = e.target.closest('button')
   if (!btn) return
-  currentLang = btn.dataset.lang
-  await window.api.setSetting('lang', currentLang)
+  setLang(btn.dataset.lang)
+  await window.api.setSetting('lang', getLang())
   applyI18n()
-  pressOne(langSw, 'lang', currentLang)
+  pressOne(langSw, 'lang', getLang())
   renderCategories()
   renderDialogCategories()
   renderWeekdays()
