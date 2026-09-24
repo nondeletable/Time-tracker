@@ -10,7 +10,7 @@
 // и движения не видно. При prefers-reduced-motion движок не запускается вовсе,
 // как и fx.js: CSS гасит переходы, но requestAnimationFrame ему не подчиняется.
 
-window.IDLE_FX = (() => {
+export const IDLE_FX = (() => {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const root = document.documentElement;
 
