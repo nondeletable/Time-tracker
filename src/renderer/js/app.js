@@ -1506,7 +1506,10 @@ langSw.addEventListener('click', async e => {
   pressOne(langSw, 'lang', getLang())
   renderCategories()
   renderDialogCategories()
-  renderWeekdays()
+  // Ряд дней недели переводится сам, а название месяца пишется только при
+  // загрузке месяца - поэтому открытый Календарь перезагружаем целиком.
+  if (currentView === 'calendar') await loadCalendarMonth()
+  else renderWeekdays()
   await refreshStats()
   flashSaved(btn)
 })
