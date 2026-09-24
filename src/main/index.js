@@ -186,12 +186,29 @@ function advancePeriodIfNeeded() {
   return changed
 }
 
+// Every channel below acts on this app's own data, so the only frame allowed to
+// reach them is the main frame of our own window. Electron's guidance is to check
+// the sender rather than trust the channel name: a frame we never created - an
+// iframe, a popup, a page navigated somewhere unexpected - can otherwise call
+// anything the preload exposes. senderFrame is null once a frame is gone, hence
+// the explicit test.
+function fromOurWindow(event, channel) {
+  const frame = event.senderFrame
+  if (frame && mainWin && !mainWin.isDestroyed() && frame === mainWin.webContents.mainFrame) return true
+  console.warn(`[ipc] refused ${channel} from an unexpected frame`)
+  return false
+}
+
+function handle(channel, listener) {
+  ipcMain.handle(channel, (event, ...args) => fromOurWindow(event, channel) ? listener(event, ...args) : null)
+}
+
 function setupIPC() {
-  ipcMain.handle('app:get-default-name', () => {
+  handle('app:get-default-name', () => {
     try { return os.userInfo().username || '' } catch { return '' }
   })
 
-  ipcMain.handle('db:rename-user', (_, newName) => {
+  handle('db:rename-user', (_, newName) => {
     const name = String(newName || '').trim()
     if (!name) return false
     const stmt = db.prepare("SELECT value FROM settings WHERE key = 'user_name'")
@@ -217,7 +234,7 @@ function setupIPC() {
     return true
   })
 
-  ipcMain.handle('db:get-setting', (_, key) => {
+  handle('db:get-setting', (_, key) => {
     const stmt = db.prepare('SELECT value FROM settings WHERE key = ?')
     stmt.bind([key])
     const result = stmt.step() ? stmt.getAsObject().value : null
@@ -225,12 +242,12 @@ function setupIPC() {
     return result
   })
 
-  ipcMain.handle('db:set-setting', (_, key, value) => {
+  handle('db:set-setting', (_, key, value) => {
     db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', [key, value])
     saveDB()
   })
 
-  ipcMain.handle('db:get-categories', () => {
+  handle('db:get-categories', () => {
     const stmt = db.prepare('SELECT id, name, color, sort_order FROM categories WHERE deleted = 0 ORDER BY sort_order')
     const rows = []
     while (stmt.step()) rows.push(stmt.getAsObject())
@@ -238,7 +255,7 @@ function setupIPC() {
     return rows
   })
 
-  ipcMain.handle('db:save-session', (_, session) => {
+  handle('db:save-session', (_, session) => {
     db.run(
       'INSERT INTO sessions (user, category_id, started_at, ended_at, duration_seconds) VALUES (?, ?, ?, ?, ?)',
       [session.user, session.category_id, session.started_at, session.ended_at, session.duration_seconds]
@@ -247,9 +264,9 @@ function setupIPC() {
     return db.exec('SELECT last_insert_rowid()')[0].values[0][0]
   })
 
-  ipcMain.handle('db:get-period-settings', () => getPeriodSettings())
+  handle('db:get-period-settings', () => getPeriodSettings())
 
-  ipcMain.handle('db:get-monthly-stats', (_, user) => {
+  handle('db:get-monthly-stats', (_, user) => {
     const { period_start, period_end } = getPeriodSettings()
     const from = dateToMs(period_start)
     const to   = dateToMsEnd(period_end)
@@ -271,7 +288,7 @@ function setupIPC() {
     return rows
   })
 
-  ipcMain.handle('db:get-sessions-by-date', (_, user, isoDate) => {
+  handle('db:get-sessions-by-date', (_, user, isoDate) => {
     const from = dateToMs(isoDate)
     const to   = dateToMsEnd(isoDate)
     const stmt = db.prepare(`
@@ -289,7 +306,7 @@ function setupIPC() {
     return rows
   })
 
-  ipcMain.handle('db:update-session', (_, id, categoryId, durationSeconds) => {
+  handle('db:update-session', (_, id, categoryId, durationSeconds) => {
     db.run(
       'UPDATE sessions SET category_id = ?, duration_seconds = ?, ended_at = started_at + ? WHERE id = ?',
       [categoryId, durationSeconds, durationSeconds * 1000, id]
@@ -297,12 +314,12 @@ function setupIPC() {
     saveDB()
   })
 
-  ipcMain.handle('db:delete-session', (_, id) => {
+  handle('db:delete-session', (_, id) => {
     db.run('DELETE FROM sessions WHERE id = ?', [id])
     saveDB()
   })
 
-  ipcMain.handle('db:add-category', (_, name, color) => {
+  handle('db:add-category', (_, name, color) => {
     const maxResult = db.exec('SELECT MAX(sort_order) as mx FROM categories')
     const mx = maxResult[0]?.values[0][0] ?? -1
     db.run('INSERT INTO categories (name, color, sort_order) VALUES (?, ?, ?)', [name, color, mx + 1])
@@ -310,12 +327,12 @@ function setupIPC() {
     return db.exec('SELECT last_insert_rowid()')[0].values[0][0]
   })
 
-  ipcMain.handle('db:update-category', (_, id, name, color) => {
+  handle('db:update-category', (_, id, name, color) => {
     db.run('UPDATE categories SET name = ?, color = ? WHERE id = ?', [name, color, id])
     saveDB()
   })
 
-  ipcMain.handle('db:get-user-avatars', () => {
+  handle('db:get-user-avatars', () => {
     const stmt = db.prepare("SELECT key, value FROM settings WHERE key LIKE 'avatar_%'")
     const avatars = {}
     while (stmt.step()) {
@@ -326,7 +343,7 @@ function setupIPC() {
     return avatars
   })
 
-  ipcMain.handle('db:get-calendar-month', (_, { year, month }) => {
+  handle('db:get-calendar-month', (_, { year, month }) => {
     const y = String(year)
     const m = String(month).padStart(2, '0')
 
@@ -356,7 +373,7 @@ function setupIPC() {
     return results
   })
 
-  ipcMain.handle('db:get-shared-total', () => {
+  handle('db:get-shared-total', () => {
     const { period_start, period_end } = getPeriodSettings()
     const from = dateToMs(period_start)
     const to   = dateToMsEnd(period_end)
@@ -382,25 +399,25 @@ function setupIPC() {
     return localTotal + peerTotal
   })
 
-  ipcMain.handle('sync:now', () => syncNow())
+  handle('sync:now', () => syncNow())
 
-  ipcMain.handle('sync:get-interval', () => {
+  handle('sync:get-interval', () => {
     const stmt = db.prepare("SELECT value FROM settings WHERE key = 'sync_interval_seconds'")
     const val  = stmt.step() ? Number(stmt.getAsObject().value) : 300
     stmt.free()
     return val
   })
 
-  ipcMain.handle('sync:set-interval', (_, seconds) => {
+  handle('sync:set-interval', (_, seconds) => {
     db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
       ['sync_interval_seconds', String(seconds)])
     saveDB()
     setSyncInterval(seconds)
   })
 
-  ipcMain.handle('sync:get-last-sync', () => getLastSyncAt())
+  handle('sync:get-last-sync', () => getLastSyncAt())
 
-  ipcMain.handle('group:create', () => {
+  handle('group:create', () => {
     const code = generateCode()
     db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_role', 'owner')")
     db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_code', ?)", [code])
@@ -409,7 +426,7 @@ function setupIPC() {
     return { role: 'owner', code }
   })
 
-  ipcMain.handle('group:join', (_, rawCode) => {
+  handle('group:join', (_, rawCode) => {
     const code = normalizeCode(rawCode)
     db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_role', 'member')")
     db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_code', ?)", [code])
@@ -418,7 +435,7 @@ function setupIPC() {
     return { role: 'member', code }
   })
 
-  ipcMain.handle('group:leave', () => {
+  handle('group:leave', () => {
     stopSync()
     db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_role', 'solo')")
     db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('group_code', '')")
@@ -427,15 +444,15 @@ function setupIPC() {
     return { role: 'solo', code: '' }
   })
 
-  ipcMain.handle('win:minimize', () => { if (mainWin) mainWin.minimize() })
-  ipcMain.handle('win:maximize-toggle', () => {
+  handle('win:minimize', () => { if (mainWin) mainWin.minimize() })
+  handle('win:maximize-toggle', () => {
     if (!mainWin) return
     if (mainWin.isMaximized()) mainWin.unmaximize()
     else mainWin.maximize()
   })
-  ipcMain.handle('win:close', () => { if (mainWin) mainWin.close() })
+  handle('win:close', () => { if (mainWin) mainWin.close() })
 
-  ipcMain.handle('db:get-deleted-categories', () => {
+  handle('db:get-deleted-categories', () => {
     const stmt = db.prepare('SELECT id, name FROM categories WHERE deleted = 1 ORDER BY name')
     const rows = []
     while (stmt.step()) rows.push(stmt.getAsObject())
@@ -443,12 +460,12 @@ function setupIPC() {
     return rows
   })
 
-  ipcMain.handle('db:soft-delete-category', (_, id) => {
+  handle('db:soft-delete-category', (_, id) => {
     db.run('UPDATE categories SET deleted = 1 WHERE id = ?', [id])
     saveDB()
   })
 
-  ipcMain.handle('db:restore-category', (_, id) => {
+  handle('db:restore-category', (_, id) => {
     db.run('UPDATE categories SET deleted = 0 WHERE id = ?', [id])
     saveDB()
   })
@@ -494,7 +511,11 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // On by default since Electron 20, stated here so that turning it off is a
+      // deliberate edit: CVE-2023-23623 needed sandbox and contextIsolation to be
+      // off together for the page CSP to stop being applied.
+      sandbox: true
     }
   }
 

@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  # Every pull request, whatever it targets. Filtering on `main` here would leave
+  # a pull request that is stacked on another branch - the work is split that way
+  # while a review is pending - with no checks at all until it is retargeted.
   pull_request:
-    branches: [main]
   push:
     branches: [main]
   # A dependency turns vulnerable without us pushing anything, so the audit job
