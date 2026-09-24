@@ -1,3 +1,10 @@
+// The entry point of the renderer. i18n.js, dict.js and roles.js stay classic
+// scripts loaded ahead of this one: node --test requires them as CommonJS, and a
+// module runs after them anyway, so they publish I18N, DICT and ROLES on window
+// exactly as before.
+import { FX } from './fx.js'
+import { IDLE_FX } from './idle-fx.js'
+
 let currentUser = null
 let categories = []
 let selectedCategoryId = null
@@ -38,7 +45,7 @@ function applyTheme() {
   document.documentElement.dataset.theme = themeMode === 'light' ? themeLight : themeDark
   // Палитра эффектов строится из --accent, поэтому после смены темы холст
   // надо перерисовать.
-  window.FX?.refresh()
+  FX.refresh()
 }
 
 async function toggleThemeMode() {
@@ -50,7 +57,7 @@ async function toggleThemeMode() {
 function applyFx(particles, leaks) {
   document.documentElement.dataset.fxp = particles
   document.documentElement.dataset.fxl = leaks
-  window.FX?.refresh()
+  FX.refresh()
 }
 
 function t(key) {
@@ -247,7 +254,7 @@ async function showMainScreen() {
   mainScreen.classList.remove('hidden')
   // После показа экрана, а не раньше: кольцо и полоса до этого скрыты, а
   // движку нужна уже посчитанная заливка обоих.
-  if (document.documentElement.dataset.fxi === 'on') window.IDLE_FX?.start()
+  if (document.documentElement.dataset.fxi === 'on') IDLE_FX.start()
 }
 
 // Выбранная категория переживает перезапуск. Без этого Start после запуска
@@ -600,20 +607,20 @@ function fadeSwap(from, to) {
     to.classList.remove('fading')
     to.querySelectorAll('[data-wave]').forEach(el => el.style.removeProperty('--wd'))
     modeBusy = false
-    window.FX?.refresh()
+    FX.refresh()
   }, 900)
 }
 
 async function setMode(next) {
   const root = document.documentElement
   if (root.dataset.mode === next || modeBusy) return
-  window.IDLE_FX?.fade()
+  IDLE_FX.fade()
 
   await window.api.setSetting('ui_mode', next)
 
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     root.dataset.mode = next
-    window.FX?.refresh()
+    FX.refresh()
     return
   }
 
@@ -669,7 +676,7 @@ async function setMode(next) {
     to.querySelectorAll('[data-wave]').forEach(el => el.style.removeProperty('--wd'))
     ringEl.style.opacity = 0
     modeBusy = false
-    window.FX?.refresh()
+    FX.refresh()
   })
 }
 
@@ -1507,7 +1514,7 @@ fxIdleSw.addEventListener('click', async e => {
   document.documentElement.dataset.fxi = state
   await window.api.setSetting('fx_idle', state)
   pressOne(fxIdleSw, 'fxIdle', state)
-  state === 'on' ? window.IDLE_FX?.start() : window.IDLE_FX?.stop()
+  state === 'on' ? IDLE_FX.start() : IDLE_FX.stop()
   flashSaved(fxIdleSw)
 })
 
