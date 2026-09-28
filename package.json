@@ -14,6 +14,7 @@
     "dev": "electron .",
     "build": "electron-builder",
     "test": "node --test",
+    "smoke": "node --test e2e/smoke.js",
     "lint": "eslint .",
     "lint:css": "stylelint \"src/**/*.css\""
   },
