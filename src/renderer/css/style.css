@@ -805,6 +805,7 @@ body {
   border-radius: 99px;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: отрезки idle-полосы живут только в .foot-bar */
 .bars-row .t span {
   display: block;
   height: 100%;
@@ -1012,6 +1013,7 @@ body {
   overflow-y: auto;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: кнопки рельса в меню дока не попадают */
 .dock-menu button {
   display: flex;
   align-items: center;
@@ -1213,6 +1215,7 @@ body {
   border-radius: 9px;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: кнопки рельса в сегментный переключатель не попадают */
 .seg button {
   padding: 5px 12px;
   border-radius: 7px;
@@ -1578,6 +1581,7 @@ body {
 }
 
 /* правка и добавление раскрываются строкой-формой под записью */
+/* stylelint-disable-next-line no-descending-specificity -- разные свойства: .tbl td:last-child задаёт только выравнивание */
 .form-row td {
   padding: var(--s3) 0;
 }
@@ -1608,6 +1612,7 @@ body {
   margin-top: var(--s3);
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: палитра не лежит в .tbl .nm */
 .palette i {
   width: 22px;
   height: 22px;
@@ -1677,6 +1682,7 @@ body {
   font-weight: 400;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: легенда Сводки не лежит в .tbl .nm */
 .legend i {
   width: 8px;
   height: 8px;
@@ -1722,6 +1728,7 @@ body {
   color: var(--text-dim);
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: легенда пончика не лежит в .tbl .nm */
 .dl-row i {
   width: 7px;
   height: 7px;
@@ -1786,6 +1793,7 @@ body {
   vertical-align: middle;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: отрезки idle-полосы живут только в .foot-bar */
 .tbl .mini span {
   display: block;
   height: 100%;
@@ -1815,6 +1823,7 @@ body {
   overflow: hidden;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: логотип в попап аватаров не попадает */
 .logo img {
   width: 64px;
   height: 64px;
@@ -1997,11 +2006,13 @@ body {
 }
 
 /* «Проверить» прогоняет ту же анимацию прямо по карточкам Appearance */
+/* stylelint-disable-next-line no-descending-specificity -- задумано: переход режима (.layer.fading) перебивает повтор анимации в Оформлении */
 .wavein [data-wave] {
   animation: wave-in 360ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- задумано: переход режима (.layer.fading) перебивает повтор анимации в Оформлении */
 .fadein [data-wave] {
   animation: fade-rise 420ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
@@ -2184,6 +2195,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* шапка таблицы той же роли, что `.tbl th` — не выключенный элемент */
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: ряд дней недели не лежит в .foot-bar */
 .calendar-weekdays span {
   text-align: center;
   font-size: 0.7rem;
