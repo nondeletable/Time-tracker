@@ -919,7 +919,7 @@ function catFormRow(id, name, color) {
   return `<tr class="form-row" data-form-id="${id ?? ''}">
       <td colspan="2">
         <div class="ed">
-          <input class="inp cat-name" value="${name}" placeholder="${t('cat_name_placeholder')}" style="flex:1;min-width:0">
+          <input class="inp cat-name" value="${esc(name)}" placeholder="${t('cat_name_placeholder')}" style="flex:1;min-width:0">
           <button class="swatch" data-do="palette" data-color="${color}" style="background:${color}"></button>
           <button class="btn-s" data-do="cancel">${t('btn_cancel')}</button>
           <button class="btn-s primary" data-do="save">${t('btn_save')}</button>
@@ -1028,7 +1028,7 @@ catRows.addEventListener('click', async e => {
 
 function hoursFormRow(id, categoryId, time) {
   const options = categories.map(c =>
-    `<option value="${c.id}"${c.id === categoryId ? ' selected' : ''}>${c.name}</option>`).join('')
+    `<option value="${c.id}"${c.id === categoryId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')
   return `<tr class="form-row" data-form-id="${id ?? ''}">
       <td colspan="3">
         <div class="ed">
