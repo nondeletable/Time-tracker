@@ -345,6 +345,14 @@ timerBtn.addEventListener('click', () => {
   else start()
 })
 
+// Глобальный хоткей жмёт ту же кнопку. Пока открыт диалог сохранения, он
+// молчит, как молчит и сама кнопка под диалогом; без категории кнопка
+// заблокирована, и click() по ней тоже ничего не делает.
+window.api.onHotkeyToggle(() => {
+  if (!saveDialog.classList.contains('hidden')) return
+  timerBtn.click()
+})
+
 resetBtn.addEventListener('click', () => {
   if (!running) resetTimer()
 })
