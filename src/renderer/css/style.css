@@ -72,6 +72,7 @@
   --r:12px; --r-lg:16px;
   --t:180ms cubic-bezier(.4,0,.2,1);
   --t-slow:420ms cubic-bezier(.16,1,.3,1);
+  --wave-ms: 900; /* переход между режимами, см. его раздел ниже */
 
   /* ── Anchors: emerald · dark (fallback default) ── */
   --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
@@ -438,7 +439,11 @@ body {
 /* Слои idle-анимации. Рисуются дважды: idle-a целиком, idle-b поверх и
    обрезанный сектором прогресса — цвет разводится только на пересечении.
    Геометрию каждый кадр пишет idle-fx.js, здесь только цвет и гашение. */
-.idle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.idle {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
 .idle-a { stroke: var(--accent); }
 .idle-b { stroke: var(--idle-over); }
 
@@ -497,8 +502,15 @@ body {
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 0.75; }
-  50%      { transform: scale(1.045); opacity: 1; }
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+
+  50% {
+    transform: scale(1.045);
+    opacity: 1;
+  }
 }
 
 /* ── Кнопка запуска ────────────────────────────────────────────────────────── */
@@ -669,7 +681,11 @@ body {
    вешает на ширину переход в 420 мс. Обёртке фон не нужен вовсе, а слоям нужен
    свой цвет и мгновенная ширина: их позицию пишет каждый кадр движок, и
    плавность превратила бы движение в вязкое доезжание с прошлого места. */
-.foot-bar .track .idle-bar { position: absolute; inset: 0; background: none; }
+.foot-bar .track .idle-bar {
+  position: absolute;
+  inset: 0;
+  background: none;
+}
 
 .foot-bar .track .idle-bar span {
   position: absolute;
@@ -809,10 +825,6 @@ body {
    поэтому рождаются ровно там, где волна прошла. --wave-ms — время, за
    которое фронт доходит до дальнего угла. */
 
-:root {
-  --wave-ms: 900;
-}
-
 [data-wave-speed="fast"] { --wave-ms: 520; }
 [data-wave-speed="med"]  { --wave-ms: 900; }
 [data-wave-speed="slow"] { --wave-ms: 1600; }
@@ -823,13 +835,20 @@ body {
 }
 
 .layer.fading [data-wave] {
-  animation: fadeRise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: fade-rise 420ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
-@keyframes fadeRise {
-  from { opacity: 0; transform: translateY(18px) scale(.82); }
-  to   { opacity: 1; transform: none; }
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .ring {
@@ -843,13 +862,20 @@ body {
 }
 
 .layer.incoming [data-wave] {
-  animation: waveIn 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: wave-in 360ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
-@keyframes waveIn {
-  from { opacity: 0; transform: translateY(10px) scale(.975); }
-  to   { opacity: 1; transform: none; }
+@keyframes wave-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.975);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ── Dashboard: рельс и каркас ─────────────────────────────────────────────── */
@@ -1972,12 +1998,12 @@ body {
 
 /* «Проверить» прогоняет ту же анимацию прямо по карточкам Appearance */
 .wavein [data-wave] {
-  animation: waveIn 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: wave-in 360ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
 .fadein [data-wave] {
-  animation: fadeRise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: fade-rise 420ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
