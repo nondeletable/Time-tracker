@@ -534,6 +534,12 @@ body {
   transition: transform var(--t), filter var(--t), background var(--t);
 }
 
+.go:disabled {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  cursor: not-allowed;
+}
+
 .go:hover:not(:disabled) {
   filter: brightness(1.07);
   transform: translateY(-1px);
@@ -541,12 +547,6 @@ body {
 
 .go:active:not(:disabled) {
   transform: scale(0.985);
-}
-
-.go:disabled {
-  background: var(--accent-soft);
-  color: var(--accent-soft-text);
-  cursor: not-allowed;
 }
 
 .go.stop {
@@ -672,12 +672,20 @@ body {
   overflow: hidden;
 }
 
+.foot-bar .track span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width var(--t-slow);
+}
+
 /* Отрезки idle-анимации живут в том же треке поверх заливки лимита.
    transition у них снят: ширину пишет каждый кадр движок, и плавность
    от --t-slow превратила бы анимацию в кашу. */
 
 /* Селекторы длиннее, чем хочется, намеренно: правило .foot-bar .track span
-   ниже перебивает более короткие — оно заливает любой span в треке акцентом и
+   выше перебивает более короткие — оно заливает любой span в треке акцентом и
    вешает на ширину переход в 420 мс. Обёртке фон не нужен вовсе, а слоям нужен
    свой цвет и мгновенная ширина: их позицию пишет каждый кадр движок, и
    плавность превратила бы движение в вязкое доезжание с прошлого места. */
@@ -694,14 +702,6 @@ body {
 }
 .foot-bar .track .idle-bar .idle-a { background: var(--accent); }
 .foot-bar .track .idle-bar .idle-b { background: var(--idle-over); }
-
-.foot-bar .track span {
-  display: block;
-  height: 100%;
-  border-radius: 99px;
-  background: var(--accent);
-  transition: width var(--t-slow);
-}
 
 .foot-bar .track span.over {
   background: var(--danger);
@@ -1064,13 +1064,13 @@ body {
   transition: background var(--t), color var(--t);
 }
 
-.dock-btn:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-
 .dock-btn:disabled {
   color: var(--text-mute);
   cursor: default;
+}
+
+.dock-btn:hover:not(:disabled) {
+  background: var(--surface-2);
 }
 
 .dock-btn.stop {
@@ -1287,15 +1287,15 @@ body {
   font-weight: 600;
 }
 
-.tbl th:last-child,
-.tbl td:last-child {
-  text-align: right;
-}
-
 .tbl td {
   padding: 7px 0;
   border-top: 1px solid var(--border);
   font-size: 12.5px;
+}
+
+.tbl th:last-child,
+.tbl td:last-child {
+  text-align: right;
 }
 
 .tbl .nm {
