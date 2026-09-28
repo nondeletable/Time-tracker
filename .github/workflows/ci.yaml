@@ -42,14 +42,12 @@ jobs:
       - name: Lint (JavaScript)
         run: npm run lint
 
-      # Reports the CSS backlog on every PR without gating on it. The stylesheet
-      # carries 62 known violations, 19 of them no-descending-specificity, and
-      # clearing those means reordering the cascade — a change that needs to be
-      # looked at, not merged on a green tick. Flip this to a gate once the CSS
-      # pass of the code audit has cleared them.
-      - name: Lint (CSS, reporting only)
+      # A gate since the CSS pass of the code audit cleared the 62 known
+      # violations. The twelve no-descending-specificity findings between
+      # unrelated components are marked in place with their reason rather than
+      # reordered across the file.
+      - name: Lint (CSS)
         run: npm run lint:css
-        continue-on-error: true
 
       - name: Test
         run: npm test
