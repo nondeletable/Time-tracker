@@ -10,6 +10,10 @@ const MODIFIERS = new Set(['CommandOrControl', 'Alt', 'Shift', 'Super'])
 const REQUIRED  = new Set(['CommandOrControl', 'Alt', 'Super'])
 const KEY = /^(?:[A-Z0-9]|F(?:[1-9]|1[0-9]|2[0-4])|Space)$/
 
+// Сочетание на первом запуске. Ctrl+Alt+Space почти нигде не занято; «Убрать» в
+// Оформлении сохраняет пустую строку, и тогда умолчание больше не возвращается.
+const DEFAULT_HOTKEY = 'CommandOrControl+Alt+Space'
+
 function isValidAccelerator(accel) {
   if (typeof accel !== 'string') return false
   const parts = accel.split('+')
@@ -20,4 +24,4 @@ function isValidAccelerator(accel) {
   return parts.some(p => REQUIRED.has(p))
 }
 
-module.exports = { isValidAccelerator }
+module.exports = { isValidAccelerator, DEFAULT_HOTKEY }

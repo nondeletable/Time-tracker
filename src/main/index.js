@@ -10,7 +10,7 @@ const { purgeSelfFromPeerData } = require('./peer')
 const { generateCode, normalizeCode } = require('./group')
 const { clampBoundsToScreen } = require('./window-bounds')
 const { backgroundFromCss, activeTheme } = require('./theme-bg')
-const { isValidAccelerator } = require('./hotkey')
+const { isValidAccelerator, DEFAULT_HOTKEY } = require('./hotkey')
 const crypto = require('crypto')
 const { detectLang } = require('../renderer/js/i18n/i18n')
 
@@ -631,11 +631,18 @@ app.whenReady().then(async () => {
   const win = mainWin
 
   // Сохранённое сочетание могла занять другая программа за время простоя —
-  // тогда хоткея просто нет, а приложение стартует как обычно.
+  // тогда хоткея просто нет, а приложение стартует как обычно. Настройки нет
+  // вовсе только до первого запуска: тогда пишем умолчание, чтобы и карточка
+  // показала его, и занятое умолчание было видно как занятое.
   {
     const stmt = db.prepare("SELECT value FROM settings WHERE key = 'hotkey_start_stop'")
-    const saved = stmt.step() ? stmt.getAsObject().value : ''
+    let saved = stmt.step() ? stmt.getAsObject().value : null
     stmt.free()
+    if (saved === null) {
+      saved = DEFAULT_HOTKEY
+      db.run('INSERT INTO settings (key, value) VALUES (?, ?)', ['hotkey_start_stop', saved])
+      saveDB()
+    }
     if (saved && !applyHotkey(saved)) console.warn(`[hotkey] ${saved} is taken, start/stop hotkey is off`)
   }
 

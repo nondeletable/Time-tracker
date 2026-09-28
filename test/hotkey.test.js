@@ -1,7 +1,7 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 
-const { isValidAccelerator } = require('../src/main/hotkey')
+const { isValidAccelerator, DEFAULT_HOTKEY } = require('../src/main/hotkey')
 
 test('сочетание с Ctrl, Alt или Super и обычной клавишей принимается', () => {
   for (const accel of ['CommandOrControl+Alt+S', 'Alt+F9', 'Super+Shift+Space', 'CommandOrControl+Shift+7', 'Alt+F24']) {
@@ -19,6 +19,10 @@ test('одни модификаторы, неизвестная клавиша �
   for (const accel of ['CommandOrControl+Alt', 'Alt+Tab', 'Alt+F25', 'Alt+s', 'Alt+Alt+S', 'Ctrl+S', '']) {
     assert.equal(isValidAccelerator(accel), false, accel)
   }
+})
+
+test('сочетание по умолчанию само проходит проверку', () => {
+  assert.equal(isValidAccelerator(DEFAULT_HOTKEY), true)
 })
 
 test('не строка — отклоняется, а не роняет', () => {
