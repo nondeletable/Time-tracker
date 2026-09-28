@@ -13,6 +13,7 @@ import { loadSummaryView } from './summary.js'
 import { periodBreakdown } from './breakdown.js'
 import { CAT_COLORS } from './palette.js'
 import { getUser, setUser } from './user.js'
+import { flashSaved } from './flash.js'
 import {
   userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
   limitBarLabel, limitBarTime, limitBarFill, expandBtn, sheet, statLeftLabel,
@@ -625,16 +626,6 @@ function formatLastSync(ts) {
   const dd = String(d.getDate()).padStart(2, '0')
   const mo = String(d.getMonth() + 1).padStart(2, '0')
   return `${dd}.${mo}.${d.getFullYear()} ${hh}:${mm}`
-}
-
-// Кнопок «Сохранить» в карточках нет: значение уходит в базу по change, а
-// справа от подписи коротко мигает «сохранено».
-function flashSaved(el) {
-  const mark = el?.closest('.row')?.querySelector('.saved')
-  if (!mark) return
-  mark.classList.add('on')
-  clearTimeout(mark._t)
-  mark._t = setTimeout(() => mark.classList.remove('on'), 1400)
 }
 
 // ── Подсказки ─────────────────────────────────────────────────────────────────
