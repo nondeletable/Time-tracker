@@ -17,6 +17,7 @@
   font-display: block;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 @font-face {
   font-family: 'Plus Jakarta Sans';
   src: url('../../../assets/fonts/PlusJakartaSans-latin-ext.woff2') format('woff2');
@@ -25,6 +26,7 @@
   font-display: block;
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 @font-face {
   font-family: 'Golos Text';
   src: url('../../../assets/fonts/GolosText-cyrillic.woff2') format('woff2');
@@ -33,6 +35,7 @@
   font-display: block;
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
+
 @font-face {
   font-family: 'Golos Text';
   src: url('../../../assets/fonts/GolosText-cyrillic-ext.woff2') format('woff2');
@@ -41,6 +44,7 @@
   font-display: block;
   unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
 }
+
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('../../../assets/fonts/JetBrainsMono-latin.woff2') format('woff2');
@@ -49,6 +53,7 @@
   font-display: block;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('../../../assets/fonts/JetBrainsMono-cyrillic.woff2') format('woff2');
@@ -83,6 +88,7 @@
   --text-faint:       color-mix(in srgb, var(--text-mute) 65%, var(--border));
   --text-disabled:    color-mix(in srgb, var(--text-mute) 40%, var(--border));
   --accent-hover:     color-mix(in srgb, var(--accent) 86%, black);
+
   /* idle-анимация там, где легла на заполненный прогресс: акцент поверх
      акцента даёт акцент, и движение пропадает — на пересечении разводим */
   --idle-over:        color-mix(in srgb, var(--accent) 50%, var(--text));
@@ -91,9 +97,10 @@
   --danger-strong:    color-mix(in srgb, var(--danger) 70%, black);
   --danger-soft:      color-mix(in srgb, var(--danger) 16%, var(--bg));
   --danger-soft-text: var(--danger);
-  --on-danger:        #ffffff;
+  --on-danger:        #fff;
+
   /* поверх затемняющей плёнки — одинаково светлый в любой теме */
-  --on-scrim:         #ffffff;
+  --on-scrim:         #fff;
 }
 
 /* ── emerald · dark ── */
@@ -102,23 +109,26 @@
   --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
   --accent:#34d399; --accent-soft:#0e2b22; --on-accent:#04231a; --danger:#f87171;
 }
+
 /* ── emerald · light ── */
 [data-theme="emerald-light"] {
-  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e5e8ee;
+  --bg:#fbfbfc; --surface:#fff; --surface-2:#f1f3f6; --border:#e5e8ee;
   --text:#111827; --text-dim:#5a6478; --text-mute:#666c77;
-  --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#ffffff; --danger:#dc2626;
+  --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#fff; --danger:#dc2626;
 }
+
 /* ── indigo · dark ── */
 [data-theme="indigo-dark"] {
   --bg:#0f0f0e; --surface:#171716; --surface-2:#1f1f1d; --border:#2b2b28;
   --text:#f0efec; --text-dim:#a0a099; --text-mute:#6b6b64;
   --accent:#818cf8; --accent-soft:#23234a; --on-accent:#10102a; --danger:#f87171;
 }
+
 /* ── indigo · light ── */
 [data-theme="indigo-light"] {
-  --bg:#f4f4f2; --surface:#ffffff; --surface-2:#ebebe7; --border:#e0e0da;
+  --bg:#f4f4f2; --surface:#fff; --surface-2:#ebebe7; --border:#e0e0da;
   --text:#1c1c1a; --text-dim:#61615c; --text-mute:#676761;
-  --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#ffffff; --danger:#dc2626;
+  --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#fff; --danger:#dc2626;
 }
 
 * {
@@ -169,7 +179,7 @@ body {
   width: 20px;
   height: 20px;
   fill: none;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -252,7 +262,7 @@ body {
    иконок навигации. */
 .chrome {
   position: absolute;
-  inset: 0 0 auto 0;
+  inset: 0 0 auto;
   height: 64px;
   z-index: 60;
   display: flex;
@@ -329,6 +339,7 @@ body {
 
 /* Слой режима. Фон непрозрачный: когда рядом встанет Dashboard, под клипом
    перехода не должен просвечивать уходящий режим. */
+
 /* Фон обязателен: под клипом волны не должен просвечивать уходящий режим */
 .layer {
   position: absolute;
@@ -621,7 +632,7 @@ body {
 /* Непрозрачный — иначе сцена просвечивает сквозь выезжающую панель */
 .foot {
   position: absolute;
-  inset: auto 0 0 0;
+  inset: auto 0 0;
   z-index: 3;
   border-top: 1px solid var(--border);
   background: var(--bg);
@@ -652,12 +663,14 @@ body {
 /* Отрезки idle-анимации живут в том же треке поверх заливки лимита.
    transition у них снят: ширину пишет каждый кадр движок, и плавность
    от --t-slow превратила бы анимацию в кашу. */
+
 /* Селекторы длиннее, чем хочется, намеренно: правило .foot-bar .track span
    ниже перебивает более короткие — оно заливает любой span в треке акцентом и
    вешает на ширину переход в 420 мс. Обёртке фон не нужен вовсе, а слоям нужен
    свой цвет и мгновенная ширина: их позицию пишет каждый кадр движок, и
    плавность превратила бы движение в вязкое доезжание с прошлого места. */
 .foot-bar .track .idle-bar { position: absolute; inset: 0; background: none; }
+
 .foot-bar .track .idle-bar span {
   position: absolute;
   top: 0;
@@ -848,6 +861,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: var(--s2);
+
   /* сверху 72px: первая иконка встаёт ниже полосы обвязки с кнопкой T */
   padding: 72px 0 var(--s3);
 }
@@ -1455,7 +1469,7 @@ body {
   display: grid;
   place-items: center;
   color: var(--on-scrim);
-  background: rgba(0, 0, 0, .5);
+  background: rgb(0 0 0 / 50%);
   opacity: 0;
   transition: opacity var(--t);
 }
@@ -1979,7 +1993,7 @@ body {
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgb(0 0 0 / 65%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1996,7 +2010,7 @@ body {
   align-items: center;
   gap: 20px;
   min-width: 290px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 60%);
 }
 
 .dialog-title {
