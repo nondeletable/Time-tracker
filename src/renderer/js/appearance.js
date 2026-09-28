@@ -267,8 +267,11 @@ function paintHotkey(accel, off = false) {
 // null — нажата не завершённая комбинация: один модификатор, неподдержанная
 // клавиша или клавиша без Ctrl, Alt и Win (Shift+буква — это просто набор
 // текста, main такое не примет). Такие нажатия запись пропускает и ждёт дальше.
+// AltGr в Windows приходит как Ctrl+Alt: записать его значило бы глобально
+// отнять у раскладки символы вроде ś и €, поэтому такое нажатие тоже пропускаем.
 function acceleratorFrom(e) {
   if (!e.ctrlKey && !e.altKey && !e.metaKey) return null
+  if (e.getModifierState('AltGraph')) return null
   const key = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3)
     : /^Digit[0-9]$/.test(e.code) ? e.code.slice(5)
     : /^F([1-9]|1[0-9]|2[0-4])$/.test(e.code) ? e.code
