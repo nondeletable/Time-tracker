@@ -14,6 +14,7 @@ import { periodBreakdown } from './breakdown.js'
 import { CAT_COLORS } from './palette.js'
 import { getUser, setUser } from './user.js'
 import { flashSaved } from './flash.js'
+import { getCurrentView, setCurrentView } from './current-view.js'
 import {
   userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
   limitBarLabel, limitBarTime, limitBarFill, expandBtn, sheet, statLeftLabel,
@@ -245,7 +246,7 @@ async function refreshStats() {
   // категории так и остался бы заблокированным до первого события таймера.
   paintDock()
   renderAverage(await periodBreakdown(period))
-  if (currentView === 'summary') await loadSummaryView()
+  if (getCurrentView() === 'summary') await loadSummaryView()
 }
 
 function renderAverage({ activeDays, avg }) {
@@ -388,12 +389,11 @@ const VIEW_TITLES = {
   about:      'nav_about'
 }
 
-let currentView = 'summary'
 let modeBusy = false
 let tGlyphTurns = 0
 
 function setView(view) {
-  currentView = view
+  setCurrentView(view)
   railButtons.forEach(b => b.setAttribute('aria-current', String(b.dataset.nav === view)))
   dashViews.forEach(v => v.classList.toggle('on', v.dataset.view === view))
   dashTitle.dataset.i18n = VIEW_TITLES[view]
@@ -1224,7 +1224,7 @@ function accentRGBA(alpha) {
 
 function drawFxPreview(time) {
   requestAnimationFrame(drawFxPreview)
-  if (currentView !== 'appearance' || document.documentElement.dataset.mode !== 'dash') return
+  if (getCurrentView() !== 'appearance' || document.documentElement.dataset.mode !== 'dash') return
 
   const w = fxPreview.clientWidth
   const h = fxPreview.clientHeight
@@ -1295,7 +1295,7 @@ langSw.addEventListener('click', async e => {
   renderDialogCategories()
   // Ряд дней недели переводится сам, а название месяца пишется только при
   // загрузке месяца - поэтому открытый Календарь перезагружаем целиком.
-  if (currentView === 'calendar') await loadCalendarMonth()
+  if (getCurrentView() === 'calendar') await loadCalendarMonth()
   else renderWeekdays()
   await refreshStats()
   flashSaved(btn)
@@ -1305,17 +1305,17 @@ langSw.addEventListener('click', async e => {
 
 window.api.onPeerUpdated(async () => {
   await refreshStats()
-  if (currentView === 'calendar') await loadCalendarMonth()
-  if (currentView === 'summary')  await loadSummaryView()
+  if (getCurrentView() === 'calendar') await loadCalendarMonth()
+  if (getCurrentView() === 'summary')  await loadSummaryView()
 })
 
 window.api.onSyncLimitUpdated(async () => {
   await refreshStats()
-  if (currentView === 'settings') await loadTimeCard()
+  if (getCurrentView() === 'settings') await loadTimeCard()
 })
 
 window.api.onSyncDone(async () => {
-  if (currentView === 'settings') await loadProfileCard()
+  if (getCurrentView() === 'settings') await loadProfileCard()
 })
 
 // ── Titlebar window controls ────────────────────────────────────────────────
@@ -1330,7 +1330,7 @@ window.api.onWinUnmaximized(() => winMaxIcon.setAttribute('href', '#i-win-max'))
 // Период продлился автоматически (сменился день во время работы приложения)
 window.api.onPeriodAdvanced(async () => {
   await refreshStats()
-  if (currentView === 'settings') await loadTimeCard()
+  if (getCurrentView() === 'settings') await loadTimeCard()
 })
 
 // ── Start ─────────────────────────────────────────────────────────────────────
