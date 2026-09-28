@@ -15,6 +15,7 @@ import { CAT_COLORS } from './palette.js'
 import { getUser, setUser } from './user.js'
 import { flashSaved } from './flash.js'
 import { getCurrentView, setCurrentView } from './current-view.js'
+import { getTheme, setTheme, applyTheme, toggleThemeMode } from './theme.js'
 import {
   userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
   limitBarLabel, limitBarTime, limitBarFill, expandBtn, sheet, statLeftLabel,
@@ -41,12 +42,6 @@ let elapsed = 0
 let interval = null
 let sessionStartedAt = null
 
-// Палитра задаётся одним значением целиком; themeMode выбирает, какая из двух
-// сохранённых тем активна сейчас.
-let themeMode  = 'dark'
-let themeDark  = 'emerald-dark'
-let themeLight = 'emerald-light'
-
 // Сегодняшние секунды, уже лежащие в базе. Ход текущего таймера прибавляется
 // поверх — в базу он попадёт только после сохранения сессии.
 let todaySeconds = 0
@@ -56,19 +51,6 @@ let lastStats = []
 // Длина окружности прогресса: r=156 из viewBox кольца
 const RING_LEN = 2 * Math.PI * 156
 
-
-function applyTheme() {
-  document.documentElement.dataset.theme = themeMode === 'light' ? themeLight : themeDark
-  // Палитра эффектов строится из --accent, поэтому после смены темы холст
-  // надо перерисовать.
-  FX.refresh()
-}
-
-async function toggleThemeMode() {
-  themeMode = themeMode === 'light' ? 'dark' : 'light'
-  await window.api.setSetting('theme_mode', themeMode)
-  applyTheme()
-}
 
 function applyFx(particles, leaks) {
   document.documentElement.dataset.fxp = particles
@@ -87,12 +69,15 @@ async function init() {
   const savedMode  = await window.api.getSetting('theme_mode')
   const savedDark  = await window.api.getSetting('theme_dark')
   const savedLight = await window.api.getSetting('theme_light')
-  themeMode  = savedMode  || themeMode
-  themeDark  = savedDark  || themeDark
-  themeLight = savedLight || themeLight
-  if (!savedMode)  await window.api.setSetting('theme_mode', themeMode)
-  if (!savedDark)  await window.api.setSetting('theme_dark', themeDark)
-  if (!savedLight) await window.api.setSetting('theme_light', themeLight)
+  const defaults = getTheme()
+  setTheme({
+    mode:  savedMode  || defaults.mode,
+    dark:  savedDark  || defaults.dark,
+    light: savedLight || defaults.light,
+  })
+  if (!savedMode)  await window.api.setSetting('theme_mode', getTheme().mode)
+  if (!savedDark)  await window.api.setSetting('theme_dark', getTheme().dark)
+  if (!savedLight) await window.api.setSetting('theme_light', getTheme().light)
   applyTheme()
 
   // Режим запоминается, активный вид — нет: Dashboard всегда открывается Сводкой
@@ -1082,11 +1067,12 @@ function pressOne(container, attr, value) {
 }
 
 function paintThemeCard() {
-  themeLightSelect.value = themeLight
-  themeDarkSelect.value  = themeDark
-  dotLight.style.background = THEME_ACCENTS[themeLight]
-  dotDark.style.background  = THEME_ACCENTS[themeDark]
-  pressOne(themeModeSw, 'themeMode', themeMode)
+  const { mode, dark, light } = getTheme()
+  themeLightSelect.value = light
+  themeDarkSelect.value  = dark
+  dotLight.style.background = THEME_ACCENTS[light]
+  dotDark.style.background  = THEME_ACCENTS[dark]
+  pressOne(themeModeSw, 'themeMode', mode)
 }
 
 function loadAppearanceView() {
@@ -1103,23 +1089,23 @@ function loadAppearanceView() {
 themeModeSw.addEventListener('click', async e => {
   const btn = e.target.closest('button')
   if (!btn) return
-  themeMode = btn.dataset.themeMode
-  await window.api.setSetting('theme_mode', themeMode)
+  setTheme({ mode: btn.dataset.themeMode })
+  await window.api.setSetting('theme_mode', getTheme().mode)
   applyTheme()
   paintThemeCard()
 })
 
 themeLightSelect.addEventListener('change', async e => {
-  themeLight = e.target.value
-  await window.api.setSetting('theme_light', themeLight)
+  setTheme({ light: e.target.value })
+  await window.api.setSetting('theme_light', getTheme().light)
   applyTheme()
   paintThemeCard()
   flashSaved(e.target)
 })
 
 themeDarkSelect.addEventListener('change', async e => {
-  themeDark = e.target.value
-  await window.api.setSetting('theme_dark', themeDark)
+  setTheme({ dark: e.target.value })
+  await window.api.setSetting('theme_dark', getTheme().dark)
   applyTheme()
   paintThemeCard()
   flashSaved(e.target)
