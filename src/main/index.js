@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Menu, screen } = require('electron')
+const { app, BrowserWindow, ipcMain, Menu, screen, globalShortcut } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const os = require('os')
@@ -10,6 +10,7 @@ const { purgeSelfFromPeerData } = require('./peer')
 const { generateCode, normalizeCode } = require('./group')
 const { clampBoundsToScreen } = require('./window-bounds')
 const { backgroundFromCss, activeTheme } = require('./theme-bg')
+const { isValidAccelerator } = require('./hotkey')
 const crypto = require('crypto')
 const { detectLang } = require('../renderer/js/i18n/i18n')
 
@@ -220,6 +221,31 @@ function handle(channel, listener) {
   ipcMain.handle(channel, (event, ...args) => fromOurWindow(event, channel) ? listener(event, ...args) : null)
 }
 
+// Глобальный хоткей Start/Stop. Новое сочетание регистрируется раньше, чем
+// снимается старое: если его держит другая программа, остаётся прежнее, а не
+// никакое. Нажатие только сообщает окну — что делать, решает рендерер, так же
+// как по кнопке.
+let hotkey = ''
+
+function applyHotkey(accel) {
+  if (accel === hotkey) return true
+  if (accel) {
+    if (!isValidAccelerator(accel)) return false
+    let ok = false
+    try {
+      ok = globalShortcut.register(accel, () => {
+        if (mainWin && !mainWin.isDestroyed()) mainWin.webContents.send('hotkey:toggle')
+      })
+    } catch (e) {
+      console.warn(`[hotkey] cannot register ${accel}: ${e.message}`)
+    }
+    if (!ok) return false
+  }
+  if (hotkey) globalShortcut.unregister(hotkey)
+  hotkey = accel
+  return true
+}
+
 function setupIPC() {
   handle('app:get-default-name', () => {
     try { return os.userInfo().username || '' } catch { return '' }
@@ -257,6 +283,14 @@ function setupIPC() {
     const result = stmt.step() ? stmt.getAsObject().value : null
     stmt.free()
     return result
+  })
+
+  handle('hotkey:set', (_, accel) => {
+    const value = String(accel || '')
+    if (!applyHotkey(value)) return false
+    db.run('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', ['hotkey_start_stop', value])
+    saveDB()
+    return true
   })
 
   handle('db:set-setting', (_, key, value) => {
@@ -586,6 +620,15 @@ app.whenReady().then(async () => {
   mainWin = createWindow()
   const win = mainWin
 
+  // Сохранённое сочетание могла занять другая программа за время простоя —
+  // тогда хоткея просто нет, а приложение стартует как обычно.
+  {
+    const stmt = db.prepare("SELECT value FROM settings WHERE key = 'hotkey_start_stop'")
+    const saved = stmt.step() ? stmt.getAsObject().value : ''
+    stmt.free()
+    if (saved && !applyHotkey(saved)) console.warn(`[hotkey] ${saved} is taken, start/stop hotkey is off`)
+  }
+
   // Синк — opt-in: стартует только при активной группе (owner/member + код).
   {
     const roleStmt = db.prepare("SELECT value FROM settings WHERE key = 'group_role'")
@@ -611,3 +654,4 @@ app.whenReady().then(async () => {
 })
 
 app.on('window-all-closed', () => app.quit())
+app.on('will-quit', () => globalShortcut.unregisterAll())
