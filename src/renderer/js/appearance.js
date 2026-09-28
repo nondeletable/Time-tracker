@@ -7,7 +7,7 @@
 
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
-import { getLang } from './lang.js'
+import { getLang, t } from './lang.js'
 import { getTheme, setTheme, applyTheme } from './theme.js'
 import { flashSaved } from './flash.js'
 import { getCurrentView } from './current-view.js'
@@ -53,6 +53,7 @@ export function loadAppearanceView() {
   fxBlobsSelect.value     = document.documentElement.dataset.fxl || 'off'
   pressOne(fxIdleSw, 'fxIdle', document.documentElement.dataset.fxi)
   pressOne(langSw, 'lang', getLang())
+  window.api.getSetting('hotkey_start_stop').then(paintHotkey)
 }
 
 themeModeSw.addEventListener('click', async e => {
@@ -236,3 +237,77 @@ function drawFxPreview(time) {
 }
 
 requestAnimationFrame(drawFxPreview)
+
+// ── Горячая клавиша ──────────────────────────────────────────────────────────
+
+// Сочетание записывается нажатием: клик по полю включает запись, первое полное
+// сочетание уходит в main, Esc и уход фокуса отменяют. Формат — accelerator
+// Electron; проверяет его main (hotkey.js), здесь только сборка из события.
+const hotkeyField = document.getElementById('hotkey-field')
+const hotkeyClear = document.getElementById('hotkey-clear')
+let hotkey = ''
+
+const KEY_NAMES = { CommandOrControl: 'Ctrl', Super: 'Win' }
+
+function paintHotkey(accel) {
+  hotkey = accel || ''
+  hotkeyField.classList.remove('rec')
+  hotkeyField.classList.toggle('none', !hotkey)
+  hotkeyField.textContent = hotkey
+    ? hotkey.split('+').map(k => KEY_NAMES[k] || k).join(' + ')
+    : t('hotkey_none')
+  hotkeyClear.disabled = !hotkey
+}
+
+// null — нажата не завершённая комбинация: один модификатор, неподдержанная
+// клавиша или клавиша без Ctrl, Alt и Win (Shift+буква — это просто набор
+// текста, main такое не примет). Такие нажатия запись пропускает и ждёт дальше.
+function acceleratorFrom(e) {
+  if (!e.ctrlKey && !e.altKey && !e.metaKey) return null
+  const key = /^Key[A-Z]$/.test(e.code) ? e.code.slice(3)
+    : /^Digit[0-9]$/.test(e.code) ? e.code.slice(5)
+    : /^F([1-9]|1[0-9]|2[0-4])$/.test(e.code) ? e.code
+    : e.code === 'Space' ? 'Space'
+    : null
+  if (!key) return null
+  const mods = []
+  if (e.ctrlKey)  mods.push('CommandOrControl')
+  if (e.altKey)   mods.push('Alt')
+  if (e.shiftKey) mods.push('Shift')
+  if (e.metaKey)  mods.push('Super')
+  return [...mods, key].join('+')
+}
+
+async function saveHotkey(accel) {
+  if (await window.api.setHotkey(accel)) {
+    paintHotkey(accel)
+    flashSaved(hotkeyField)
+    return
+  }
+  hotkeyField.classList.remove('rec')
+  hotkeyField.textContent = t('hotkey_taken')
+  setTimeout(() => paintHotkey(hotkey), 1400)
+}
+
+hotkeyField.addEventListener('click', () => {
+  hotkeyField.classList.add('rec')
+  hotkeyField.classList.remove('none')
+  hotkeyField.textContent = t('hotkey_press')
+})
+
+// Пока идёт запись, нажатия не должны доходить до остальных хоткеев окна —
+// Ctrl+L иначе переключил бы тему прямо во время выбора сочетания.
+hotkeyField.addEventListener('keydown', e => {
+  if (!hotkeyField.classList.contains('rec')) return
+  e.preventDefault()
+  e.stopPropagation()
+  if (e.key === 'Escape') { paintHotkey(hotkey); return }
+  const accel = acceleratorFrom(e)
+  if (accel) saveHotkey(accel)
+})
+
+hotkeyField.addEventListener('blur', () => {
+  if (hotkeyField.classList.contains('rec')) paintHotkey(hotkey)
+})
+
+hotkeyClear.addEventListener('click', () => saveHotkey(''))
