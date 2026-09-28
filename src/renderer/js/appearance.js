@@ -246,12 +246,14 @@ requestAnimationFrame(drawFxPreview)
 const hotkeyField = document.getElementById('hotkey-field')
 const hotkeyClear = document.getElementById('hotkey-clear')
 let hotkey = ''
+let takenTimer = null
 
 const KEY_NAMES = { CommandOrControl: 'Ctrl', Super: 'Win' }
 
 // off — сочетание сохранено, но не работает: при запуске его уже держала
 // другая программа. Показываем его с пометкой, чтобы было что перезаписать.
 function paintHotkey(accel, off = false) {
+  clearTimeout(takenTimer)
   hotkey = accel || ''
   hotkeyField.classList.remove('rec')
   hotkeyField.classList.toggle('none', !hotkey || off)
@@ -289,10 +291,11 @@ async function saveHotkey(accel) {
   }
   hotkeyField.classList.remove('rec')
   hotkeyField.textContent = t('hotkey_taken')
-  setTimeout(() => paintHotkey(hotkey), 1400)
+  takenTimer = setTimeout(() => paintHotkey(hotkey), 1400)
 }
 
 hotkeyField.addEventListener('click', () => {
+  clearTimeout(takenTimer)
   hotkeyField.classList.add('rec')
   hotkeyField.classList.remove('none')
   hotkeyField.textContent = t('hotkey_press')
