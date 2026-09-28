@@ -53,7 +53,7 @@ export function loadAppearanceView() {
   fxBlobsSelect.value     = document.documentElement.dataset.fxl || 'off'
   pressOne(fxIdleSw, 'fxIdle', document.documentElement.dataset.fxi)
   pressOne(langSw, 'lang', getLang())
-  window.api.getSetting('hotkey_start_stop').then(paintHotkey)
+  window.api.getHotkey().then(({ saved, active }) => paintHotkey(saved, saved !== active))
 }
 
 themeModeSw.addEventListener('click', async e => {
@@ -249,13 +249,16 @@ let hotkey = ''
 
 const KEY_NAMES = { CommandOrControl: 'Ctrl', Super: 'Win' }
 
-function paintHotkey(accel) {
+// off — сочетание сохранено, но не работает: при запуске его уже держала
+// другая программа. Показываем его с пометкой, чтобы было что перезаписать.
+function paintHotkey(accel, off = false) {
   hotkey = accel || ''
   hotkeyField.classList.remove('rec')
-  hotkeyField.classList.toggle('none', !hotkey)
-  hotkeyField.textContent = hotkey
-    ? hotkey.split('+').map(k => KEY_NAMES[k] || k).join(' + ')
-    : t('hotkey_none')
+  hotkeyField.classList.toggle('none', !hotkey || off)
+  const combo = hotkey.split('+').map(k => KEY_NAMES[k] || k).join(' + ')
+  hotkeyField.textContent = !hotkey ? t('hotkey_none')
+    : off ? `${combo} · ${t('hotkey_taken')}`
+    : combo
   hotkeyClear.disabled = !hotkey
 }
 

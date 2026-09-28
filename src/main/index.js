@@ -285,6 +285,16 @@ function setupIPC() {
     return result
   })
 
+  // Сохранённое и действующее расходятся, когда при запуске сочетание уже
+  // держала другая программа: карточка должна показать это, а не выдавать
+  // сохранённое за работающее.
+  handle('hotkey:get', () => {
+    const stmt = db.prepare("SELECT value FROM settings WHERE key = 'hotkey_start_stop'")
+    const saved = stmt.step() ? stmt.getAsObject().value : ''
+    stmt.free()
+    return { saved, active: hotkey }
+  })
+
   handle('hotkey:set', (_, accel) => {
     const value = String(accel || '')
     if (!applyHotkey(value)) return false

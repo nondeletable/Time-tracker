@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('api', {
   winClose:          ()   => ipcRenderer.invoke('win:close'),
   onWinMaximized:    (cb) => ipcRenderer.on('win:maximized', () => cb()),
   onWinUnmaximized:  (cb) => ipcRenderer.on('win:unmaximized', () => cb()),
+  getHotkey:         ()      => ipcRenderer.invoke('hotkey:get'),
   setHotkey:         (accel) => ipcRenderer.invoke('hotkey:set', accel),
   onHotkeyToggle:    (cb) => ipcRenderer.on('hotkey:toggle', () => cb()),
 })
