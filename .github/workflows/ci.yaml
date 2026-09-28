@@ -54,6 +54,30 @@ jobs:
       - name: Test
         run: npm test
 
+  # The real app, started by npm run smoke: onboarding, Focus and the five views
+  # with no page errors, plus idle effects staying off under reduced motion.
+  # Windows, because that is the platform the app ships for, and a Windows
+  # runner has a desktop to open the window on without an xvfb wrapper. The
+  # Electron binary downloads itself on first use since Electron 42.
+  smoke:
+    name: smoke (Electron)
+    runs-on: windows-latest
+    if: github.event_name != 'schedule'
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Smoke
+        run: npm run smoke
+
   # Neither half needs a build or the Electron binary, and on the weekly cron
   # this is the only job that runs.
   audit:
