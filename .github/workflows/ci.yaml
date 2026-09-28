@@ -95,11 +95,10 @@ jobs:
       # Reads package-lock.json directly — no `npm ci` needed.
       # Threshold `high`: `low` is dominated by dev-only noise we cannot act on.
       #
-      # Reporting only for now. The tree carries 13 known advisories at this
-      # threshold, and the one that matters is electron itself: every release
-      # up to 40.10.2 is affected, so the fix is the major upgrade off 31.x, not
-      # a lockfile bump. The rest sit under electron-builder and only run at
-      # build time. Flip this to a gate once that upgrade has landed.
+      # Reporting only for now. Electron itself left the report with the upgrade
+      # to 44; the 11 advisories still at this threshold all sit under
+      # electron-builder 24 and only run at build time, never in the shipped
+      # app. Flip this to a gate once electron-builder is upgraded too.
       - name: npm audit (reporting only)
         run: npm audit --audit-level=high
         continue-on-error: true
