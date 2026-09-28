@@ -1,9 +1,8 @@
 // The Appearance view: the theme card, the transition between modes, the
 // background and its live preview. Its state is either the theme, which lives in
 // theme.js, or data attributes on <html> that the rest of the renderer reads -
-// so nothing here needs to be shared back, and app.js sees three entry points:
-// open the view, apply a background at startup, and press one button of a
-// segmented switch, which the language switch uses too.
+// so nothing here needs to be shared back, and app.js sees two entry points:
+// open the view, and apply a background at startup.
 
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
@@ -30,7 +29,7 @@ const THEME_ACCENTS = {
   'indigo-light':  '#4f46e5', 'indigo-dark':  '#818cf8'
 }
 
-export function pressOne(container, attr, value) {
+function pressOne(container, attr, value) {
   container.querySelectorAll('button').forEach(b =>
     b.setAttribute('aria-pressed', String(b.dataset[attr] === value)))
 }
