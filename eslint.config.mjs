@@ -48,6 +48,14 @@ export default [
     }
   },
   {
+    files: ['scripts/**/*.cjs'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'commonjs',
+      globals: globals.node
+    }
+  },
+  {
     // The smoke test runs in node, but the callbacks it hands to page.evaluate
     // run inside the app window.
     files: ['e2e/**/*.js'],
