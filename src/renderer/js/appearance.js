@@ -9,11 +9,10 @@ import { IDLE_FX } from './idle-fx.js'
 import { getLang, t } from './lang.js'
 import { getTheme, setTheme, applyTheme } from './theme.js'
 import { flashSaved } from './flash.js'
-import { getCurrentView } from './current-view.js'
 import {
   tbtn, appearanceGrid, themeModeSw, themeLightSelect, themeDarkSelect,
   dotLight, dotDark, animSw, animSpeedSw, animSpeedRow, animReplay,
-  fxParticlesSelect, fxBlobsSelect, fxIdleSw, fxPreview, langSw,
+  fxParticlesSelect, fxBlobsSelect, fxIdleSw, langSw,
 } from './dom.js'
 
 export function applyFx(particles, leaks) {
@@ -153,89 +152,6 @@ fxBlobsSelect.addEventListener('change', async e => {
   flashSaved(e.target)
 })
 
-// Превью — не второй движок, а сокращённая модель существующего: те же пять
-// вариантов частиц и четыре засветов, цвет из того же акцента. Без неё
-// дропдаун не говорит ничего: «Эмиссия» и «Вселенная» названием не отличаются.
-const fxCtx = fxPreview.getContext('2d')
-const fxDots = Array.from({ length: 70 }, () => ({
-  x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + .4,
-  vx: (Math.random() - .5) * .0055, vy: (Math.random() - .5) * .0055,
-  phase: Math.random() * 6.28
-}))
-
-function fitFxPreview() {
-  const ratio = devicePixelRatio || 1
-  const box = fxPreview.getBoundingClientRect()
-  fxPreview.width  = box.width * ratio
-  fxPreview.height = box.height * ratio
-  fxCtx.setTransform(ratio, 0, 0, ratio, 0, 0)
-}
-
-function accentRGBA(alpha) {
-  const hex = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
-  const n = parseInt(hex.slice(1), 16)
-  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${alpha})`
-}
-
-function drawFxPreview(time) {
-  requestAnimationFrame(drawFxPreview)
-  if (getCurrentView() !== 'appearance' || document.documentElement.dataset.mode !== 'dash') return
-
-  const w = fxPreview.clientWidth
-  const h = fxPreview.clientHeight
-  if (!w || !h) return
-  if (fxPreview.width !== Math.round(w * (devicePixelRatio || 1))) fitFxPreview()
-  fxCtx.clearRect(0, 0, w, h)
-
-  const blobs = document.documentElement.dataset.fxl
-  if (blobs && blobs !== 'off') {
-    const spots = blobs === 'bottom' ? [[.5, 1.15, .9]]
-      : blobs === 'all' ? [[.2, .25, .55], [.8, .35, .5], [.5, 1.05, .8]]
-      : [[.3 + Math.sin(time / 2600) * .16, .3, .6], [.72 + Math.cos(time / 3100) * .12, .55, .5]]
-    spots.forEach(([bx, by, br]) => {
-      const g = fxCtx.createRadialGradient(bx * w, by * h, 0, bx * w, by * h, br * h)
-      g.addColorStop(0, accentRGBA(blobs === 'aurora' ? .3 : .22))
-      g.addColorStop(1, accentRGBA(0))
-      fxCtx.fillStyle = g
-      fxCtx.fillRect(0, 0, w, h)
-    })
-  }
-
-  const particles = document.documentElement.dataset.fxp
-  if (particles === 'grid') {
-    fxCtx.strokeStyle = accentRGBA(.16)
-    fxCtx.lineWidth = 1
-    const step = 22
-    const shift = (time / 90) % step
-    for (let x = -step + shift; x < w; x += step) {
-      fxCtx.beginPath(); fxCtx.moveTo(x, 0); fxCtx.lineTo(x, h); fxCtx.stroke()
-    }
-    for (let y = -step + shift; y < h; y += step) {
-      fxCtx.beginPath(); fxCtx.moveTo(0, y); fxCtx.lineTo(w, y); fxCtx.stroke()
-    }
-  } else if (particles && particles !== 'off') {
-    fxDots.forEach(p => {
-      let x, y, alpha
-      if (particles === 'emit') {
-        const t = (time * .00004 + p.phase / 6.28) % 1
-        x = w / 2 + Math.cos(p.phase) * t * w * .62
-        y = h / 2 + Math.sin(p.phase) * t * h * .9
-        alpha = (1 - t) * .75
-      } else if (particles === 'universe') {
-        x = p.x * w; y = p.y * h
-        alpha = (Math.sin(time / 620 + p.phase) * .5 + .5) * .8
-      } else {
-        p.x = (p.x + p.vx / 60 + 1) % 1
-        p.y = (p.y + p.vy / 60 + 1) % 1
-        x = p.x * w; y = p.y * h; alpha = .45
-      }
-      fxCtx.fillStyle = accentRGBA(alpha)
-      fxCtx.beginPath(); fxCtx.arc(x, y, p.r, 0, 6.29); fxCtx.fill()
-    })
-  }
-}
-
-requestAnimationFrame(drawFxPreview)
 
 // ── Горячая клавиша ──────────────────────────────────────────────────────────
 
