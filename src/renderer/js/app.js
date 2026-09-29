@@ -5,10 +5,18 @@
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
 import {
-  esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, localISODate, daysBetween,
+  esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, formatHM,
 } from './format.js'
 import { getLang, setLang, t, langDict, applyI18n } from './lang.js'
 import { loadCalendarView, loadCalendarMonth, renderWeekdays } from './calendar.js'
+import { loadSummaryView } from './summary.js'
+import { periodBreakdown } from './breakdown.js'
+import { CAT_COLORS } from './palette.js'
+import { getUser, setUser } from './user.js'
+import { flashSaved } from './flash.js'
+import { getCurrentView, setCurrentView } from './current-view.js'
+import { loadAppearanceView, applyFx } from './appearance.js'
+import { getTheme, setTheme, applyTheme, toggleThemeMode } from './theme.js'
 import {
   userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
   limitBarLabel, limitBarTime, limitBarFill, expandBtn, sheet, statLeftLabel,
@@ -20,13 +28,9 @@ import {
   syncIntervalSelect, syncIntervalHelp, syncNowBtn, groupLeaveBtn,
   limitLeftValue, dailyGoalInput, limitInput, periodStartInput,
   periodEndInput, catRows, catEmpty, catAddBtn, catTabs, hoursRows,
-  hoursEmpty, hoursAddBtn, hoursDateInput, appearanceGrid, themeModeSw,
-  themeLightSelect, themeDarkSelect, dotLight, dotDark, animSw, animSpeedSw,
-  animSpeedRow, animReplay, fxParticlesSelect, fxBlobsSelect, fxIdleSw,
-  fxPreview, langSw,
+  hoursEmpty, hoursAddBtn, hoursDateInput, langSw,
 } from './dom.js'
 
-let currentUser = null
 let categories = []
 let selectedCategoryId = null
 
@@ -36,12 +40,6 @@ let elapsed = 0
 let interval = null
 let sessionStartedAt = null
 
-// Палитра задаётся одним значением целиком; themeMode выбирает, какая из двух
-// сохранённых тем активна сейчас.
-let themeMode  = 'dark'
-let themeDark  = 'emerald-dark'
-let themeLight = 'emerald-light'
-
 // Сегодняшние секунды, уже лежащие в базе. Ход текущего таймера прибавляется
 // поверх — в базу он попадёт только после сохранения сессии.
 let todaySeconds = 0
@@ -50,26 +48,6 @@ let lastStats = []
 
 // Длина окружности прогресса: r=156 из viewBox кольца
 const RING_LEN = 2 * Math.PI * 156
-
-
-function applyTheme() {
-  document.documentElement.dataset.theme = themeMode === 'light' ? themeLight : themeDark
-  // Палитра эффектов строится из --accent, поэтому после смены темы холст
-  // надо перерисовать.
-  FX.refresh()
-}
-
-async function toggleThemeMode() {
-  themeMode = themeMode === 'light' ? 'dark' : 'light'
-  await window.api.setSetting('theme_mode', themeMode)
-  applyTheme()
-}
-
-function applyFx(particles, leaks) {
-  document.documentElement.dataset.fxp = particles
-  document.documentElement.dataset.fxl = leaks
-  FX.refresh()
-}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
@@ -82,12 +60,15 @@ async function init() {
   const savedMode  = await window.api.getSetting('theme_mode')
   const savedDark  = await window.api.getSetting('theme_dark')
   const savedLight = await window.api.getSetting('theme_light')
-  themeMode  = savedMode  || themeMode
-  themeDark  = savedDark  || themeDark
-  themeLight = savedLight || themeLight
-  if (!savedMode)  await window.api.setSetting('theme_mode', themeMode)
-  if (!savedDark)  await window.api.setSetting('theme_dark', themeDark)
-  if (!savedLight) await window.api.setSetting('theme_light', themeLight)
+  const defaults = getTheme()
+  setTheme({
+    mode:  savedMode  || defaults.mode,
+    dark:  savedDark  || defaults.dark,
+    light: savedLight || defaults.light,
+  })
+  if (!savedMode)  await window.api.setSetting('theme_mode', getTheme().mode)
+  if (!savedDark)  await window.api.setSetting('theme_dark', getTheme().dark)
+  if (!savedLight) await window.api.setSetting('theme_light', getTheme().light)
   applyTheme()
 
   // Режим запоминается, активный вид — нет: Dashboard всегда открывается Сводкой
@@ -121,7 +102,7 @@ async function init() {
 
   const userName = await window.api.getSetting('user_name')
   if (userName) {
-    currentUser = userName
+    setUser(userName)
     await showMainScreen()
   } else {
     await showUserSelect()
@@ -138,7 +119,7 @@ async function showUserSelect() {
   const confirm = async () => {
     const name = input.value.trim()
     if (!name) return
-    currentUser = name
+    setUser(name)
     await window.api.setSetting('user_name', name)
     userSelectScreen.classList.add('hidden')
     await showMainScreen()
@@ -223,21 +204,13 @@ function selectCategory(id) {
 
 // Без секунд: на бейджах, в кольце и в подвале они только шумят.
 // Нулевая часть тоже опускается — «160ч», а не «160ч 0м».
-function formatHM(seconds) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  if (!h) return `${m}${t('unit_m')}`
-  if (!m) return `${h}${t('unit_h')}`
-  return `${h}${t('unit_h')} ${m}${t('unit_m')}`
-}
-
 
 async function refreshStats() {
   const [stats, sharedTotal, period, todaySessions] = await Promise.all([
-    window.api.getMonthlyStats(currentUser),
+    window.api.getMonthlyStats(getUser()),
     window.api.getSharedTotal(),
     window.api.getPeriodSettings(),
-    window.api.getSessionsByDate(currentUser, todayISO()),
+    window.api.getSessionsByDate(getUser(), todayISO()),
   ])
   lastStats = stats
   todaySeconds = todaySessions.reduce((sum, s) => sum + s.duration_seconds, 0)
@@ -249,48 +222,7 @@ async function refreshStats() {
   // категории так и остался бы заблокированным до первого события таймера.
   paintDock()
   renderAverage(await periodBreakdown(period))
-  if (currentView === 'summary') await loadSummaryView()
-}
-
-// Период не совпадает с календарным месяцем (28 авг — 27 сен пересекает два),
-// поэтому собираем каждый месяц, который он задевает, и отбрасываем дни за
-// границами. getCalendarMonth отдаёт сразу и свои сессии, и данные партнёра,
-// так что суммы получаются общими на двоих — как и полоса лимита рядом.
-async function periodBreakdown(period) {
-  const [sy, sm] = period.period_start.split('-').map(Number)
-  const [ey, em] = period.period_end.split('-').map(Number)
-
-  const months = []
-  let y = sy, m = sm
-  while (y < ey || (y === ey && m <= em)) {
-    months.push([y, m])
-    m++
-    if (m > 12) { m = 1; y++ }
-  }
-
-  const rows = (await Promise.all(
-    months.map(([yy, mm]) => window.api.getCalendarMonth(yy, mm))
-  )).flat()
-
-  const perDay = new Map()
-  // Участники не хардкодятся: кто встретился в данных, тот и попадёт в полосу
-  const perUser = new Map()
-  rows.forEach(row => {
-    if (row.day < period.period_start || row.day > period.period_end) return
-    const seconds = row.total_seconds || 0
-    perDay.set(row.day, (perDay.get(row.day) || 0) + seconds)
-    perUser.set(row.user, (perUser.get(row.user) || 0) + seconds)
-  })
-
-  const worked = [...perDay.values()].filter(v => v > 0)
-  const total = worked.reduce((a, b) => a + b, 0)
-
-  return {
-    perDay,
-    perUser,
-    activeDays: worked.length,
-    avg: worked.length ? Math.round(total / worked.length) : 0,
-  }
+  if (getCurrentView() === 'summary') await loadSummaryView()
 }
 
 function renderAverage({ activeDays, avg }) {
@@ -413,6 +345,14 @@ timerBtn.addEventListener('click', () => {
   else start()
 })
 
+// Глобальный хоткей жмёт ту же кнопку. Пока открыт диалог сохранения, он
+// молчит, как молчит и сама кнопка под диалогом; без категории кнопка
+// заблокирована, и click() по ней тоже ничего не делает.
+window.api.onHotkeyToggle(() => {
+  if (!saveDialog.classList.contains('hidden')) return
+  timerBtn.click()
+})
+
 resetBtn.addEventListener('click', () => {
   if (!running) resetTimer()
 })
@@ -433,12 +373,11 @@ const VIEW_TITLES = {
   about:      'nav_about'
 }
 
-let currentView = 'summary'
 let modeBusy = false
 let tGlyphTurns = 0
 
 function setView(view) {
-  currentView = view
+  setCurrentView(view)
   railButtons.forEach(b => b.setAttribute('aria-current', String(b.dataset.nav === view)))
   dashViews.forEach(v => v.classList.toggle('on', v.dataset.view === view))
   dashTitle.dataset.i18n = VIEW_TITLES[view]
@@ -638,7 +577,7 @@ dialogSave.addEventListener('click', async () => {
   const startedAt = sessionStartedAt ?? (endedAt - elapsed)
 
   await window.api.saveSession({
-    user: currentUser,
+    user: getUser(),
     category_id: categoryId,
     started_at: startedAt,
     ended_at: endedAt,
@@ -659,11 +598,6 @@ const AVATAR_FILES = [
   'woman.png', 'woman_1.png', 'woman_2.png', 'woman_3.png'
 ]
 
-const CAT_COLORS = [
-  '#60a5fa', '#c084fc', '#fb923c', '#f472b6', '#f87171',
-  '#34d399', '#EFF74A', '#2AF720', '#3020F5'
-]
-
 
 
 function formatLastSync(ts) {
@@ -676,16 +610,6 @@ function formatLastSync(ts) {
   const dd = String(d.getDate()).padStart(2, '0')
   const mo = String(d.getMonth() + 1).padStart(2, '0')
   return `${dd}.${mo}.${d.getFullYear()} ${hh}:${mm}`
-}
-
-// Кнопок «Сохранить» в карточках нет: значение уходит в базу по change, а
-// справа от подписи коротко мигает «сохранено».
-function flashSaved(el) {
-  const mark = el?.closest('.row')?.querySelector('.saved')
-  if (!mark) return
-  mark.classList.add('on')
-  clearTimeout(mark._t)
-  mark._t = setTimeout(() => mark.classList.remove('on'), 1400)
 }
 
 // ── Подсказки ─────────────────────────────────────────────────────────────────
@@ -750,8 +674,8 @@ function renderGroupRows(mode) {
 }
 
 async function loadProfileCard() {
-  profileName.value = currentUser
-  avatarFile = (await window.api.getSetting(`avatar_${currentUser}`)) ?? 'user.svg'
+  profileName.value = getUser()
+  avatarFile = (await window.api.getSetting(`avatar_${getUser()}`)) ?? 'user.svg'
   renderAvatar()
 
   const role = (await window.api.getSetting('group_role')) || 'solo'
@@ -777,7 +701,7 @@ avatarPop.addEventListener('click', async e => {
   const img = e.target.closest('img')
   if (!img) return
   avatarFile = img.dataset.file
-  await window.api.setSetting(`avatar_${currentUser}`, avatarFile)
+  await window.api.setSetting(`avatar_${getUser()}`, avatarFile)
   renderAvatar()
   avatarPop.classList.add('hidden')
 })
@@ -787,11 +711,11 @@ document.addEventListener('click', () => avatarPop.classList.add('hidden'))
 profileName.addEventListener('change', async () => {
   const name = profileName.value.trim()
   if (!name) {
-    profileName.value = currentUser
+    profileName.value = getUser()
     return
   }
   await window.api.renameUser(name)
-  currentUser = name
+  setUser(name)
   await refreshStats()
 })
 
@@ -919,7 +843,7 @@ function catFormRow(id, name, color) {
   return `<tr class="form-row" data-form-id="${id ?? ''}">
       <td colspan="2">
         <div class="ed">
-          <input class="inp cat-name" value="${name}" placeholder="${t('cat_name_placeholder')}" style="flex:1;min-width:0">
+          <input class="inp cat-name" value="${esc(name)}" placeholder="${t('cat_name_placeholder')}" style="flex:1;min-width:0">
           <button class="swatch" data-do="palette" data-color="${color}" style="background:${color}"></button>
           <button class="btn-s" data-do="cancel">${t('btn_cancel')}</button>
           <button class="btn-s primary" data-do="save">${t('btn_save')}</button>
@@ -1028,7 +952,7 @@ catRows.addEventListener('click', async e => {
 
 function hoursFormRow(id, categoryId, time) {
   const options = categories.map(c =>
-    `<option value="${c.id}"${c.id === categoryId ? ' selected' : ''}>${c.name}</option>`).join('')
+    `<option value="${c.id}"${c.id === categoryId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')
   return `<tr class="form-row" data-form-id="${id ?? ''}">
       <td colspan="3">
         <div class="ed">
@@ -1046,7 +970,7 @@ async function loadHoursTable() {
     hoursDateInput.value = todayISO()
     paintDateField(hoursDateInput)
   }
-  const sessions = await window.api.getSessionsByDate(currentUser, hoursDateInput.value)
+  const sessions = await window.api.getSessionsByDate(getUser(), hoursDateInput.value)
   hoursRows.innerHTML = sessions.map(s =>
     `<tr data-id="${s.id}" data-cat="${s.category_id}" data-time="${secsToHHMM(s.duration_seconds)}">
        <td><span class="nm"><i style="background:${esc(s.color)}"></i>${esc(s.name)}</span></td>
@@ -1106,7 +1030,7 @@ hoursRows.addEventListener('click', async e => {
       } else {
         const startedAt = new Date(hoursDateInput.value + 'T00:00:00').getTime()
         await window.api.saveSession({
-          user: currentUser,
+          user: getUser(),
           category_id: categoryId,
           started_at: startedAt,
           ended_at: startedAt + seconds * 1000,
@@ -1127,374 +1051,6 @@ async function loadSettingsView() {
   await loadHoursTable()
 }
 
-// ── Вид «Сводка» ──────────────────────────────────────────────────────────────
-
-const sumPeriod      = document.getElementById('sum-period')
-const sumTotal       = document.getElementById('sum-total')
-const sumLeft        = document.getElementById('sum-left')
-const sumStack       = document.getElementById('sum-stack')
-const sumLegend      = document.getElementById('sum-legend')
-const sumToday       = document.getElementById('sum-today')
-const sumTodaySub    = document.getElementById('sum-today-sub')
-const sumAvg         = document.getElementById('sum-avg')
-const sumAvgSub      = document.getElementById('sum-avg-sub')
-const sumDonut       = document.getElementById('sum-donut')
-const sumDonutLegend = document.getElementById('sum-donut-legend')
-const sumChart       = document.getElementById('sum-chart')
-const sumChartX      = document.getElementById('sum-chart-x')
-const sumCatRows     = document.getElementById('sum-cat-rows')
-
-const DONUT_LEN = 2 * Math.PI * 54
-
-function shortDate(iso) {
-  const [, m, d] = iso.split('-')
-  return `${Number(d)} ${langDict().months_short[Number(m) - 1]}`
-}
-
-
-// Цвет участника: свои часы идут акцентом темы, остальные разбирают палитру
-// категорий по порядку — на двоих выглядит как в прототипе, третий не ломает.
-function userColor(index) {
-  return index === 0 ? 'var(--accent)' : CAT_COLORS[(index - 1) % CAT_COLORS.length]
-}
-
-async function loadSummaryView() {
-  if (!currentUser) return
-  const [stats, sharedTotal, period, todaySessions] = await Promise.all([
-    window.api.getMonthlyStats(currentUser),
-    window.api.getSharedTotal(),
-    window.api.getPeriodSettings(),
-    window.api.getSessionsByDate(currentUser, todayISO()),
-  ])
-  const breakdown = await periodBreakdown(period)
-
-  renderSummaryLimit(sharedTotal, period, breakdown)
-  renderSummaryToday(todaySessions)
-  renderSummaryAverage(breakdown, period)
-  renderSummaryDonut(stats)
-  renderSummaryChart(breakdown, period)
-  renderSummaryCategories(stats)
-}
-
-function renderSummaryLimit(total, period, { perUser }) {
-  const limit = period.monthly_limit_seconds
-  sumPeriod.textContent = `${shortDate(period.period_start)} — ${shortDate(period.period_end)}`
-  sumTotal.innerHTML = `${formatHM(total)} <span class="of">/ ${formatHM(limit)}</span>`
-
-  const left = limit - total
-  const daysLeft = Math.max(0, daysBetween(todayISO(), period.period_end))
-  sumLeft.textContent = left >= 0
-    ? `${t('sum_left')} ${formatHM(left)} · ${daysLeft} ${t('stat_days')}`
-    : `${t('stat_over')} ${formatHM(-left)} · ${daysLeft} ${t('stat_days')}`
-
-  // Свой всегда первым, остальные по убыванию часов
-  const users = [...perUser.entries()]
-    .sort((a, b) => (a[0] === currentUser ? -1 : b[0] === currentUser ? 1 : b[1] - a[1]))
-
-  sumStack.innerHTML = users.map(([, seconds], i) =>
-    `<span style="width:${limit > 0 ? (seconds / limit) * 100 : 0}%;background:${userColor(i)}"></span>`
-  ).join('')
-
-  sumLegend.innerHTML = users.map(([name, seconds], i) =>
-    `<b><i style="background:${userColor(i)}"></i>${esc(name)} <span class="v">${formatHM(seconds)}</span></b>`
-  ).join('') + (left > 0
-    ? `<b><i style="background:var(--surface-2)"></i>${t('sum_free')} <span class="v">${formatHM(left)}</span></b>`
-    : '')
-}
-
-function renderSummaryToday(sessions) {
-  const seconds = sessions.reduce((sum, s) => sum + s.duration_seconds, 0)
-  sumToday.textContent = formatHM(seconds)
-  const names = [...new Set(sessions.map(s => s.name))]
-  sumTodaySub.textContent = sessions.length
-    ? `${t('sum_sessions').replace('{n}', sessions.length)} · ${names.join(', ')}`
-    : '—'
-}
-
-function renderSummaryAverage({ activeDays, avg }, period) {
-  sumAvg.textContent = activeDays ? formatHM(avg) : '—'
-  const totalDays = daysBetween(period.period_start, period.period_end) + 1
-  sumAvgSub.textContent = t('sum_active_days')
-    .replace('{active}', activeDays)
-    .replace('{total}', totalDays)
-}
-
-function renderSummaryDonut(stats) {
-  const total = stats.reduce((sum, row) => sum + row.total, 0)
-  if (!total) {
-    sumDonut.innerHTML = ''
-    sumDonutLegend.innerHTML = ''
-    return
-  }
-
-  let offset = 0
-  sumDonut.innerHTML = stats.map(row => {
-    const len = DONUT_LEN * (row.total / total)
-    const circle = `<circle cx="62" cy="62" r="54" stroke="${esc(row.color)}" stroke-dasharray="${len} ${DONUT_LEN - len}" stroke-dashoffset="${-offset}"></circle>`
-    offset += len
-    return circle
-  }).join('')
-
-  const top = stats.slice(0, 5)
-  const rest = stats.slice(5)
-  sumDonutLegend.innerHTML = top.map(row =>
-    `<div class="dl-row"><i style="background:${esc(row.color)}"></i><span class="n">${esc(row.name)}</span><span class="v">${Math.round(row.total / total * 100)}%</span></div>`
-  ).join('') + (rest.length
-    ? `<div class="dl-row"><i style="background:var(--surface-2)"></i><span class="n">${t('sum_more')} ${rest.length}</span><span class="v">${Math.round(rest.reduce((s, r) => s + r.total, 0) / total * 100)}%</span></div>`
-    : '')
-}
-
-function renderSummaryChart({ perDay }, period) {
-  const days = []
-  const cursor = new Date(period.period_start + 'T00:00:00')
-  const end = new Date(period.period_end + 'T00:00:00')
-  while (cursor <= end) {
-    const iso = localISODate(cursor)
-    days.push([iso, perDay.get(iso) || 0])
-    cursor.setDate(cursor.getDate() + 1)
-  }
-
-  const max = Math.max(...days.map(([, seconds]) => seconds), 1)
-  sumChart.innerHTML = days.map(([iso, seconds]) =>
-    `<span class="bar ${seconds ? '' : 'none'}" style="height:${seconds ? Math.max(seconds / max * 100, 6) : 6}%" title="${shortDate(iso)}: ${seconds ? formatHM(seconds) : '—'}"></span>`
-  ).join('')
-
-  // Подписи по краям и трети: день месяца, месяц читается из заголовка карточки
-  const marks = [0, Math.floor(days.length / 3), Math.floor(days.length * 2 / 3), days.length - 1]
-  sumChartX.innerHTML = [...new Set(marks)]
-    .map(i => `<span>${Number(days[i][0].slice(8, 10))}</span>`).join('')
-}
-
-function renderSummaryCategories(stats) {
-  if (!stats.length) {
-    sumCatRows.innerHTML = ''
-    return
-  }
-  const max = stats[0].total
-  sumCatRows.innerHTML = stats.map(row => `
-    <tr>
-      <td><span class="nm"><i style="background:${esc(row.color)}"></i>${esc(row.name)}</span></td>
-      <td><span class="mini"><span style="width:${row.total / max * 100}%;background:${esc(row.color)}"></span></span></td>
-      <td class="num">${row.sessions}</td>
-      <td class="num">${formatHM(row.total)}</td>
-    </tr>`).join('')
-}
-
-// ── Вид «Appearance» ──────────────────────────────────────────────────────────
-
-// Точка у строки несёт акцент выбранной палитры: превью темы в дропдаун не
-// положишь, а «Emerald» и «Indigo» названием ни о чём не говорят.
-const THEME_ACCENTS = {
-  'emerald-light': '#059669', 'emerald-dark': '#34d399',
-  'indigo-light':  '#4f46e5', 'indigo-dark':  '#818cf8'
-}
-
-function pressOne(container, attr, value) {
-  container.querySelectorAll('button').forEach(b =>
-    b.setAttribute('aria-pressed', String(b.dataset[attr] === value)))
-}
-
-function paintThemeCard() {
-  themeLightSelect.value = themeLight
-  themeDarkSelect.value  = themeDark
-  dotLight.style.background = THEME_ACCENTS[themeLight]
-  dotDark.style.background  = THEME_ACCENTS[themeDark]
-  pressOne(themeModeSw, 'themeMode', themeMode)
-}
-
-function loadAppearanceView() {
-  paintThemeCard()
-  pressOne(animSw, 'anim', document.documentElement.dataset.anim)
-  pressOne(animSpeedSw, 'speed', document.documentElement.dataset.waveSpeed)
-  animSpeedRow.classList.toggle('off', document.documentElement.dataset.anim === 'fade')
-  fxParticlesSelect.value = document.documentElement.dataset.fxp || 'off'
-  fxBlobsSelect.value     = document.documentElement.dataset.fxl || 'off'
-  pressOne(fxIdleSw, 'fxIdle', document.documentElement.dataset.fxi)
-  pressOne(langSw, 'lang', getLang())
-}
-
-themeModeSw.addEventListener('click', async e => {
-  const btn = e.target.closest('button')
-  if (!btn) return
-  themeMode = btn.dataset.themeMode
-  await window.api.setSetting('theme_mode', themeMode)
-  applyTheme()
-  paintThemeCard()
-})
-
-themeLightSelect.addEventListener('change', async e => {
-  themeLight = e.target.value
-  await window.api.setSetting('theme_light', themeLight)
-  applyTheme()
-  paintThemeCard()
-  flashSaved(e.target)
-})
-
-themeDarkSelect.addEventListener('change', async e => {
-  themeDark = e.target.value
-  await window.api.setSetting('theme_dark', themeDark)
-  applyTheme()
-  paintThemeCard()
-  flashSaved(e.target)
-})
-
-// ── Переход между режимами ────────────────────────────────────────────────────
-
-animSw.addEventListener('click', async e => {
-  const btn = e.target.closest('button')
-  if (!btn) return
-  document.documentElement.dataset.anim = btn.dataset.anim
-  await window.api.setSetting('ui_anim', btn.dataset.anim)
-  pressOne(animSw, 'anim', btn.dataset.anim)
-  animSpeedRow.classList.toggle('off', btn.dataset.anim === 'fade')
-  flashSaved(btn)
-  replayTransition()
-})
-
-animSpeedSw.addEventListener('click', async e => {
-  const btn = e.target.closest('button')
-  if (!btn) return
-  document.documentElement.dataset.waveSpeed = btn.dataset.speed
-  await window.api.setSetting('ui_wave_speed', btn.dataset.speed)
-  pressOne(animSpeedSw, 'speed', btn.dataset.speed)
-  flashSaved(btn)
-  replayTransition()
-})
-
-// Прогоняет ту же анимацию, которой рождается вид при смене режима, прямо по
-// карточкам Appearance: выбор виден сразу, без ухода из настроек и обратно.
-function replayTransition() {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
-  const wave = document.documentElement.dataset.anim !== 'fade'
-  const duration = Number(getComputedStyle(document.documentElement).getPropertyValue('--wave-ms')) || 900
-  const origin = tbtn.getBoundingClientRect()
-  const ox = origin.left + origin.width / 2
-  const oy = origin.top + origin.height / 2
-  const far = Math.hypot(innerWidth, innerHeight)
-
-  appearanceGrid.classList.remove('wavein', 'fadein')
-  void appearanceGrid.offsetWidth
-  appearanceGrid.querySelectorAll('[data-wave]').forEach((el, i) => {
-    const b = el.getBoundingClientRect()
-    const delay = wave
-      ? Math.hypot(b.left + b.width / 2 - ox, b.top + b.height / 2 - oy) / far * duration
-      : 60 + i * 34
-    el.style.setProperty('--wd', Math.round(delay) + 'ms')
-  })
-  appearanceGrid.classList.add(wave ? 'wavein' : 'fadein')
-}
-
-animReplay.addEventListener('click', replayTransition)
-
-// ── Фон ───────────────────────────────────────────────────────────────────────
-
-fxIdleSw.addEventListener('click', async e => {
-  const btn = e.target.closest('button')
-  if (!btn) return
-  const state = btn.dataset.fxIdle
-  document.documentElement.dataset.fxi = state
-  await window.api.setSetting('fx_idle', state)
-  pressOne(fxIdleSw, 'fxIdle', state)
-  state === 'on' ? IDLE_FX.start() : IDLE_FX.stop()
-  flashSaved(fxIdleSw)
-})
-
-fxParticlesSelect.addEventListener('change', async e => {
-  await window.api.setSetting('fx_particles', e.target.value)
-  applyFx(e.target.value, document.documentElement.dataset.fxl)
-  flashSaved(e.target)
-})
-
-fxBlobsSelect.addEventListener('change', async e => {
-  await window.api.setSetting('fx_blobs', e.target.value)
-  applyFx(document.documentElement.dataset.fxp, e.target.value)
-  flashSaved(e.target)
-})
-
-// Превью — не второй движок, а сокращённая модель существующего: те же пять
-// вариантов частиц и четыре засветов, цвет из того же акцента. Без неё
-// дропдаун не говорит ничего: «Эмиссия» и «Вселенная» названием не отличаются.
-const fxCtx = fxPreview.getContext('2d')
-const fxDots = Array.from({ length: 70 }, () => ({
-  x: Math.random(), y: Math.random(), r: Math.random() * 1.6 + .4,
-  vx: (Math.random() - .5) * .0055, vy: (Math.random() - .5) * .0055,
-  phase: Math.random() * 6.28
-}))
-
-function fitFxPreview() {
-  const ratio = devicePixelRatio || 1
-  const box = fxPreview.getBoundingClientRect()
-  fxPreview.width  = box.width * ratio
-  fxPreview.height = box.height * ratio
-  fxCtx.setTransform(ratio, 0, 0, ratio, 0, 0)
-}
-
-function accentRGBA(alpha) {
-  const hex = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
-  const n = parseInt(hex.slice(1), 16)
-  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${alpha})`
-}
-
-function drawFxPreview(time) {
-  requestAnimationFrame(drawFxPreview)
-  if (currentView !== 'appearance' || document.documentElement.dataset.mode !== 'dash') return
-
-  const w = fxPreview.clientWidth
-  const h = fxPreview.clientHeight
-  if (!w || !h) return
-  if (fxPreview.width !== Math.round(w * (devicePixelRatio || 1))) fitFxPreview()
-  fxCtx.clearRect(0, 0, w, h)
-
-  const blobs = document.documentElement.dataset.fxl
-  if (blobs && blobs !== 'off') {
-    const spots = blobs === 'bottom' ? [[.5, 1.15, .9]]
-      : blobs === 'all' ? [[.2, .25, .55], [.8, .35, .5], [.5, 1.05, .8]]
-      : [[.3 + Math.sin(time / 2600) * .16, .3, .6], [.72 + Math.cos(time / 3100) * .12, .55, .5]]
-    spots.forEach(([bx, by, br]) => {
-      const g = fxCtx.createRadialGradient(bx * w, by * h, 0, bx * w, by * h, br * h)
-      g.addColorStop(0, accentRGBA(blobs === 'aurora' ? .3 : .22))
-      g.addColorStop(1, accentRGBA(0))
-      fxCtx.fillStyle = g
-      fxCtx.fillRect(0, 0, w, h)
-    })
-  }
-
-  const particles = document.documentElement.dataset.fxp
-  if (particles === 'grid') {
-    fxCtx.strokeStyle = accentRGBA(.16)
-    fxCtx.lineWidth = 1
-    const step = 22
-    const shift = (time / 90) % step
-    for (let x = -step + shift; x < w; x += step) {
-      fxCtx.beginPath(); fxCtx.moveTo(x, 0); fxCtx.lineTo(x, h); fxCtx.stroke()
-    }
-    for (let y = -step + shift; y < h; y += step) {
-      fxCtx.beginPath(); fxCtx.moveTo(0, y); fxCtx.lineTo(w, y); fxCtx.stroke()
-    }
-  } else if (particles && particles !== 'off') {
-    fxDots.forEach(p => {
-      let x, y, alpha
-      if (particles === 'emit') {
-        const t = (time * .00004 + p.phase / 6.28) % 1
-        x = w / 2 + Math.cos(p.phase) * t * w * .62
-        y = h / 2 + Math.sin(p.phase) * t * h * .9
-        alpha = (1 - t) * .75
-      } else if (particles === 'universe') {
-        x = p.x * w; y = p.y * h
-        alpha = (Math.sin(time / 620 + p.phase) * .5 + .5) * .8
-      } else {
-        p.x = (p.x + p.vx / 60 + 1) % 1
-        p.y = (p.y + p.vy / 60 + 1) % 1
-        x = p.x * w; y = p.y * h; alpha = .45
-      }
-      fxCtx.fillStyle = accentRGBA(alpha)
-      fxCtx.beginPath(); fxCtx.arc(x, y, p.r, 0, 6.29); fxCtx.fill()
-    })
-  }
-}
-
-requestAnimationFrame(drawFxPreview)
-
 // ── Язык ──────────────────────────────────────────────────────────────────────
 
 langSw.addEventListener('click', async e => {
@@ -1503,12 +1059,14 @@ langSw.addEventListener('click', async e => {
   setLang(btn.dataset.lang)
   await window.api.setSetting('lang', getLang())
   applyI18n()
-  pressOne(langSw, 'lang', getLang())
+  // Язык переключается только отсюда, из Оформления: перерисовываем вид целиком,
+  // включая поле хоткея — его текст пишется из кода, а не через data-i18n.
+  loadAppearanceView()
   renderCategories()
   renderDialogCategories()
   // Ряд дней недели переводится сам, а название месяца пишется только при
   // загрузке месяца - поэтому открытый Календарь перезагружаем целиком.
-  if (currentView === 'calendar') await loadCalendarMonth()
+  if (getCurrentView() === 'calendar') await loadCalendarMonth()
   else renderWeekdays()
   await refreshStats()
   flashSaved(btn)
@@ -1518,17 +1076,17 @@ langSw.addEventListener('click', async e => {
 
 window.api.onPeerUpdated(async () => {
   await refreshStats()
-  if (currentView === 'calendar') await loadCalendarMonth()
-  if (currentView === 'summary')  await loadSummaryView()
+  if (getCurrentView() === 'calendar') await loadCalendarMonth()
+  if (getCurrentView() === 'summary')  await loadSummaryView()
 })
 
 window.api.onSyncLimitUpdated(async () => {
   await refreshStats()
-  if (currentView === 'settings') await loadTimeCard()
+  if (getCurrentView() === 'settings') await loadTimeCard()
 })
 
 window.api.onSyncDone(async () => {
-  if (currentView === 'settings') await loadProfileCard()
+  if (getCurrentView() === 'settings') await loadProfileCard()
 })
 
 // ── Titlebar window controls ────────────────────────────────────────────────
@@ -1543,7 +1101,7 @@ window.api.onWinUnmaximized(() => winMaxIcon.setAttribute('href', '#i-win-max'))
 // Период продлился автоматически (сменился день во время работы приложения)
 window.api.onPeriodAdvanced(async () => {
   await refreshStats()
-  if (currentView === 'settings') await loadTimeCard()
+  if (getCurrentView() === 'settings') await loadTimeCard()
 })
 
 // ── Start ─────────────────────────────────────────────────────────────────────
