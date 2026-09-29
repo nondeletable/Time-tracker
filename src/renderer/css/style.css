@@ -309,17 +309,18 @@ body {
   cursor: pointer;
   opacity: 0.55;
   padding: 0;
-  transition: opacity var(--t), background var(--t);
+  transition: opacity var(--t), color var(--t);
 }
 
+/* Подложки при наведении нет ни у одной кнопки: меняется только сам символ.
+   Свернуть и развернуть проявляются до полного цвета текста, крестик
+   краснеет. */
 .win-btn:hover {
   opacity: 1;
-  background: var(--surface-2);
 }
 
 .win-close:hover {
-  background: var(--danger);
-  color: var(--on-danger);
+  color: var(--danger);
 }
 
 .win-btn .ic {
