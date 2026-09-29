@@ -15,7 +15,7 @@ import { CAT_COLORS } from './palette.js'
 import { getUser, setUser } from './user.js'
 import { flashSaved } from './flash.js'
 import { getCurrentView, setCurrentView } from './current-view.js'
-import { loadAppearanceView, applyFx, pressOne } from './appearance.js'
+import { loadAppearanceView, applyFx } from './appearance.js'
 import { getTheme, setTheme, applyTheme, toggleThemeMode } from './theme.js'
 import {
   userSelectScreen, mainScreen, focusLayer, chips, dialCat, dialSub, prog,
@@ -343,6 +343,14 @@ function resetTimer() {
 timerBtn.addEventListener('click', () => {
   if (running) stopTimer()
   else start()
+})
+
+// Глобальный хоткей жмёт ту же кнопку. Пока открыт диалог сохранения, он
+// молчит, как молчит и сама кнопка под диалогом; без категории кнопка
+// заблокирована, и click() по ней тоже ничего не делает.
+window.api.onHotkeyToggle(() => {
+  if (!saveDialog.classList.contains('hidden')) return
+  timerBtn.click()
 })
 
 resetBtn.addEventListener('click', () => {
@@ -1051,7 +1059,9 @@ langSw.addEventListener('click', async e => {
   setLang(btn.dataset.lang)
   await window.api.setSetting('lang', getLang())
   applyI18n()
-  pressOne(langSw, 'lang', getLang())
+  // Язык переключается только отсюда, из Оформления: перерисовываем вид целиком,
+  // включая поле хоткея — его текст пишется из кода, а не через data-i18n.
+  loadAppearanceView()
   renderCategories()
   renderDialogCategories()
   // Ряд дней недели переводится сам, а название месяца пишется только при

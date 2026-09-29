@@ -2,7 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 // Handing a listener straight to ipcRenderer.on would call it with the
 // IpcRendererEvent as its first argument, which carries sender and senderFrame
-// into page scope. None of these five channels sends a payload, so the wrapper
+// into page scope. None of these six channels sends a payload, so the wrapper
 // forwards nothing at all; the two that do send one already unpack it below.
 contextBridge.exposeInMainWorld('api', {
   getDefaultName:   ()             => ipcRenderer.invoke('app:get-default-name'),
@@ -41,4 +41,7 @@ contextBridge.exposeInMainWorld('api', {
   winClose:          ()   => ipcRenderer.invoke('win:close'),
   onWinMaximized:    (cb) => ipcRenderer.on('win:maximized', () => cb()),
   onWinUnmaximized:  (cb) => ipcRenderer.on('win:unmaximized', () => cb()),
+  getHotkey:         ()      => ipcRenderer.invoke('hotkey:get'),
+  setHotkey:         (accel) => ipcRenderer.invoke('hotkey:set', accel),
+  onHotkeyToggle:    (cb) => ipcRenderer.on('hotkey:toggle', () => cb()),
 })

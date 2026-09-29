@@ -457,7 +457,7 @@
                 </div>
 
                 <!-- ── Фон ─────────────────────────────────────────────── -->
-                <div class="card span2" data-wave>
+                <div class="card span2" id="fx-card" data-wave>
                   <div class="card-head">
                     <h3 data-i18n="card_fx">Фон</h3>
                     <button class="help" data-i18n-tip="tip_fx"><svg class="ic"><use href="#i-help"/></svg></button>
@@ -524,6 +524,23 @@
                       <button data-lang="de">DE</button>
                       <button data-lang="es">ES</button>
                     </div>
+                  </div>
+                </div>
+
+                <!-- ── Горячая клавиша ─────────────────────────────────── -->
+                <div class="card span2" data-wave>
+                  <div class="card-head">
+                    <h3 data-i18n="card_hotkey">Горячая клавиша</h3>
+                    <button class="help" data-i18n-tip="tip_hotkey"><svg class="ic"><use href="#i-help"/></svg></button>
+                    <span class="sp"></span>
+                  </div>
+
+                  <div class="row">
+                    <span class="lab" data-i18n="row_hotkey">Старт и стоп таймера</span>
+                    <span class="sp"></span>
+                    <span class="saved" data-i18n="saved_mark">сохранено</span>
+                    <button class="hotkey-f" id="hotkey-field"></button>
+                    <button class="btn-s" id="hotkey-clear" data-i18n="hotkey_clear">Убрать</button>
                   </div>
                 </div>
 

@@ -1118,9 +1118,41 @@ body {
 }
 
 /* В Appearance карточка не тянется и под высоту соседки по ряду: у «Языка»
-   одна строка, растянутый он превращается в пустое поле */
+   одна строка, растянутый он превращается в пустое поле.
+   Фон занимает два ряда слева, чтобы карточка хоткея встала справа прямо под
+   «Языком», а не третьим рядом под самым высоким соседом. Лишнюю высоту Фона
+   забирает третий ряд: поровну на два ряда она раздвинула бы «Язык» и хоткей. */
 #appearance-grid {
   align-items: start;
+  grid-template-rows: auto auto 1fr;
+}
+
+#fx-card {
+  grid-row: span 2;
+}
+
+.hotkey-f {
+  min-width: 150px;
+  padding: 7px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-num);
+  font-size: 12.5px;
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--t), color var(--t);
+}
+
+.hotkey-f:hover,
+.hotkey-f.rec {
+  border-color: var(--accent);
+}
+
+.hotkey-f.rec,
+.hotkey-f.none {
+  color: var(--text-dim);
 }
 
 .card {
