@@ -10,6 +10,7 @@ const { purgeSelfFromPeerData } = require('./peer')
 const { generateCode, normalizeCode } = require('./group')
 const { clampBoundsToScreen } = require('./window-bounds')
 const { backgroundFromCss, activeTheme } = require('./theme-bg')
+const { isOurFrame } = require('./ipc-sender')
 const { isValidAccelerator, DEFAULT_HOTKEY } = require('./hotkey')
 const crypto = require('crypto')
 const { detectLang } = require('../renderer/js/i18n/i18n')
@@ -211,8 +212,7 @@ function advancePeriodIfNeeded() {
 // anything the preload exposes. senderFrame is null once a frame is gone, hence
 // the explicit test.
 function fromOurWindow(event, channel) {
-  const frame = event.senderFrame
-  if (frame && mainWin && !mainWin.isDestroyed() && frame === mainWin.webContents.mainFrame) return true
+  if (isOurFrame(event.senderFrame, mainWin)) return true
   console.warn(`[ipc] refused ${channel} from an unexpected frame`)
   return false
 }
