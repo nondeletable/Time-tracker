@@ -17,6 +17,7 @@
   font-display: block;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 @font-face {
   font-family: 'Plus Jakarta Sans';
   src: url('../../../assets/fonts/PlusJakartaSans-latin-ext.woff2') format('woff2');
@@ -25,6 +26,7 @@
   font-display: block;
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 @font-face {
   font-family: 'Golos Text';
   src: url('../../../assets/fonts/GolosText-cyrillic.woff2') format('woff2');
@@ -33,6 +35,7 @@
   font-display: block;
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
+
 @font-face {
   font-family: 'Golos Text';
   src: url('../../../assets/fonts/GolosText-cyrillic-ext.woff2') format('woff2');
@@ -41,6 +44,7 @@
   font-display: block;
   unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
 }
+
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('../../../assets/fonts/JetBrainsMono-latin.woff2') format('woff2');
@@ -49,6 +53,7 @@
   font-display: block;
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('../../../assets/fonts/JetBrainsMono-cyrillic.woff2') format('woff2');
@@ -67,6 +72,7 @@
   --r:12px; --r-lg:16px;
   --t:180ms cubic-bezier(.4,0,.2,1);
   --t-slow:420ms cubic-bezier(.16,1,.3,1);
+  --wave-ms: 900; /* переход между режимами, см. его раздел ниже */
 
   /* ── Anchors: emerald · dark (fallback default) ── */
   --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
@@ -83,6 +89,7 @@
   --text-faint:       color-mix(in srgb, var(--text-mute) 65%, var(--border));
   --text-disabled:    color-mix(in srgb, var(--text-mute) 40%, var(--border));
   --accent-hover:     color-mix(in srgb, var(--accent) 86%, black);
+
   /* idle-анимация там, где легла на заполненный прогресс: акцент поверх
      акцента даёт акцент, и движение пропадает — на пересечении разводим */
   --idle-over:        color-mix(in srgb, var(--accent) 50%, var(--text));
@@ -91,9 +98,10 @@
   --danger-strong:    color-mix(in srgb, var(--danger) 70%, black);
   --danger-soft:      color-mix(in srgb, var(--danger) 16%, var(--bg));
   --danger-soft-text: var(--danger);
-  --on-danger:        #ffffff;
+  --on-danger:        #fff;
+
   /* поверх затемняющей плёнки — одинаково светлый в любой теме */
-  --on-scrim:         #ffffff;
+  --on-scrim:         #fff;
 }
 
 /* ── emerald · dark ── */
@@ -102,23 +110,26 @@
   --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
   --accent:#34d399; --accent-soft:#0e2b22; --on-accent:#04231a; --danger:#f87171;
 }
+
 /* ── emerald · light ── */
 [data-theme="emerald-light"] {
-  --bg:#fbfbfc; --surface:#ffffff; --surface-2:#f1f3f6; --border:#e5e8ee;
+  --bg:#fbfbfc; --surface:#fff; --surface-2:#f1f3f6; --border:#e5e8ee;
   --text:#111827; --text-dim:#5a6478; --text-mute:#666c77;
-  --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#ffffff; --danger:#dc2626;
+  --accent:#059669; --accent-soft:#d8f3e7; --on-accent:#fff; --danger:#dc2626;
 }
+
 /* ── indigo · dark ── */
 [data-theme="indigo-dark"] {
   --bg:#0f0f0e; --surface:#171716; --surface-2:#1f1f1d; --border:#2b2b28;
   --text:#f0efec; --text-dim:#a0a099; --text-mute:#6b6b64;
   --accent:#818cf8; --accent-soft:#23234a; --on-accent:#10102a; --danger:#f87171;
 }
+
 /* ── indigo · light ── */
 [data-theme="indigo-light"] {
-  --bg:#f4f4f2; --surface:#ffffff; --surface-2:#ebebe7; --border:#e0e0da;
+  --bg:#f4f4f2; --surface:#fff; --surface-2:#ebebe7; --border:#e0e0da;
   --text:#1c1c1a; --text-dim:#61615c; --text-mute:#676761;
-  --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#ffffff; --danger:#dc2626;
+  --accent:#4f46e5; --accent-soft:#e6e5fb; --on-accent:#fff; --danger:#dc2626;
 }
 
 * {
@@ -169,7 +180,7 @@ body {
   width: 20px;
   height: 20px;
   fill: none;
-  stroke: currentColor;
+  stroke: currentcolor;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -252,7 +263,7 @@ body {
    иконок навигации. */
 .chrome {
   position: absolute;
-  inset: 0 0 auto 0;
+  inset: 0 0 auto;
   height: 64px;
   z-index: 60;
   display: flex;
@@ -330,6 +341,7 @@ body {
 
 /* Слой режима. Фон непрозрачный: когда рядом встанет Dashboard, под клипом
    перехода не должен просвечивать уходящий режим. */
+
 /* Фон обязателен: под клипом волны не должен просвечивать уходящий режим */
 .layer {
   position: absolute;
@@ -428,7 +440,11 @@ body {
 /* Слои idle-анимации. Рисуются дважды: idle-a целиком, idle-b поверх и
    обрезанный сектором прогресса — цвет разводится только на пересечении.
    Геометрию каждый кадр пишет idle-fx.js, здесь только цвет и гашение. */
-.idle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.idle {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
 .idle-a { stroke: var(--accent); }
 .idle-b { stroke: var(--idle-over); }
 
@@ -487,8 +503,15 @@ body {
 }
 
 @keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 0.75; }
-  50%      { transform: scale(1.045); opacity: 1; }
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+
+  50% {
+    transform: scale(1.045);
+    opacity: 1;
+  }
 }
 
 /* ── Кнопка запуска ────────────────────────────────────────────────────────── */
@@ -512,6 +535,12 @@ body {
   transition: transform var(--t), filter var(--t), background var(--t);
 }
 
+.go:disabled {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  cursor: not-allowed;
+}
+
 .go:hover:not(:disabled) {
   filter: brightness(1.07);
   transform: translateY(-1px);
@@ -519,12 +548,6 @@ body {
 
 .go:active:not(:disabled) {
   transform: scale(0.985);
-}
-
-.go:disabled {
-  background: var(--accent-soft);
-  color: var(--accent-soft-text);
-  cursor: not-allowed;
 }
 
 .go.stop {
@@ -622,7 +645,7 @@ body {
 /* Непрозрачный — иначе сцена просвечивает сквозь выезжающую панель */
 .foot {
   position: absolute;
-  inset: auto 0 0 0;
+  inset: auto 0 0;
   z-index: 3;
   border-top: 1px solid var(--border);
   background: var(--bg);
@@ -650,23 +673,6 @@ body {
   overflow: hidden;
 }
 
-/* Отрезки idle-анимации живут в том же треке поверх заливки лимита.
-   transition у них снят: ширину пишет каждый кадр движок, и плавность
-   от --t-slow превратила бы анимацию в кашу. */
-/* Селекторы длиннее, чем хочется, намеренно: правило .foot-bar .track span
-   ниже перебивает более короткие — оно заливает любой span в треке акцентом и
-   вешает на ширину переход в 420 мс. Обёртке фон не нужен вовсе, а слоям нужен
-   свой цвет и мгновенная ширина: их позицию пишет каждый кадр движок, и
-   плавность превратила бы движение в вязкое доезжание с прошлого места. */
-.foot-bar .track .idle-bar { position: absolute; inset: 0; background: none; }
-.foot-bar .track .idle-bar span {
-  position: absolute;
-  top: 0;
-  transition: none;
-}
-.foot-bar .track .idle-bar .idle-a { background: var(--accent); }
-.foot-bar .track .idle-bar .idle-b { background: var(--idle-over); }
-
 .foot-bar .track span {
   display: block;
   height: 100%;
@@ -674,6 +680,29 @@ body {
   background: var(--accent);
   transition: width var(--t-slow);
 }
+
+/* Отрезки idle-анимации живут в том же треке поверх заливки лимита.
+   transition у них снят: ширину пишет каждый кадр движок, и плавность
+   от --t-slow превратила бы анимацию в кашу. */
+
+/* Селекторы длиннее, чем хочется, намеренно: правило .foot-bar .track span
+   выше перебивает более короткие — оно заливает любой span в треке акцентом и
+   вешает на ширину переход в 420 мс. Обёртке фон не нужен вовсе, а слоям нужен
+   свой цвет и мгновенная ширина: их позицию пишет каждый кадр движок, и
+   плавность превратила бы движение в вязкое доезжание с прошлого места. */
+.foot-bar .track .idle-bar {
+  position: absolute;
+  inset: 0;
+  background: none;
+}
+
+.foot-bar .track .idle-bar span {
+  position: absolute;
+  top: 0;
+  transition: none;
+}
+.foot-bar .track .idle-bar .idle-a { background: var(--accent); }
+.foot-bar .track .idle-bar .idle-b { background: var(--idle-over); }
 
 .foot-bar .track span.over {
   background: var(--danger);
@@ -777,6 +806,7 @@ body {
   border-radius: 99px;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: отрезки idle-полосы живут только в .foot-bar */
 .bars-row .t span {
   display: block;
   height: 100%;
@@ -797,10 +827,6 @@ body {
    поэтому рождаются ровно там, где волна прошла. --wave-ms — время, за
    которое фронт доходит до дальнего угла. */
 
-:root {
-  --wave-ms: 900;
-}
-
 [data-wave-speed="fast"] { --wave-ms: 520; }
 [data-wave-speed="med"]  { --wave-ms: 900; }
 [data-wave-speed="slow"] { --wave-ms: 1600; }
@@ -811,13 +837,20 @@ body {
 }
 
 .layer.fading [data-wave] {
-  animation: fadeRise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: fade-rise 420ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
-@keyframes fadeRise {
-  from { opacity: 0; transform: translateY(18px) scale(.82); }
-  to   { opacity: 1; transform: none; }
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .ring {
@@ -831,13 +864,20 @@ body {
 }
 
 .layer.incoming [data-wave] {
-  animation: waveIn 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: wave-in 360ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
-@keyframes waveIn {
-  from { opacity: 0; transform: translateY(10px) scale(.975); }
-  to   { opacity: 1; transform: none; }
+@keyframes wave-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.975);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ── Dashboard: рельс и каркас ─────────────────────────────────────────────── */
@@ -849,6 +889,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: var(--s2);
+
   /* сверху 72px: первая иконка встаёт ниже полосы обвязки с кнопкой T */
   padding: 72px 0 var(--s3);
 }
@@ -973,6 +1014,7 @@ body {
   overflow-y: auto;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: кнопки рельса в меню дока не попадают */
 .dock-menu button {
   display: flex;
   align-items: center;
@@ -1025,13 +1067,13 @@ body {
   transition: background var(--t), color var(--t);
 }
 
-.dock-btn:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-
 .dock-btn:disabled {
   color: var(--text-mute);
   cursor: default;
+}
+
+.dock-btn:hover:not(:disabled) {
+  background: var(--surface-2);
 }
 
 .dock-btn.stop {
@@ -1118,39 +1160,6 @@ body {
   flex: 1;
 }
 
-/* всё, что стоит справа в шапке карточки, — одной высоты и одной фактуры */
-.card-head .seg,
-.card-head .hint,
-.card-head .date-f .val {
-  height: 32px;
-  display: flex;
-  align-items: center;
-}
-
-.card-head .hint {
-  padding: 0 12px;
-  border-radius: 9px;
-  background: var(--surface-2);
-  color: var(--text-dim);
-  font-size: 12px;
-  gap: 6px;
-}
-
-.card-head .hint .num {
-  color: var(--text);
-}
-
-.card-head .date-f .val {
-  justify-content: center;
-  padding: 0 10px;
-  background: var(--surface-2);
-  border-color: transparent;
-}
-
-.card-head .date-f:hover .val {
-  border-color: var(--accent);
-}
-
 /* разделитель между строками, а не под каждой */
 .row {
   display: flex;
@@ -1207,6 +1216,7 @@ body {
   border-radius: 9px;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: кнопки рельса в сегментный переключатель не попадают */
 .seg button {
   padding: 5px 12px;
   border-radius: 7px;
@@ -1248,15 +1258,15 @@ body {
   font-weight: 600;
 }
 
-.tbl th:last-child,
-.tbl td:last-child {
-  text-align: right;
-}
-
 .tbl td {
   padding: 7px 0;
   border-top: 1px solid var(--border);
   font-size: 12.5px;
+}
+
+.tbl th:last-child,
+.tbl td:last-child {
+  text-align: right;
 }
 
 .tbl .nm {
@@ -1415,6 +1425,39 @@ body {
   cursor: pointer;
 }
 
+/* всё, что стоит справа в шапке карточки, — одной высоты и одной фактуры */
+.card-head .seg,
+.card-head .hint,
+.card-head .date-f .val {
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.card-head .hint {
+  padding: 0 12px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-size: 12px;
+  gap: 6px;
+}
+
+.card-head .hint .num {
+  color: var(--text);
+}
+
+.card-head .date-f .val {
+  justify-content: center;
+  padding: 0 10px;
+  background: var(--surface-2);
+  border-color: transparent;
+}
+
+.card-head .date-f:hover .val {
+  border-color: var(--accent);
+}
+
 /* аватар: карандаш по наведению, попап с выбором по клику */
 .idt {
   display: flex;
@@ -1456,7 +1499,7 @@ body {
   display: grid;
   place-items: center;
   color: var(--on-scrim);
-  background: rgba(0, 0, 0, .5);
+  background: rgb(0 0 0 / 50%);
   opacity: 0;
   transition: opacity var(--t);
 }
@@ -1539,6 +1582,7 @@ body {
 }
 
 /* правка и добавление раскрываются строкой-формой под записью */
+/* stylelint-disable-next-line no-descending-specificity -- разные свойства: .tbl td:last-child задаёт только выравнивание */
 .form-row td {
   padding: var(--s3) 0;
 }
@@ -1569,6 +1613,7 @@ body {
   margin-top: var(--s3);
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: палитра не лежит в .tbl .nm */
 .palette i {
   width: 22px;
   height: 22px;
@@ -1638,6 +1683,7 @@ body {
   font-weight: 400;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: легенда Сводки не лежит в .tbl .nm */
 .legend i {
   width: 8px;
   height: 8px;
@@ -1683,6 +1729,7 @@ body {
   color: var(--text-dim);
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: легенда пончика не лежит в .tbl .nm */
 .dl-row i {
   width: 7px;
   height: 7px;
@@ -1747,6 +1794,7 @@ body {
   vertical-align: middle;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: отрезки idle-полосы живут только в .foot-bar */
 .tbl .mini span {
   display: block;
   height: 100%;
@@ -1776,6 +1824,7 @@ body {
   overflow: hidden;
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: логотип в попап аватаров не попадает */
 .logo img {
   width: 64px;
   height: 64px;
@@ -1958,13 +2007,15 @@ body {
 }
 
 /* «Проверить» прогоняет ту же анимацию прямо по карточкам Appearance */
+/* stylelint-disable-next-line no-descending-specificity -- задумано: переход режима (.layer.fading) перебивает повтор анимации в Оформлении */
 .wavein [data-wave] {
-  animation: waveIn 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: wave-in 360ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
+/* stylelint-disable-next-line no-descending-specificity -- задумано: переход режима (.layer.fading) перебивает повтор анимации в Оформлении */
 .fadein [data-wave] {
-  animation: fadeRise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation: fade-rise 420ms cubic-bezier(.16, 1, .3, 1) both;
   animation-delay: var(--wd, 0ms);
 }
 
@@ -1980,7 +2031,7 @@ body {
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgb(0 0 0 / 65%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1997,7 +2048,7 @@ body {
   align-items: center;
   gap: 20px;
   min-width: 290px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 60%);
 }
 
 .dialog-title {
@@ -2145,6 +2196,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 /* шапка таблицы той же роли, что `.tbl th` — не выключенный элемент */
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: ряд дней недели не лежит в .foot-bar */
 .calendar-weekdays span {
   text-align: center;
   font-size: 0.7rem;
