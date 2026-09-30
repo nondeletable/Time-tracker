@@ -1965,6 +1965,7 @@ body {
 .cal-card {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
 }
 
@@ -2272,9 +2273,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--text-mute);
 }
 
+/* Карточка тянется на всю высоту вида, как сетка Сводки, а шесть недель
+   делят её поровну. Ниже 70px ячейка не сжимается: на маленьком окне вид
+   просто прокручивается. */
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
+  flex: 1;
+  min-height: 0;
   padding: 4px 12px 12px;
   gap: 3px;
 }
