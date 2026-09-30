@@ -4,6 +4,7 @@
 // exactly as before.
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
+import './scrollbars.js'
 import {
   esc, formatTime, secsToHHMM, hhmmToSecs, todayISO, formatHM,
 } from './format.js'

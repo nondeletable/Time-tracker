@@ -102,6 +102,9 @@
 
   /* поверх затемняющей плёнки — одинаково светлый в любой теме */
   --on-scrim:         #fff;
+
+  /* бегунок прокрутки, пока область прокручивается (раздел Scrollbar) */
+  --scroll-thumb:     color-mix(in srgb, var(--text-mute) 70%, transparent);
 }
 
 /* ── emerald · dark ── */
@@ -2198,23 +2201,55 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 
+/* Дорожки нет, бегунок виден только пока область прокручивается и гаснет
+   следом. Класс .scrolling ставит и снимает scrollbars.js.
+   Форма — через ::-webkit-scrollbar: только так убираются кнопки-стрелки
+   (стандартный scrollbar-color рисует их в цвет бегунка). Сами псевдоэлементы
+   Chromium не анимирует, поэтому цвет бегунка берётся из зарегистрированного
+   свойства --scroll-thumb-now: у него есть тип, и transition по нему плавно
+   перерисовывает бегунок. Родные overlay-прокрутки (OverlayScrollbar,
+   FluentOverlayScrollbar) в Electron 44 флагами не включаются — проверено. */
+@property --scroll-thumb-now {
+  syntax: '<color>';
+  inherits: true; /* псевдоэлементы прокрутки получают его наследованием */
+  initial-value: transparent;
+}
+
+.scroll,
+.tbl-wrap,
+.dock-menu {
+  --scroll-thumb-now: transparent;
+
+  transition: --scroll-thumb-now 600ms ease;
+}
+
+.scroll.scrolling,
+.tbl-wrap.scrolling,
+.dock-menu.scrolling {
+  --scroll-thumb-now: var(--scroll-thumb);
+
+  transition-duration: 100ms;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-button {
   display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--surface-3);
-  border-radius: 5px;
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg);
+  background: var(--scroll-thumb-now, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
   border-radius: 5px;
-  border: 2px solid var(--surface-3);
 }
 
 /* ── Сетка календаря ────────────────────────────────────────────────────────── */
