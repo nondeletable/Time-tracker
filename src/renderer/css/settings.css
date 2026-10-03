@@ -97,8 +97,7 @@
   margin-top: var(--s3);
 }
 
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: палитра не лежит в .tbl .nm */
-.palette i {
+.palette-dot {
   width: 22px;
   height: 22px;
   border-radius: 6px;

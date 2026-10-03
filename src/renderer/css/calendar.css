@@ -19,8 +19,7 @@
 }
 
 /* шапка таблицы той же роли, что `.tbl th` — не выключенный элемент */
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: ряд дней недели не лежит в .foot-bar */
-.calendar-weekdays span {
+.weekday {
   text-align: center;
   font-size: 0.7rem;
   font-weight: 600;

@@ -46,8 +46,7 @@
   font-weight: 400;
 }
 
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: легенда Сводки не лежит в .tbl .nm */
-.legend i {
+.legend-dot {
   width: 8px;
   height: 8px;
   border-radius: 2px;
@@ -92,8 +91,7 @@
   color: var(--text-dim);
 }
 
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: легенда пончика не лежит в .tbl .nm */
-.dl-row i {
+.dl-dot {
   width: 7px;
   height: 7px;
   border-radius: 2px;
@@ -157,8 +155,7 @@
   vertical-align: middle;
 }
 
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: отрезки idle-полосы живут только в .foot-bar */
-.tbl .mini span {
+.mini-fill {
   display: block;
   height: 100%;
   border-radius: 2px;
