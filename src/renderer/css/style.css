@@ -1,20 +1,25 @@
-/* Оглавление стилей. Файлы разложены по назначению, порядок подключения
-   задаёт порядок в каскаде: токены, база, каркас, компоненты, виды, движение. */
+/* Оглавление стилей. Файлы разложены по назначению и подключаются в слои.
+   Порядок слоёв объявлен ниже один раз: правило из более позднего слоя сильнее
+   правила из раннего, какой бы ни была специфичность. Вне слоёв не должно
+   оставаться ничего: такие стили сильнее любого слоя. С !important порядок
+   переворачивается — важное из раннего слоя сильнее важного из позднего. */
 
-@import url('tokens.css');
-@import url('themes.css');
-@import url('base.css');
-@import url('shell.css');
-@import url('card.css');
-@import url('controls.css');
-@import url('table.css');
-@import url('dialog.css');
-@import url('dock.css');
-@import url('focus.css');
-@import url('summary.css');
-@import url('calendar.css');
-@import url('settings.css');
-@import url('appearance.css');
-@import url('about.css');
-@import url('onboarding.css');
-@import url('motion.css');
+@layer tokens, base, layout, components, views, motion;
+
+@import url('tokens.css') layer(tokens);
+@import url('themes.css') layer(tokens);
+@import url('base.css') layer(base);
+@import url('shell.css') layer(layout);
+@import url('card.css') layer(components);
+@import url('controls.css') layer(components);
+@import url('table.css') layer(components);
+@import url('dialog.css') layer(components);
+@import url('dock.css') layer(components);
+@import url('focus.css') layer(views);
+@import url('summary.css') layer(views);
+@import url('calendar.css') layer(views);
+@import url('settings.css') layer(views);
+@import url('appearance.css') layer(views);
+@import url('about.css') layer(views);
+@import url('onboarding.css') layer(views);
+@import url('motion.css') layer(motion);
