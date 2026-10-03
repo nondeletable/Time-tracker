@@ -392,8 +392,17 @@ body {
 
 /* Подвал лежит поверх сцены, а не в потоке: при раскрытии «Подробно» сцена
    уезжает вверх лишь немного — панель успевает накрыть бейджи категорий,
-   а не гонит их вверх вместе с собой. */
+   а не гонит их вверх вместе с собой.
+   Окно больше 1280×812 масштабирует весь интерфейс (window-zoom.js), но сцена
+   Focus растёт по-своему: --f — желаемый диаметр кольца в пикселях экрана, от
+   высоты окна и не шире трети ширины. Каждый размер ниже задан в пикселях
+   экрана и делится на --k, зум окна. На 1280×812 --f меньше нынешних 330px,
+   и clamp() держит прежние размеры. Таймер растёт вместе с кольцом, кнопка
+   и бейджи — вполовину слабее (--f-half), иначе превращаются в плакат. */
 .stage {
+  --f: calc(min(40vh, 30vw) * var(--k, 1));
+  --f-half: calc((var(--f) - 330px) / 660);
+
   position: relative;
   z-index: 1;
   flex: 1;
@@ -401,7 +410,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--s6);
+  gap: calc(clamp(var(--s6), calc(var(--s6) + var(--f-half) * 44), 60px) / var(--k, 1));
   padding: 0 var(--s5) 52px;
   min-height: 0;
   transition: transform var(--t-slow);
@@ -415,8 +424,8 @@ body {
 
 .ring-wrap {
   position: relative;
-  width: 330px;
-  height: 330px;
+  width: calc(clamp(330px, var(--f), 560px) / var(--k, 1));
+  height: calc(clamp(330px, var(--f), 560px) / var(--k, 1));
   flex-shrink: 0;
 }
 
@@ -465,7 +474,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: calc(clamp(13px, calc(13px + var(--f-half) * 13), 17px) / var(--k, 1));
   color: var(--text-dim);
   min-height: 1.2em;
 }
@@ -478,14 +487,14 @@ body {
 
 .dial-time {
   font-weight: 300;
-  font-size: 56px;
+  font-size: calc(clamp(56px, calc(var(--f) * 56 / 330), 95px) / var(--k, 1));
   letter-spacing: -0.045em;
   line-height: 1;
   color: var(--text);
 }
 
 .dial-sub {
-  font-size: 12px;
+  font-size: calc(clamp(12px, calc(12px + var(--f-half) * 12), 16px) / var(--k, 1));
   color: var(--text-mute);
   min-height: 1.2em;
 }
@@ -526,14 +535,16 @@ body {
 }
 
 .go {
-  padding: 15px 52px;
+  padding:
+    calc(clamp(15px, calc(15px + var(--f-half) * 15), 20px) / var(--k, 1))
+    calc(clamp(52px, calc(52px + var(--f-half) * 52), 70px) / var(--k, 1));
   border-radius: 99px;
   border: none;
   cursor: pointer;
   background: var(--accent);
   color: var(--on-accent);
   font-family: inherit;
-  font-size: 15px;
+  font-size: calc(clamp(15px, calc(15px + var(--f-half) * 15), 20px) / var(--k, 1));
   font-weight: 600;
   transition: transform var(--t), filter var(--t), background var(--t);
 }
@@ -593,7 +604,7 @@ body {
   flex-wrap: wrap;
   gap: var(--s2);
   justify-content: center;
-  max-width: 780px;
+  max-width: calc(clamp(780px, calc(780px + var(--f-half) * 780), 1050px) / var(--k, 1));
   transition: opacity var(--t-slow), transform var(--t-slow);
 }
 
@@ -607,13 +618,15 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 9px 16px;
+  padding:
+    calc(clamp(9px, calc(9px + var(--f-half) * 9), 12px) / var(--k, 1))
+    calc(clamp(16px, calc(16px + var(--f-half) * 16), 21px) / var(--k, 1));
   border-radius: 99px;
   border: 1px solid var(--border);
   background: transparent;
   cursor: pointer;
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(clamp(13px, calc(13px + var(--f-half) * 13), 17px) / var(--k, 1));
   color: var(--text-dim);
   transition: border-color var(--t), color var(--t), background var(--t), transform var(--t);
 }
@@ -638,7 +651,7 @@ body {
 }
 
 .chip .h {
-  font-size: 11.5px;
+  font-size: calc(clamp(11.5px, calc(11.5px + var(--f-half) * 11.5), 15px) / var(--k, 1));
   color: var(--text-mute);
   font-family: var(--font-num);
 }

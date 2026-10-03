@@ -2,6 +2,7 @@
 // scripts loaded ahead of this one: node --test requires them as CommonJS, and a
 // module runs after them anyway, so they publish I18N, DICT and ROLES on window
 // exactly as before.
+import './zoom.js'
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
 import './scrollbars.js'
