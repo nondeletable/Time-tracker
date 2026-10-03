@@ -9,6 +9,7 @@ const { pickPresetCategories } = require('./presets')
 const { purgeSelfFromPeerData } = require('./peer')
 const { generateCode, normalizeCode } = require('./group')
 const { clampBoundsToScreen } = require('./window-bounds')
+const { zoomFor } = require('./window-zoom')
 const { backgroundFromCss, activeTheme } = require('./theme-bg')
 const { isOurFrame } = require('./ipc-sender')
 const { isValidAccelerator, DEFAULT_HOTKEY } = require('./hotkey')
@@ -595,6 +596,15 @@ function createWindow() {
 
   const win = new BrowserWindow(opts)
   if (restoreMaximized) win.maximize()
+
+  // Zoom is reapplied after every load: a navigation is free to reset it.
+  const applyZoom = () => {
+    if (win.isDestroyed()) return
+    const [width, height] = win.getContentSize()
+    win.webContents.setZoomFactor(zoomFor(width, height))
+  }
+  win.on('resize', applyZoom)
+  win.webContents.on('did-finish-load', applyZoom)
 
   win.on('maximize',   () => { if (!win.isDestroyed()) win.webContents.send('win:maximized') })
   win.on('unmaximize', () => { if (!win.isDestroyed()) win.webContents.send('win:unmaximized') })
