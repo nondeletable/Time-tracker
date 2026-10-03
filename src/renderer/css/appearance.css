@@ -1,0 +1,132 @@
+/* Вид «Оформление». */
+
+/* Карточки в ряду одной высоты, как в Настройках. Фон занимает два ряда слева,
+   чтобы карточка хоткея встала справа прямо под «Языком», а не третьим рядом
+   под самым высоким соседом. Лишнюю высоту Фона забирает третий ряд, то есть
+   хоткей: поровну на два ряда она раздвинула бы «Язык» и хоткей, и нижние края
+   колонок всё равно совпадают. */
+#appearance-grid {
+  grid-template-rows: auto auto 1fr;
+}
+
+#fx-card {
+  grid-row: span 2;
+}
+
+.hotkey-f {
+  min-width: 150px;
+  padding: 7px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-num);
+  font-size: 12.5px;
+  color: var(--text);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--t), color var(--t);
+}
+
+.hotkey-f:hover,
+.hotkey-f.rec {
+  border-color: var(--accent);
+}
+
+.hotkey-f.rec,
+.hotkey-f.none {
+  color: var(--text-dim);
+}
+
+/* При Fade скорость ни на что не влияет: строка гаснет, но остаётся на месте,
+   чтобы карточка не прыгала по высоте */
+.row.off {
+  opacity: .45;
+  pointer-events: none;
+}
+
+/* Превью палитры в дропдаун не положишь — точка у строки несёт акцент той
+   темы, что в ней выбрана */
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid var(--border-strong);
+}
+
+/* Превью фона: оба слоя настоящие, рисуются акцентом активной темы */
+.fxprev {
+  --fx-c0: var(--accent);
+  --fx-c1: hsl(from var(--accent) calc(h - 26) s l);
+  --fx-c2: hsl(from var(--accent) calc(h + 26) s l);
+
+  position: relative;
+  height: 96px;
+  margin-top: var(--s3);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+/* Превью — статичный кадр каждого пресета (scripts/fx-preview-art.cjs), а не
+   работающий движок. Показан тот слой, чей пресет стоит на <html> в data-fxp и
+   data-fxl, поэтому смена в списке сразу меняет картинку без единой строки JS.
+   Три цвета — акцент и два его соседа по тону, ±26°, как у движка в fx.js;
+   объявлены на .fxprev. */
+.fxprev-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.fxprev-art g {
+  display: none;
+}
+
+:root[data-fxp="dust"] .fxprev-art [data-fxp="dust"],
+:root[data-fxp="emit"] .fxprev-art [data-fxp="emit"],
+:root[data-fxp="universe"] .fxprev-art [data-fxp="universe"],
+:root[data-fxp="grid"] .fxprev-art [data-fxp="grid"],
+:root[data-fxl="bottom"] .fxprev-art [data-fxl="bottom"],
+:root[data-fxl="all"] .fxprev-art [data-fxl="all"],
+:root[data-fxl="aurora"] .fxprev-art [data-fxl="aurora"] {
+  display: inline;
+}
+
+.fxprev-art .c0 { fill: var(--fx-c0); }
+.fxprev-art .c1 { fill: var(--fx-c1); }
+.fxprev-art .c2 { fill: var(--fx-c2); }
+.fxprev-art .s0 { stop-color: var(--fx-c0); }
+.fxprev-art .s1 { stop-color: var(--fx-c1); }
+.fxprev-art .s2 { stop-color: var(--fx-c2); }
+
+/* засветы в движке складываются светом (globalCompositeOperation 'lighter') */
+.fxprev-art .add {
+  mix-blend-mode: plus-lighter;
+}
+
+.fxprev .cap {
+  position: absolute;
+  left: 10px;
+  bottom: 8px;
+  font-size: 10.5px;
+  color: var(--text-mute);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* «Проверить» прогоняет ту же анимацию прямо по карточкам Appearance */
+/* stylelint-disable-next-line no-descending-specificity -- задумано: переход режима (.layer.fading) перебивает повтор анимации в Оформлении */
+.wavein [data-wave] {
+  animation: wave-in 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+/* stylelint-disable-next-line no-descending-specificity -- задумано: переход режима (.layer.fading) перебивает повтор анимации в Оформлении */
+.fadein [data-wave] {
+  animation: fade-rise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}

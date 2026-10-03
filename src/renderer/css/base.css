@@ -1,0 +1,189 @@
+/* База: шрифты, сброс, body, иконки, цифры, прокрутки, нативный календарь в поле даты. */
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Fonts. Locally bundled woff2 subsets from Google Fonts (all OFL 1.1,
+   licences next to the files in assets/fonts). The app is offline — nothing
+   is fetched at runtime.
+
+   UI text is split across two families on purpose: Plus Jakarta Sans, the
+   face the design is built on, has no basic Cyrillic (U+0400-045F), so every
+   Russian label would silently fall back to a system font. Golos Text covers
+   that range and sits closest to Jakarta in weight and proportion, so the
+   seam inside a mixed line reads as one typeface.
+   ────────────────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('../../../assets/fonts/PlusJakartaSans-latin.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('../../../assets/fonts/PlusJakartaSans-latin-ext.woff2') format('woff2');
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Golos Text';
+  src: url('../../../assets/fonts/GolosText-cyrillic.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+@font-face {
+  font-family: 'Golos Text';
+  src: url('../../../assets/fonts/GolosText-cyrillic-ext.woff2') format('woff2');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../../../assets/fonts/JetBrainsMono-latin.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../../../assets/fonts/JetBrainsMono-cyrillic.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Кнопки из прототипа задают только фон и радиус и рассчитывают на этот
+   сброс: без него к ним прилипают рамка, системный шрифт и цвет браузера. */
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  overflow: hidden;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ── Иконки ────────────────────────────────────────────────────────────────
+   Набор <symbol> в начале body. Он не должен ни занимать место, ни ловить
+   мышь: display:none убил бы и <use>, поэтому схлопываем размер. Сами иконки
+   рисуются обводкой currentColor, так что цветом управляет `color` кнопки —
+   и в темах, и в hover.                                                     */
+.icons {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.ic {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* Digits that must not jiggle while the timer runs */
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* ── Нативный календарь в поле даты ─────────────────────────────────────────── */
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.55);
+  cursor: pointer;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+
+/* Дорожки нет, бегунок виден только пока область прокручивается и гаснет
+   следом. Класс .scrolling ставит и снимает scrollbars.js.
+   Форма — через ::-webkit-scrollbar: только так убираются кнопки-стрелки
+   (стандартный scrollbar-color рисует их в цвет бегунка). Сами псевдоэлементы
+   Chromium не анимирует, поэтому цвет бегунка берётся из зарегистрированного
+   свойства --scroll-thumb-now: у него есть тип, и transition по нему плавно
+   перерисовывает бегунок. Родные overlay-прокрутки (OverlayScrollbar,
+   FluentOverlayScrollbar) в Electron 44 флагами не включаются — проверено. */
+@property --scroll-thumb-now {
+  syntax: '<color>';
+  inherits: true; /* псевдоэлементы прокрутки получают его наследованием */
+  initial-value: transparent;
+}
+
+.scroll,
+.tbl-wrap,
+.dock-menu {
+  --scroll-thumb-now: transparent;
+
+  transition: --scroll-thumb-now 600ms ease;
+}
+
+.scroll.scrolling,
+.tbl-wrap.scrolling,
+.dock-menu.scrolling {
+  --scroll-thumb-now: var(--scroll-thumb);
+
+  transition-duration: 100ms;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb-now, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 5px;
+}

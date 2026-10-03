@@ -38,12 +38,10 @@ function hexOffenders(css) {
   return offenders
 }
 
-test('style.css uses raw hex only in custom-property definitions', () => {
-  const css = fs.readFileSync(
-    path.join(__dirname, '..', 'src', 'renderer', 'css', 'style.css'),
-    'utf8'
-  )
-  const offenders = hexOffenders(css)
+test('the stylesheets use raw hex only in custom-property definitions', () => {
+  const dir = path.join(__dirname, '..', 'src', 'renderer', 'css')
+  const offenders = fs.readdirSync(dir).filter(f => f.endsWith('.css'))
+    .flatMap(f => hexOffenders(fs.readFileSync(path.join(dir, f), 'utf8')).map(o => `${f}:${o}`))
   assert.deepEqual(offenders, [], `raw hex outside token definitions:\n${offenders.join('\n')}`)
 })
 
