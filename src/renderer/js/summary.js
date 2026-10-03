@@ -80,9 +80,9 @@ function renderSummaryLimit(total, period, { perUser }) {
   ).join('')
 
   sumLegend.innerHTML = users.map(([name, seconds], i) =>
-    `<b><i style="background:${userColor(i)}"></i>${esc(name)} <span class="v">${formatHM(seconds)}</span></b>`
+    `<b><i class="legend-dot" style="background:${userColor(i)}"></i>${esc(name)} <span class="v">${formatHM(seconds)}</span></b>`
   ).join('') + (left > 0
-    ? `<b><i style="background:var(--surface-2)"></i>${t('sum_free')} <span class="v">${formatHM(left)}</span></b>`
+    ? `<b><i class="legend-dot" style="background:var(--surface-2)"></i>${t('sum_free')} <span class="v">${formatHM(left)}</span></b>`
     : '')
 }
 
@@ -122,9 +122,9 @@ function renderSummaryDonut(stats) {
   const top = stats.slice(0, 5)
   const rest = stats.slice(5)
   sumDonutLegend.innerHTML = top.map(row =>
-    `<div class="dl-row"><i style="background:${esc(row.color)}"></i><span class="n">${esc(row.name)}</span><span class="v">${Math.round(row.total / total * 100)}%</span></div>`
+    `<div class="dl-row"><i class="dl-dot" style="background:${esc(row.color)}"></i><span class="n">${esc(row.name)}</span><span class="v">${Math.round(row.total / total * 100)}%</span></div>`
   ).join('') + (rest.length
-    ? `<div class="dl-row"><i style="background:var(--surface-2)"></i><span class="n">${t('sum_more')} ${rest.length}</span><span class="v">${Math.round(rest.reduce((s, r) => s + r.total, 0) / total * 100)}%</span></div>`
+    ? `<div class="dl-row"><i class="dl-dot" style="background:var(--surface-2)"></i><span class="n">${t('sum_more')} ${rest.length}</span><span class="v">${Math.round(rest.reduce((s, r) => s + r.total, 0) / total * 100)}%</span></div>`
     : '')
 }
 
@@ -158,7 +158,7 @@ function renderSummaryCategories(stats) {
   sumCatRows.innerHTML = stats.map(row => `
     <tr>
       <td><span class="nm"><i style="background:${esc(row.color)}"></i>${esc(row.name)}</span></td>
-      <td><span class="mini"><span style="width:${row.total / max * 100}%;background:${esc(row.color)}"></span></span></td>
+      <td><span class="mini"><span class="mini-fill" style="width:${row.total / max * 100}%;background:${esc(row.color)}"></span></span></td>
       <td class="num">${row.sessions}</td>
       <td class="num">${formatHM(row.total)}</td>
     </tr>`).join('')

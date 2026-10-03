@@ -232,8 +232,8 @@
                   <button class="icon-btn" id="cal-next"><svg class="ic"><use href="#i-arrow-right"/></svg></button>
                 </div>
                 <div class="calendar-weekdays">
-                  <span>Пн</span><span>Вт</span><span>Ср</span>
-                  <span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+                  <span class="weekday">Пн</span><span class="weekday">Вт</span><span class="weekday">Ср</span>
+                  <span class="weekday">Чт</span><span class="weekday">Пт</span><span class="weekday">Сб</span><span class="weekday">Вс</span>
                 </div>
                 <div class="calendar-grid" id="calendar-grid"></div>
               </div>
@@ -247,8 +247,8 @@
                     <h3 data-i18n="card_profile">Профиль</h3>
                     <span class="sp"></span>
                     <div class="seg" id="group-mode-sw">
-                      <button data-group-mode="solo" aria-pressed="true" data-i18n="mode_solo">Соло</button>
-                      <button data-group-mode="group" data-i18n="mode_group">Группа</button>
+                      <button class="seg-btn" data-group-mode="solo" aria-pressed="true" data-i18n="mode_solo">Соло</button>
+                      <button class="seg-btn" data-group-mode="group" data-i18n="mode_group">Группа</button>
                     </div>
                   </div>
 
@@ -350,8 +350,8 @@
                     <h3 data-i18n="card_categories">Категории</h3>
                     <span class="sp"></span>
                     <div class="seg" id="cat-tabs">
-                      <button data-cat-tab="active" aria-pressed="true" data-i18n="cat_tab_active">Активные</button>
-                      <button data-cat-tab="deleted" data-i18n="cat_tab_deleted">Удалённые</button>
+                      <button class="seg-btn" data-cat-tab="active" aria-pressed="true" data-i18n="cat_tab_active">Активные</button>
+                      <button class="seg-btn" data-cat-tab="deleted" data-i18n="cat_tab_deleted">Удалённые</button>
                     </div>
                   </div>
                   <div class="tbl-wrap">
@@ -393,8 +393,8 @@
                     <button class="help" data-i18n-tip="tip_theme"><svg class="ic"><use href="#i-help"/></svg></button>
                     <span class="sp"></span>
                     <div class="seg" id="theme-mode-sw">
-                      <button data-theme-mode="light" data-i18n="theme_light_label">Светлая</button>
-                      <button data-theme-mode="dark" aria-pressed="true" data-i18n="theme_dark_label">Тёмная</button>
+                      <button class="seg-btn" data-theme-mode="light" data-i18n="theme_light_label">Светлая</button>
+                      <button class="seg-btn" data-theme-mode="dark" aria-pressed="true" data-i18n="theme_dark_label">Тёмная</button>
                     </div>
                   </div>
 
@@ -439,8 +439,8 @@
                     <span class="sp"></span>
                     <span class="saved" data-i18n="saved_mark">сохранено</span>
                     <div class="seg" id="anim-sw">
-                      <button data-anim="wave" aria-pressed="true">Wave</button>
-                      <button data-anim="fade">Fade</button>
+                      <button class="seg-btn" data-anim="wave" aria-pressed="true">Wave</button>
+                      <button class="seg-btn" data-anim="fade">Fade</button>
                     </div>
                   </div>
 
@@ -449,9 +449,9 @@
                     <span class="sp"></span>
                     <span class="saved" data-i18n="saved_mark">сохранено</span>
                     <div class="seg" id="anim-speed-sw">
-                      <button data-speed="fast" data-i18n="speed_fast">Быстро</button>
-                      <button data-speed="med" aria-pressed="true" data-i18n="speed_med">Средне</button>
-                      <button data-speed="slow" data-i18n="speed_slow">Медленно</button>
+                      <button class="seg-btn" data-speed="fast" data-i18n="speed_fast">Быстро</button>
+                      <button class="seg-btn" data-speed="med" aria-pressed="true" data-i18n="speed_med">Средне</button>
+                      <button class="seg-btn" data-speed="slow" data-i18n="speed_slow">Медленно</button>
                     </div>
                   </div>
                 </div>
@@ -470,8 +470,8 @@
                     <span class="sp"></span>
                     <span class="saved" data-i18n="saved_mark">сохранено</span>
                     <div class="seg" id="fx-idle-sw">
-                      <button data-fx-idle="on" aria-pressed="true" data-i18n="state_on">Вкл</button>
-                      <button data-fx-idle="off" data-i18n="state_off">Выкл</button>
+                      <button class="seg-btn" data-fx-idle="on" aria-pressed="true" data-i18n="state_on">Вкл</button>
+                      <button class="seg-btn" data-fx-idle="off" data-i18n="state_off">Выкл</button>
                     </div>
                   </div>
 
@@ -530,10 +530,10 @@
                     <span class="sp"></span>
                     <span class="saved" data-i18n="saved_mark">сохранено</span>
                     <div class="seg" id="lang-sw">
-                      <button data-lang="en">EN</button>
-                      <button data-lang="ru">RU</button>
-                      <button data-lang="de">DE</button>
-                      <button data-lang="es">ES</button>
+                      <button class="seg-btn" data-lang="en">EN</button>
+                      <button class="seg-btn" data-lang="ru">RU</button>
+                      <button class="seg-btn" data-lang="de">DE</button>
+                      <button class="seg-btn" data-lang="es">ES</button>
                     </div>
                   </div>
                 </div>
@@ -565,7 +565,7 @@
               <div class="grid">
                 <div class="card span4" data-wave>
                 <div class="col">
-                  <span class="logo"><img src="../../assets/icons/time-management.png" alt=""></span>
+                  <span class="logo"><img class="logo-img" src="../../assets/icons/time-management.png" alt=""></span>
                   <div class="nm">Time Tracker</div>
                   <div class="ver num">1.0.0</div>
 

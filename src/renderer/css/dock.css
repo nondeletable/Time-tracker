@@ -63,8 +63,7 @@
   overflow-y: auto;
 }
 
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: кнопки рельса в меню дока не попадают */
-.dock-menu button {
+.dock-item {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -76,12 +75,12 @@
   transition: background var(--t), color var(--t);
 }
 
-.dock-menu button:hover {
+.dock-item:hover {
   background: var(--surface);
   color: var(--text);
 }
 
-.dock-menu button[aria-pressed="true"] {
+.dock-item[aria-pressed="true"] {
   color: var(--accent);
 }
 

@@ -23,8 +23,7 @@
   overflow: hidden;
 }
 
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: логотип в попап аватаров не попадает */
-.logo img {
+.logo-img {
   width: 64px;
   height: 64px;
   object-fit: contain;
