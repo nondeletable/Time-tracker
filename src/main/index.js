@@ -547,7 +547,8 @@ function startupBackground() {
       return val
     }
     const theme = activeTheme(read('theme_mode'), read('theme_light'), read('theme_dark'))
-    const css = fs.readFileSync(path.join(__dirname, '../renderer/css/style.css'), 'utf8')
+    const css = ['tokens.css', 'themes.css']
+      .map(f => fs.readFileSync(path.join(__dirname, '../renderer/css', f), 'utf8')).join('\n')
     return backgroundFromCss(css, theme)
   } catch {
     return null

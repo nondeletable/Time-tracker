@@ -1,0 +1,60 @@
+/* Экран входа: выбор пользователя и поле имени. */
+
+/* ── User select ───────────────────────────────────────────────────────────── */
+
+.user-select-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+}
+
+.user-select-label {
+  font-size: 1.3rem;
+  font-weight: 300;
+  color: var(--text-mute);
+  letter-spacing: 0.02em;
+}
+
+.user-btn {
+  padding: 14px 48px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 1.1rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  letter-spacing: 0.03em;
+}
+
+.user-btn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+/* ── Поле имени на экране входа ─────────────────────────────────────────────── */
+
+.settings-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  color: var(--text-dim);
+  padding: 7px 10px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.settings-input:focus {
+  border-color: var(--text-disabled);
+}
+
+.settings-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

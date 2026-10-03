@@ -1,0 +1,67 @@
+/* Переход между режимами и отказ от движения по prefers-reduced-motion. */
+
+/* ── Переход между режимами ────────────────────────────────────────────────
+   Фронт — круг clip-path от центра кнопки T. Элементы входящего слоя
+   получают задержку, равную расстоянию до T, делённому на скорость фронта,
+   поэтому рождаются ровно там, где волна прошла. --wave-ms — время, за
+   которое фронт доходит до дальнего угла. */
+
+[data-wave-speed="fast"] { --wave-ms: 520; }
+[data-wave-speed="med"]  { --wave-ms: 900; }
+[data-wave-speed="slow"] { --wave-ms: 1600; }
+
+/* Режим Fade: уходящий слой сверху и гаснет, входящий проявляется под ним */
+.anim .layer.leaving {
+  z-index: 25;
+}
+
+.layer.fading [data-wave] {
+  animation: fade-rise 420ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0;
+  box-shadow: 0 0 28px 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.layer.incoming [data-wave] {
+  animation: wave-in 360ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: var(--wd, 0ms);
+}
+
+@keyframes wave-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.975);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

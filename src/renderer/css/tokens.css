@@ -1,0 +1,45 @@
+/* Токены: шрифтовые семейства, ритм, радиусы, переходы, якорные цвета по умолчанию и производные от них. */
+
+:root {
+  --font-ui:  'Plus Jakarta Sans', 'Golos Text', system-ui, sans-serif;
+  --font-num: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* ── Rhythm, radii, easing (from the prototype) ── */
+  --s1:4px; --s2:8px; --s3:12px; --s4:18px; --s5:28px; --s6:44px;
+  --r:12px; --r-lg:16px;
+  --t:180ms cubic-bezier(.4,0,.2,1);
+  --t-slow:420ms cubic-bezier(.16,1,.3,1);
+  --wave-ms: 900; /* переход между режимами, см. его раздел ниже */
+
+  /* ── Anchors: emerald · dark (fallback default) ── */
+  --bg:#0b0f14; --surface:#11161d; --surface-2:#161d26; --border:#212b37;
+  --text:#f0f4f8; --text-dim:#97a3b6; --text-mute:#5f6b7d;
+  --accent:#34d399; --accent-soft:#0e2b22; --on-accent:#04231a; --danger:#f87171;
+
+  /* ── Derived (defined once; recompute from active anchors per theme) ── */
+  --surface-3:        color-mix(in srgb, var(--surface-2) 75%, var(--border));
+  --control:          color-mix(in srgb, var(--surface-2) 60%, var(--border));
+  --control-hover:    color-mix(in srgb, var(--surface-2) 40%, var(--border));
+  --border-soft:      color-mix(in srgb, var(--border) 55%, var(--surface-2));
+  --border-strong:    color-mix(in srgb, var(--border) 70%, var(--text-mute));
+  --text-2:           color-mix(in srgb, var(--text) 60%, var(--text-dim));
+  --text-faint:       color-mix(in srgb, var(--text-mute) 65%, var(--border));
+  --text-disabled:    color-mix(in srgb, var(--text-mute) 40%, var(--border));
+  --accent-hover:     color-mix(in srgb, var(--accent) 86%, black);
+
+  /* idle-анимация там, где легла на заполненный прогресс: акцент поверх
+     акцента даёт акцент, и движение пропадает — на пересечении разводим */
+  --idle-over:        color-mix(in srgb, var(--accent) 50%, var(--text));
+  --accent-soft-text: var(--accent);
+  --danger-hover:     color-mix(in srgb, var(--danger) 86%, black);
+  --danger-strong:    color-mix(in srgb, var(--danger) 70%, black);
+  --danger-soft:      color-mix(in srgb, var(--danger) 16%, var(--bg));
+  --danger-soft-text: var(--danger);
+  --on-danger:        #fff;
+
+  /* поверх затемняющей плёнки — одинаково светлый в любой теме */
+  --on-scrim:         #fff;
+
+  /* бегунок прокрутки, пока область прокручивается (раздел Scrollbar) */
+  --scroll-thumb:     color-mix(in srgb, var(--text-mute) 70%, transparent);
+}

@@ -1,0 +1,116 @@
+/* Вид «Настройки»: аватар и попап выбора, палитра категорий, код группы. */
+
+/* аватар: карандаш по наведению, попап с выбором по клику */
+.idt {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding-bottom: var(--s4);
+  position: relative;
+}
+
+.idt .inp {
+  flex: 1;
+  min-width: 0;
+}
+
+.av-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.av-btn.lg {
+  width: 52px;
+  height: 52px;
+}
+
+.av-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.av-btn .pen {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--on-scrim);
+  background: rgb(0 0 0 / 50%);
+  opacity: 0;
+  transition: opacity var(--t);
+}
+
+.av-btn:hover .pen {
+  opacity: 1;
+}
+
+.pop {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 196px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.pop img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  object-fit: cover;
+}
+
+.pop img:hover {
+  border-color: var(--text-mute);
+}
+
+.pop img.on {
+  border-color: var(--accent);
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--s3);
+}
+
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: палитра не лежит в .tbl .nm */
+.palette i {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ── Код группы ─────────────────────────────────────────────────────────────── */
+
+#group-code-value {
+  user-select: text;
+  cursor: text;
+  font-family: var(--font-num);
+  font-size: 1rem;
+  letter-spacing: 2px;
+}
