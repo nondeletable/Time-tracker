@@ -1,0 +1,467 @@
+/* Вид Focus: холст эффектов, сцена, кольцо, кнопка запуска, бейджи категорий, подвал периода. */
+
+/* Холст эффектов лежит под содержимым Focus */
+.fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Распорка под .chrome: обвязка позиционирована абсолютно, содержимому нужен
+   свой отступ той же высоты */
+.f-bar {
+  height: 64px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Подвал лежит поверх сцены, а не в потоке: при раскрытии «Подробно» сцена
+   уезжает вверх лишь немного — панель успевает накрыть бейджи категорий,
+   а не гонит их вверх вместе с собой.
+   Окно больше 1280×812 масштабирует весь интерфейс (window-zoom.js), но сцена
+   Focus растёт по-своему: --f — желаемый диаметр кольца в пикселях экрана, от
+   высоты окна и не шире трети ширины. Каждый размер ниже задан в пикселях
+   экрана и делится на --k, зум окна. На 1280×812 --f меньше нынешних 330px,
+   и clamp() держит прежние размеры. Таймер растёт вместе с кольцом, кнопка
+   и бейджи — вполовину слабее (--f-half), иначе превращаются в плакат. */
+.stage {
+  --f: calc(min(40vh, 30vw) * var(--k, 1));
+  --f-half: calc((var(--f) - 330px) / 660);
+
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(clamp(var(--s6), calc(var(--s6) + var(--f-half) * 44), 60px) / var(--k, 1));
+  padding: 0 var(--s5) 52px;
+  min-height: 0;
+  transition: transform var(--t-slow);
+}
+
+.layer.sheet-open .stage {
+  transform: translateY(-44px);
+}
+
+/* ── Кольцо ────────────────────────────────────────────────────────────────── */
+
+.ring-wrap {
+  position: relative;
+  width: calc(clamp(330px, var(--f), 560px) / var(--k, 1));
+  height: calc(clamp(330px, var(--f), 560px) / var(--k, 1));
+  flex-shrink: 0;
+}
+
+.dial {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.dial .track {
+  fill: none;
+  stroke: var(--surface-2);
+  stroke-width: 10;
+}
+
+.dial .prog {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--t-slow);
+}
+
+/* Слои idle-анимации. Рисуются дважды: idle-a целиком, idle-b поверх и
+   обрезанный сектором прогресса — цвет разводится только на пересечении.
+   Геометрию каждый кадр пишет idle-fx.js, здесь только цвет и гашение. */
+.idle {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+.idle-a { stroke: var(--accent); }
+.idle-b { stroke: var(--idle-over); }
+
+.dial-in {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+}
+
+.dial-cat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: calc(clamp(13px, calc(13px + var(--f-half) * 13), 17px) / var(--k, 1));
+  color: var(--text-dim);
+  min-height: 1.2em;
+}
+
+.dial-cat .sw {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.dial-time {
+  font-weight: 300;
+  font-size: calc(clamp(56px, calc(var(--f) * 56 / 330), 95px) / var(--k, 1));
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.dial-sub {
+  font-size: calc(clamp(12px, calc(12px + var(--f-half) * 12), 16px) / var(--k, 1));
+  color: var(--text-mute);
+  min-height: 1.2em;
+}
+
+.halo {
+  position: absolute;
+  inset: -30px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 62%);
+  transition: opacity var(--t-slow);
+}
+
+.layer.running .halo {
+  opacity: 1;
+  animation: breathe 4.5s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+
+  50% {
+    transform: scale(1.045);
+    opacity: 1;
+  }
+}
+
+/* ── Кнопка запуска ────────────────────────────────────────────────────────── */
+
+.go-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.go {
+  padding:
+    calc(clamp(15px, calc(15px + var(--f-half) * 15), 20px) / var(--k, 1))
+    calc(clamp(52px, calc(52px + var(--f-half) * 52), 70px) / var(--k, 1));
+  border-radius: 99px;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: inherit;
+  font-size: calc(clamp(15px, calc(15px + var(--f-half) * 15), 20px) / var(--k, 1));
+  font-weight: 600;
+  transition: transform var(--t), filter var(--t), background var(--t);
+}
+
+.go:disabled {
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  cursor: not-allowed;
+}
+
+.go:hover:not(:disabled) {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+}
+
+.go:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.go.stop {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* Сброс накопленного времени. В прототипе кнопки нет — он макет, в нём нечего
+   сбрасывать. Здесь она нужна: отменённый диалог сохранения оставляет время
+   в счётчике, и без сброса от него не избавиться. */
+.reset-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-mute);
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: border-color var(--t), color var(--t);
+}
+
+.reset-btn:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ── Бейджи категорий ──────────────────────────────────────────────────────── */
+
+/* Уходят под панель «Подробно»: между рядами 8px, и нет такого подъёма, при
+   котором нижний ряд скрыт целиком, а верхний не липнет к краю панели.
+   Поэтому не подрезаем, а гасим — заодно не отвлекают, пока читаешь цифры. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  justify-content: center;
+  max-width: calc(clamp(780px, calc(780px + var(--f-half) * 780), 1050px) / var(--k, 1));
+  transition: opacity var(--t-slow), transform var(--t-slow);
+}
+
+.layer.sheet-open .chips {
+  opacity: 0;
+  transform: translateY(14px);
+  pointer-events: none;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding:
+    calc(clamp(9px, calc(9px + var(--f-half) * 9), 12px) / var(--k, 1))
+    calc(clamp(16px, calc(16px + var(--f-half) * 16), 21px) / var(--k, 1));
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: calc(clamp(13px, calc(13px + var(--f-half) * 13), 17px) / var(--k, 1));
+  color: var(--text-dim);
+  transition: border-color var(--t), color var(--t), background var(--t), transform var(--t);
+}
+
+.chip:hover {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.chip[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.chip .sw {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chip .h {
+  font-size: calc(clamp(11.5px, calc(11.5px + var(--f-half) * 11.5), 15px) / var(--k, 1));
+  color: var(--text-mute);
+  font-family: var(--font-num);
+}
+
+/* ── Подвал периода ────────────────────────────────────────────────────────── */
+
+/* Непрозрачный — иначе сцена просвечивает сквозь выезжающую панель */
+.foot {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.foot-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+}
+
+.foot-bar .lab {
+  font-size: 12px;
+  color: var(--text-mute);
+  white-space: nowrap;
+}
+
+.foot-bar .track {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  background: var(--surface-2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.foot-bar .track span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width var(--t-slow);
+}
+
+/* Отрезки idle-анимации живут в том же треке поверх заливки лимита.
+   transition у них снят: ширину пишет каждый кадр движок, и плавность
+   от --t-slow превратила бы анимацию в кашу. */
+
+/* Селекторы длиннее, чем хочется, намеренно: правило .foot-bar .track span
+   выше перебивает более короткие — оно заливает любой span в треке акцентом и
+   вешает на ширину переход в 420 мс. Обёртке фон не нужен вовсе, а слоям нужен
+   свой цвет и мгновенная ширина: их позицию пишет каждый кадр движок, и
+   плавность превратила бы движение в вязкое доезжание с прошлого места. */
+.foot-bar .track .idle-bar {
+  position: absolute;
+  inset: 0;
+  background: none;
+}
+
+.foot-bar .track .idle-bar span {
+  position: absolute;
+  top: 0;
+  transition: none;
+}
+.foot-bar .track .idle-bar .idle-a { background: var(--accent); }
+.foot-bar .track .idle-bar .idle-b { background: var(--idle-over); }
+
+.foot-bar .track span.over {
+  background: var(--danger);
+}
+
+.foot-num {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.foot-num .of {
+  color: var(--text-mute);
+}
+
+.foot-num.over {
+  color: var(--danger);
+}
+
+.expand {
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition: background var(--t);
+}
+
+.expand:hover {
+  background: var(--surface-2);
+}
+
+.sheet {
+  max-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+  transition: max-height var(--t-slow);
+}
+
+.sheet.open {
+  max-height: 240px;
+  border-top: 1px solid var(--border);
+}
+
+.sheet-in {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s5);
+  padding: var(--s4) var(--s4) var(--s5);
+}
+
+.stat dt {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  margin-bottom: 6px;
+}
+
+.stat dd {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.stat dd small {
+  font-size: 12px;
+  color: var(--text-mute);
+  font-weight: 400;
+}
+
+.bars {
+  grid-column: span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.bars-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 12px;
+}
+
+.bars-row .n {
+  width: 104px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bars-row .t {
+  flex: 1;
+  height: 5px;
+  background: var(--surface-2);
+  border-radius: 99px;
+}
+
+/* stylelint-disable-next-line no-descending-specificity -- другой компонент: отрезки idle-полосы живут только в .foot-bar */
+.bars-row .t span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+}
+
+.bars-row .v {
+  width: 58px;
+  text-align: right;
+  font-family: var(--font-num);
+  font-size: 11.5px;
+  color: var(--text-mute);
+}

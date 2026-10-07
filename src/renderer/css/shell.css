@@ -1,0 +1,257 @@
+/* Каркас: экраны, обвязка окна, слои режимов, рельс и шапка Dashboard, прокручиваемая область видов, сетка карточек. */
+
+/* ── Screens ───────────────────────────────────────────────────────────────── */
+
+.screen {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Focus mode ────────────────────────────────────────────────────────────── */
+
+#main-screen {
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.app {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* ── Обвязка окна ──────────────────────────────────────────────────────────── */
+
+/* Живёт НАД слоями режимов и в переходах не участвует: управление окном не
+   должно мигать. Отступ слева 11px — центр T (34px) попадает на 28px, это
+   центр будущего рельса Dashboard, иначе T в нём визуально съедет правее
+   иконок навигации. */
+.chrome {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 64px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s4) 0 11px;
+  pointer-events: none;
+  -webkit-app-region: drag;
+}
+
+.chrome > * {
+  pointer-events: auto;
+  -webkit-app-region: no-drag;
+}
+
+.chrome .sp {
+  flex: 1;
+  pointer-events: none;
+  -webkit-app-region: drag;
+}
+
+.tbtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.tglyph {
+  display: block;
+  line-height: 1;
+}
+
+.win {
+  display: flex;
+  gap: 2px;
+}
+
+.win-btn {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0.55;
+  padding: 0;
+  transition: opacity var(--t), color var(--t);
+}
+
+/* Подложки при наведении нет ни у одной кнопки: меняется только сам символ.
+   Свернуть и развернуть проявляются до полного цвета текста, крестик
+   краснеет. */
+.win-btn:hover {
+  opacity: 1;
+}
+
+.win-close:hover {
+  color: var(--danger);
+}
+
+.win-btn .ic {
+  width: 15px;
+  height: 15px;
+}
+
+/* Слой режима. Фон непрозрачный: когда рядом встанет Dashboard, под клипом
+   перехода не должен просвечивать уходящий режим. */
+
+/* Фон обязателен: под клипом волны не должен просвечивать уходящий режим */
+.layer {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: var(--bg);
+}
+
+[data-mode="focus"] .layer[data-layer="focus"],
+.anim .layer[data-layer="focus"] {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-mode="dash"] .layer[data-layer="dash"],
+.anim .layer[data-layer="dash"] {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* В переходе показаны оба слоя: уходящий снизу, приходящий поверх под клипом */
+.anim .layer.incoming {
+  z-index: 20;
+}
+
+/* ── Dashboard: рельс и каркас ─────────────────────────────────────────────── */
+
+.rail {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+
+  /* сверху 72px: первая иконка встаёт ниже полосы обвязки с кнопкой T */
+  padding: 72px 0 var(--s3);
+}
+
+.rail button {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--text-mute);
+  display: grid;
+  place-items: center;
+  transition: background var(--t), color var(--t);
+}
+
+.rail button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.rail button[aria-current="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.rail .sp {
+  flex: 1;
+}
+
+.d-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Шапка занимает ту же верхнюю полосу 64px, где стоят T и кнопки окна */
+.d-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  height: 64px;
+  padding: 0 var(--s5);
+  flex-shrink: 0;
+}
+
+.d-head h1 {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+
+.d-head .sp {
+  flex: 1;
+}
+
+/* зазор под кнопками окна справа сверху */
+.d-head .pad {
+  width: 104px;
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 var(--s5) var(--s5);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.view {
+  display: none;
+}
+
+.view.on {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s3);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Карточки настроек стоят рядами сверху, а не растягиваются на всю высоту */
+.grid.set {
+  grid-template-rows: none;
+  align-content: start;
+  flex: none;
+}
+
+.span2 {
+  grid-column: span 2;
+}
+
+.span4 {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}

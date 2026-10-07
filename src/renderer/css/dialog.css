@@ -1,0 +1,99 @@
+/* Диалог сохранения сессии. */
+
+/* ── Save dialog ───────────────────────────────────────────────────────────── */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 65%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.dialog {
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  min-width: 290px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 60%);
+}
+
+.dialog-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-mute);
+  letter-spacing: 0.03em;
+}
+
+.dialog-time {
+  font-size: 2.2rem;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
+.dialog-category-select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  color: var(--text-dim);
+  padding: 10px 12px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+
+.dialog-category-select:focus {
+  border-color: var(--text-disabled);
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.dialog-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s, transform 0.1s;
+  font-family: inherit;
+}
+
+.dialog-btn:active {
+  transform: scale(0.97);
+}
+
+.dialog-btn.cancel {
+  background: var(--control);
+  color: var(--text-mute);
+}
+
+.dialog-btn.cancel:hover {
+  background: var(--border);
+}
+
+.dialog-btn.save {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.dialog-btn.save:hover {
+  background: var(--accent-hover);
+}

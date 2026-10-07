@@ -1,0 +1,79 @@
+/* Таблица и строки-формы под записью. */
+
+.tbl-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tbl th {
+  font-size: 10px;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+  text-align: left;
+  padding-bottom: 6px;
+  font-weight: 600;
+}
+
+.tbl td {
+  padding: 7px 0;
+  border-top: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.tbl th:last-child,
+.tbl td:last-child {
+  text-align: right;
+}
+
+.tbl .nm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tbl .nm i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+/* удаление подтверждается инлайново, в той же ячейке */
+.acts {
+  white-space: nowrap;
+}
+
+.acts .btns,
+.acts .confirm {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.acts .confirm .q {
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* правка и добавление раскрываются строкой-формой под записью */
+/* stylelint-disable-next-line no-descending-specificity -- разные свойства: .tbl td:last-child задаёт только выравнивание */
+.form-row td {
+  padding: var(--s3) 0;
+}
+
+.ed {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.ed .sp {
+  flex: 1;
+}

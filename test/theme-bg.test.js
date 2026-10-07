@@ -5,10 +5,11 @@ const path = require('node:path')
 
 const { backgroundFromCss, activeTheme } = require('../src/main/theme-bg')
 
-const CSS = fs.readFileSync(
-  path.join(__dirname, '..', 'src', 'renderer', 'css', 'style.css'),
-  'utf8'
-)
+// Тот же набор файлов, что читает main при старте: :root с фоном по умолчанию
+// и четыре темы.
+const CSS = ['tokens.css', 'themes.css']
+  .map(f => fs.readFileSync(path.join(__dirname, '..', 'src', 'renderer', 'css', f), 'utf8'))
+  .join('\n')
 
 const THEMES = ['emerald-dark', 'emerald-light', 'indigo-dark', 'indigo-light']
 
