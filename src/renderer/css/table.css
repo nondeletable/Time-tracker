@@ -62,8 +62,7 @@
 }
 
 /* правка и добавление раскрываются строкой-формой под записью */
-/* stylelint-disable-next-line no-descending-specificity -- разные свойства: .tbl td:last-child задаёт только выравнивание */
-.form-row td {
+.tbl .form-cell {
   padding: var(--s3) 0;
 }
 

@@ -28,8 +28,7 @@
   border-radius: 9px;
 }
 
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: кнопки рельса в сегментный переключатель не попадают */
-.seg button {
+.seg-btn {
   padding: 5px 12px;
   border-radius: 7px;
   font-size: 12px;
@@ -37,7 +36,7 @@
   transition: background var(--t), color var(--t);
 }
 
-.seg button[aria-pressed="true"] {
+.seg-btn[aria-pressed="true"] {
   background: var(--surface);
   color: var(--text);
   font-weight: 600;

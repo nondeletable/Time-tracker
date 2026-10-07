@@ -451,8 +451,7 @@
   border-radius: 99px;
 }
 
-/* stylelint-disable-next-line no-descending-specificity -- другой компонент: отрезки idle-полосы живут только в .foot-bar */
-.bars-row .t span {
+.bars-fill {
   display: block;
   height: 100%;
   border-radius: 99px;

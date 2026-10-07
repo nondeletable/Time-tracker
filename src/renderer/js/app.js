@@ -278,7 +278,7 @@ function renderStats(stats) {
     item.className = 'bars-row'
     item.innerHTML = `
       <span class="n">${esc(row.name)}</span>
-      <span class="t"><span style="width:${pct}%;background:${esc(row.color)}"></span></span>
+      <span class="t"><span class="bars-fill" style="width:${pct}%;background:${esc(row.color)}"></span></span>
       <span class="v">${formatHM(row.total)}</span>
     `
     bars.appendChild(item)
@@ -544,7 +544,7 @@ dockCat.addEventListener('click', e => {
   e.stopPropagation()
   if (dockCat.disabled) return
   dockMenu.innerHTML = categories.map(cat =>
-    `<button data-id="${cat.id}" aria-pressed="${cat.id === selectedCategoryId}">
+    `<button class="dock-item" data-id="${cat.id}" aria-pressed="${cat.id === selectedCategoryId}">
        <span class="sw" style="background:${esc(cat.color)}"></span>${esc(cat.name)}</button>`
   ).join('')
   dockMenu.classList.toggle('hidden')
@@ -846,14 +846,14 @@ function editDeleteButtons() {
 
 function catFormRow(id, name, color) {
   return `<tr class="form-row" data-form-id="${id ?? ''}">
-      <td colspan="2">
+      <td class="form-cell" colspan="2">
         <div class="ed">
           <input class="inp cat-name" value="${esc(name)}" placeholder="${t('cat_name_placeholder')}" style="flex:1;min-width:0">
           <button class="swatch" data-do="palette" data-color="${color}" style="background:${color}"></button>
           <button class="btn-s" data-do="cancel">${t('btn_cancel')}</button>
           <button class="btn-s primary" data-do="save">${t('btn_save')}</button>
         </div>
-        <div class="palette hidden">${CAT_COLORS.map(c => `<i style="background:${c}" data-color="${c}"></i>`).join('')}</div>
+        <div class="palette hidden">${CAT_COLORS.map(c => `<i class="palette-dot" style="background:${c}" data-color="${c}"></i>`).join('')}</div>
       </td></tr>`
 }
 
@@ -898,7 +898,7 @@ catAddBtn.addEventListener('click', () => {
 })
 
 catRows.addEventListener('click', async e => {
-  const swatch = e.target.closest('.palette i')
+  const swatch = e.target.closest('.palette-dot')
   if (swatch) {
     const form = swatch.closest('.form-row')
     const target = form.querySelector('.swatch')
@@ -959,7 +959,7 @@ function hoursFormRow(id, categoryId, time) {
   const options = categories.map(c =>
     `<option value="${c.id}"${c.id === categoryId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')
   return `<tr class="form-row" data-form-id="${id ?? ''}">
-      <td colspan="3">
+      <td class="form-cell" colspan="3">
         <div class="ed">
           <select class="inp hours-cat">${options}</select>
           <input class="inp num hours-time" type="time" value="${time}">
