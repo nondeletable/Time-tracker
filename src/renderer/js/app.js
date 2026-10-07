@@ -2,6 +2,7 @@
 // scripts loaded ahead of this one: node --test requires them as CommonJS, and a
 // module runs after them anyway, so they publish I18N, DICT and ROLES on window
 // exactly as before.
+import './zoom.js'
 import { FX } from './fx.js'
 import { IDLE_FX } from './idle-fx.js'
 import './scrollbars.js'
@@ -458,7 +459,10 @@ function setMode(next) {
     return
   }
 
-  if (root.dataset.anim === 'fade') {
+  // Волна перерисовывает clip-path всего слоя каждый кадр. В окне больше
+  // 1280×812 слой растеризуется увеличенным, GPU не успевает, и маска отстаёт
+  // от кольца. Поэтому там переход всегда Fade, что бы ни стояло в настройке.
+  if (root.dataset.anim === 'fade' || window.api.zoomFactor() > 1) {
     const from = next === 'dash' ? focusLayer : dashLayer
     const to   = next === 'dash' ? dashLayer  : focusLayer
     root.dataset.mode = next

@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, webFrame } = require('electron')
 
 // Handing a listener straight to ipcRenderer.on would call it with the
 // IpcRendererEvent as its first argument, which carries sender and senderFrame
@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld('api', {
   winClose:          ()   => ipcRenderer.invoke('win:close'),
   onWinMaximized:    (cb) => ipcRenderer.on('win:maximized', () => cb()),
   onWinUnmaximized:  (cb) => ipcRenderer.on('win:unmaximized', () => cb()),
+  zoomFactor:        ()   => webFrame.getZoomFactor(),
   getHotkey:         ()      => ipcRenderer.invoke('hotkey:get'),
   setHotkey:         (accel) => ipcRenderer.invoke('hotkey:set', accel),
   onHotkeyToggle:    (cb) => ipcRenderer.on('hotkey:toggle', () => cb()),
